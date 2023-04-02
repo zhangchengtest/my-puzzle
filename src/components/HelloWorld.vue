@@ -177,7 +177,7 @@ const refresh = () => {
 
 
 function weixin() {
-  var urls = window.location.href
+  var urls = 'http://cheng.yufu.pub/home'
   axios.get('https://api.punengshuo.com/api/wx/share?url=' + urls)
     .then(res => {
       //微信加签
