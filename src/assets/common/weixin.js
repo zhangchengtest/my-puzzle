@@ -41,11 +41,10 @@ export const wexinShare = (data, shareData) => {
             link: shareData.link, // 分享链接 该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
             imgUrl: 'https://cheng-resource.oss-cn-hangzhou.aliyuncs.com/blog-resource/apemgr.jpg', // 分享图标
             success: function(res) {
-                console.log("分享朋友成功返回的信息为:", res);;
+                console.log("分享朋友成功返回的信息为:", res);
+                wx.showOptionMenu();
             }
         })
-
-        wx.showOptionMenu();
 
     });
     wx.error(function(res) {
