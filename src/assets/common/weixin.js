@@ -19,7 +19,7 @@ export const wexinShare = (data, shareData) => {
         nonceStr: nonceStr, // 必填，生成签名的随机串
         signature: signature, // 必填，签名，见附录1
         jsApiList: [
-            'onMenuShareAppMessage',
+            'updateAppMessageShareData', 'updateTimelineShareData'
             ] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
     });
    
