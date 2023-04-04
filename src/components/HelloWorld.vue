@@ -188,7 +188,7 @@ function weixin() {
         timestamp: res.data.data.timestamp,
         jsApiList: ['onMenuShareAppMessage']
       };
-      console.log('come weixin')
+      console.log('come weixin1')
       console.log(url.value)
       let shareData = {
         title: 'title', // 分享标题
