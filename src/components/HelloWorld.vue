@@ -5,15 +5,32 @@ import { Swappable } from '@shopify/draggable'
 import { useRoute, useRouter } from 'vue-router'
 import Timer from './Timer.vue'
 import Rank from './Rank.vue'
+import Loading from '@/components/Loading.vue'
 import { wexinShare } from '@/assets/common/weixin.js';
 const router = useRouter()
 const route = useRoute()
 
 const shareButtonsVisible = ref(false);
 
+const popVisible = ref(false);
+
+const loadingVisible = ref(false);
+
 function toggleShareButtons() {
   shareButtonsVisible.value = !shareButtonsVisible.value;
 }
+
+function popButton() {
+  popVisible.value = true;
+  
+}
+
+const hidePopup = () => {
+  if (popVisible.value) {
+    popVisible.value = false;
+  }
+}
+
 
 const imageArray = ref([])
 
@@ -24,11 +41,16 @@ const rank = ref()
 const isStart = ref(false)
 const step = ref(0)
 
-url.value = route.query.randomUrl
-if (!route.query.randomUrl) {
-  toRedirect()
-} else {
-  showGame()
+
+init()
+function init(){
+  loadingVisible.value = true
+  url.value = route.query.randomUrl
+  if (!route.query.randomUrl) {
+    toRedirect()
+  } else {
+    showGame()
+  }
 }
 
 watch(route, (newValue, oldValue) => {
@@ -38,6 +60,7 @@ watch(route, (newValue, oldValue) => {
 })
 
 function toRedirect() {
+  loadingVisible.value = true
   axios.get('https://api.punengshuo.com/api/game/queryPuzzle')
     .then(response => {
       router.push('/home?randomUrl=' + response.data.data.url)
@@ -48,9 +71,14 @@ function toRedirect() {
 }
 
 function showGame() {
+  loadingVisible.value = true
   axios.get('https://api.punengshuo.com/api/game/queryPuzzleByUrl?order_type=normal&url=' + url.value)
     .then(response => {
       imageArray.value = response.data.data.piecces
+      
+      setTimeout( () => {
+        loadingVisible.value = false
+      }, 3 * 1000 )
     })
     .catch(error => {
       console.log(error)
@@ -58,12 +86,16 @@ function showGame() {
 }
 
 function startGame() {
+  loadingVisible.value = true
   axios.get('https://api.punengshuo.com/api/game/queryPuzzleByUrl?order_type=random&url=' + url.value)
     .then(response => {
       imageArray.value = response.data.data.piecces
       timer.value.start()
       isStart.value = true
       swap()
+      setTimeout( () => {
+        loadingVisible.value = false
+      }, 1.5 * 1000 )
 
     })
     .catch(error => {
@@ -78,6 +110,9 @@ function getRank() {
     .then(response => {
       ranks.value = response.data.data
       rank.value.openModal()
+      setTimeout( () => {
+        loadingVisible.value = false
+      }, 1.5 * 1000 )
     })
     .catch(error => {
       console.log(error)
@@ -93,17 +128,20 @@ function savePuzzleRank(rankData) {
       console.log(error)
     })
 }
-
+const swappable = ref()
+function stopswap(){
+  swappable.value.destroy()
+}
 function swap() {
-  const swappable = new Swappable(document.querySelectorAll('.puzzle-all'), {
+  swappable.value = new Swappable(document.querySelectorAll('.puzzle-all'), {
     draggable: 'img',
     delay: 0,
     mirror: {
       constrainDimensions: true
     }
   })
-  swappable.on('drag:start', () => { })
-  swappable.on('swappable:swapped', event => {
+  swappable.value.on('drag:start', () => { })
+  swappable.value.on('swappable:swapped', event => {
     // console.log( event.data.dragEvent.source.currentSrc )
     // // console.log( event.swappedElement.currentSrc )
     // var x2 = event.swappedElement.getAttribute( 'showx' )
@@ -111,13 +149,13 @@ function swap() {
     // a.value = x2
     // b.value = y2
   })
-  swappable.on('drag:stop', event => {
+  swappable.value.on('drag:stop', event => {
     move()
     // console.log( event )
     // console.log( event.data.source.currentSrc )
     // shouldMove()
   })
-  swappable.on('drag:move', () => { })
+  swappable.value.on('drag:move', () => { })
 }
 
 function move() {
@@ -128,6 +166,7 @@ function move() {
   for (var i = 0; i < arr.length; i++) {
     if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('draggable-mirror')) {
     } else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('draggable--original')) {
+    }else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('popup-img')) {
     } else {
       var s = arr[i]
         .getAttribute('src')
@@ -147,6 +186,9 @@ function len(str) {
 function gameEnd(result) {
   const target = creatArr(3).toString()
   if (result === target) {
+    loadingVisible.value = true
+    timer.value.stop()
+    stopswap()
     savePuzzleRank({ spendTime: timer.value.getTime(), step: step.value, username: '成', url: url.value })
   }
 }
@@ -177,6 +219,7 @@ const refresh = () => {
 
 
 function weixin() {
+  popButton();
   var urls = window.location.href
   axios.get('https://api.punengshuo.com/api/wx/share?url=' + urls)
     .then(res => {
@@ -267,10 +310,43 @@ function weixin() {
 
     <Rank ref="rank" :listData="ranks"></Rank>
 
+    <div class="popup" :style="{ display: popVisible ? 'flex' : 'none' }" @click="hidePopup">
+      <div class="popup-content">
+        <img src="../assets/arrow.png" alt="Your Image" class="popup-img">
+      </div>
+    </div>
+
+
+    <Loading :visible="loadingVisible"></Loading>
+
   </div>
 </template>
 
 <style scoped>
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  /* 半透明黑色背景 */
+  z-index: 9999;
+}
+
+.popup-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+ 
+}
+
+
 .time-style {
   border-radius: 5px;
   background-color: lightblue;
@@ -372,6 +448,5 @@ div .puzzle+.puzzle {
 .puzzle-image {
   max-width: 100%;
   max-height: 100%;
-}
-</style>
+}</style>
 

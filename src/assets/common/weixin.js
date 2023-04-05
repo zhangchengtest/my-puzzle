@@ -42,7 +42,6 @@ export const wexinShare = (data, shareData) => {
             imgUrl: 'https://cheng-resource.oss-cn-hangzhou.aliyuncs.com/blog-resource/apemgr.jpg', // 分享图标
             success: function(res) {
                 console.log("分享朋友成功返回的信息为:", res);
-                wx.showOptionMenu();
             }
         })
 
