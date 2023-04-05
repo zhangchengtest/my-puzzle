@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Timer from './Timer.vue'
 import Rank from './Rank.vue'
 import Loading from '@/components/Loading.vue'
+import Header from '@/components/Header.vue'
 import { wexinShare } from '@/assets/common/weixin.js';
 const router = useRouter()
 const route = useRoute()
@@ -189,7 +190,7 @@ function gameEnd(result) {
     loadingVisible.value = true
     timer.value.stop()
     stopswap()
-    savePuzzleRank({ spendTime: timer.value.getTime(), step: step.value, username: '成', url: url.value })
+    savePuzzleRank({ spendTime: timer.value.getTime(), step: step.value, username: localStorage.getItem('username'), url: url.value })
   }
 }
 
@@ -252,6 +253,7 @@ function weixin() {
 
 <template>
   <div>
+    <Header :visible="loadingVisible"></Header>
     <div style="width: 300px; ${centerDivStyle}" id="container">
       <div style="display: flex; justify-content: space-between;">
         <div id="time" class="time-style">
