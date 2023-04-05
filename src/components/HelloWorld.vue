@@ -234,8 +234,8 @@ function weixin() {
       console.log('come weixin1')
       console.log(url.value)
       let shareData = {
-        title: 'title', // 分享标题
-        desc: '测试2',
+        title: '拼图', // 分享标题
+        desc: '就是玩',
         link: urls,
         // link: window.location.href,
         imgUrl: '' // 分享图标
