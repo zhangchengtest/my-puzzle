@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="header" :class="{ 'sticky': isSticky }">
-            <div class="logo"><img src="../assets/logo.png"/></div>
+            <div class="logo"><img src="../assets/logo.png" class="logo-img"/></div>
             <div class="user-info">
                 <div class="username">{{ username }}</div>
                 <div class="dropdown" v-show="showDropdown">
@@ -96,7 +96,7 @@ export default {
     font-weight: bold;
 }
 
-.logo img{
+.logo-img{
    width: 60px;
    height: 60px;
    margin-top: 10px;

@@ -168,7 +168,9 @@ function move() {
     if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('draggable-mirror')) {
     } else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('draggable--original')) {
     }else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('popup-img')) {
-    } else {
+    } else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('logo-img')) {
+    } 
+    else {
       var s = arr[i]
         .getAttribute('src')
         .substring(len(arr[i].getAttribute('src')) - 5, len(arr[i].getAttribute('src')) - 4)
