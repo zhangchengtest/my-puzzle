@@ -1,13 +1,13 @@
 <template>
     <div>
         <div class="header" :class="{ 'sticky': isSticky }">
-            <div class="logo"><img src="../assets/logo.png" class="logo-img"/></div>
+            <div class="logo"><img src="../assets/logo.png" class="logo-img" /></div>
             <div class="user-info">
                 <div class="username">{{ username }}</div>
                 <div class="dropdown" v-show="showDropdown">
                     <ul>
                         <li v-if="isLoggedIn"><a href="#">注销</a></li>
-                        <li v-else><a href="#">登录</a></li>
+                        <li v-else><a href="javascript:void(0)" @click="jump">登录</a></li>
                     </ul>
                 </div>
                 <div class="arrow" @click="showDropdown = !showDropdown"></div>
@@ -17,8 +17,9 @@
 </template>
   
 <script>
+import axios from 'axios';
 export default {
-    name: 'MyComponent',
+    name: 'Header',
     data() {
         return {
             isSticky: false,
@@ -28,6 +29,7 @@ export default {
         }
     },
     mounted() {
+
         // 获取 localStorage 中 myData 的值
         this.username = localStorage.getItem('username');
         // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
@@ -35,7 +37,24 @@ export default {
             this.username = '游客' + this.getCurrentDate() + this.generateRandomCode();
             localStorage.setItem('username', this.username);
         }
-       
+
+        const token = localStorage.getItem('puzzle-token');
+        // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
+        if (token) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+            axios.get('https://api.punengshuo.com/api/auth/info')
+                .then(response => {
+                    console.log(response.data)
+                    this.isLoggedIn = true
+                    this.username = response.data.data.userName
+                    localStorage.setItem('username', response.data.data.userName);
+                })
+                .catch(error => {
+                    console.log(error)
+                })
+          
+        }
+
         window.addEventListener('scroll', this.handleScroll)
     },
     beforeDestroy() {
@@ -47,6 +66,10 @@ export default {
         },
         show() {
             console.log('show');
+        },
+        jump() {
+            console.log('ssss')
+            window.location = 'https://sso.punengshuo.com?redirectUrl=' + 'http://192.168.67.0:5173/callback'
         },
         generateRandomCode() {
             let code = '';
@@ -96,10 +119,10 @@ export default {
     font-weight: bold;
 }
 
-.logo-img{
-   width: 60px;
-   height: 60px;
-   margin-top: 10px;
+.logo-img {
+    width: 60px;
+    height: 60px;
+    margin-top: 10px;
 }
 
 .user-info {
