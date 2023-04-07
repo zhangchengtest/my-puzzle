@@ -69,7 +69,7 @@ export default {
         },
         jump() {
             console.log('ssss')
-            window.location = 'https://sso.punengshuo.com?redirectUrl=' + 'http://192.168.67.0:5173/callback'
+            window.location = 'https://sso.punengshuo.com?redirectUrl=' + 'https://chengapi.yufu.pub/callback'
         },
         generateRandomCode() {
             let code = '';
