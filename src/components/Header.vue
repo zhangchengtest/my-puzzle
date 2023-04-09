@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="header" :class="{ 'sticky': isSticky }">
-            <div class="logo"><img src="../assets/logo.png" class="logo-img" /></div>
+            <div >积分：<span class="score">{{score}}</span></div>
             <div class="user-info">
                 <div class="username">{{ username }}</div>
                 <div class="dropdown" v-show="showDropdown">
@@ -18,6 +18,7 @@
   
 <script>
 import axios from 'axios';
+const baseUrl = import.meta.env.VITE_APP_API_URL
 export default {
     name: 'Header',
     data() {
@@ -25,11 +26,11 @@ export default {
             isSticky: false,
             showDropdown: false,
             username: '',
+            score:'0',
             isLoggedIn: false // 根据实际情况设置该值
         }
     },
     mounted() {
-
         // 获取 localStorage 中 myData 的值
         this.username = localStorage.getItem('username');
         // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
@@ -44,7 +45,6 @@ export default {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
             axios.get('https://api.punengshuo.com/api/auth/info')
                 .then(response => {
-                    console.log(response.data)
                     this.isLoggedIn = true
                     this.username = response.data.data.userName
                     localStorage.setItem('username', response.data.data.userName);
@@ -54,6 +54,14 @@ export default {
                 })
           
         }
+
+        axios.get('https://chengapi.yufu.pub/openapi/scores/getByUserId')
+            .then(response => {
+                this.score = response.data.data.score
+            })
+            .catch(error => {
+                console.log(error)
+            })
 
         window.addEventListener('scroll', this.handleScroll)
     },
@@ -69,7 +77,7 @@ export default {
         },
         jump() {
             console.log('ssss')
-            window.location = 'https://sso.punengshuo.com?redirectUrl=' + 'https://chengapi.yufu.pub/callback'
+            window.location = 'https://sso.punengshuo.com?redirectUrl=' + baseUrl +'/callback'
         },
         generateRandomCode() {
             let code = '';
@@ -132,6 +140,9 @@ export default {
 
 .username {
     margin-right: 10px;
+}
+.score {
+    color: lightblue;
 }
 
 .dropdown {

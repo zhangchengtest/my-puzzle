@@ -107,9 +107,10 @@ function startGame() {
 const ranks = ref([]);
 //http://st.punengshuo.com/images/20230402000000/full.jpg
 function getRank() {
-  axios.get('https://api.punengshuo.com/api/game/queryPuzzleRank?&url=' + url.value)
+  axios.get('https://chengapi.yufu.pub/openapi/puzzleRanks/page?&url=' + url.value)
     .then(response => {
-      ranks.value = response.data.data
+      console.log(response.data)
+      ranks.value = response.data.data.list
       rank.value.openModal()
       setTimeout( () => {
         loadingVisible.value = false
@@ -121,7 +122,7 @@ function getRank() {
 }
 //https://api.punengshuo.com/api/game/savePuzzleRank
 function savePuzzleRank(rankData) {
-  axios.post('https://api.punengshuo.com/api/game/savePuzzleRank', rankData)
+  axios.post('https://chengapi.yufu.pub/openapi/puzzleRanks/', rankData)
     .then(response => {
       getRank()
     })
@@ -192,7 +193,8 @@ function gameEnd(result) {
     loadingVisible.value = true
     timer.value.stop()
     stopswap()
-    savePuzzleRank({ spendTime: timer.value.getTime(), step: step.value, username: localStorage.getItem('username'), url: url.value })
+    savePuzzleRank({ spendTime: timer.value.getTime(), step: step.value, username: localStorage.getItem('username'), url: url.value, title: url.value, 
+    userId: localStorage.getItem('username')})
   }
 }
 
