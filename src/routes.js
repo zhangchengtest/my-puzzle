@@ -1,6 +1,7 @@
 import Puzzle from './Puzzle.vue'
 import Callback from './Callback.vue'
 import Novel from './Novel.vue'
+import Timeline from './Timeline.vue'
 
 export default [
   {
@@ -22,5 +23,10 @@ export default [
     path: '/novel',
     name: 'Novel',
     component: Novel
+  },
+  {
+    path: '/timeline',
+    name: 'Timeline',
+    component: Timeline
   }
 ]
