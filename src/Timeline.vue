@@ -4,7 +4,7 @@
     <ul>
       <li v-for="event in events" :key="event.id">
         <div class="timeline"> 
-          <span class="circle"></span>
+          <span class="circle" :class="getCircleClass(event.content)"></span>
           <div class="event">
           <div class="content">
             <div class="date">{{ event.title }}</div>
@@ -53,7 +53,14 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
-  background-color: #000000;
+}
+
+.circle-red{
+  background-color: red;
+}
+
+.circle-black{
+  background-color: black;
 }
 
 .event {
@@ -106,12 +113,23 @@ export default {
   methods: {
     processLink(link) {
       return `<a href="${link}">${link}</a>`
+    },
+    getCircleClass(item) {
+      if (!item) {
+        return 'circle-red';
+      } else {
+        return 'circle-black';
+      }
     }
+    
   },
   computed: {
     processedContent() {
       return function(content) {
         const regex = /(\b(https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:/~+#-]*[\w@?^=%&amp;/~+#-])?)/g;
+        if(!content){
+          return '';
+        }
         this.content = content.replace(regex, this.processLink)
         this.content = this.content.replace(/\n/g, '<br>');
         return this.content;
@@ -120,9 +138,10 @@ export default {
   },
   created() {
     this.eventName = this.$route.query.eventName;
-  const url = 'https://chengapi.yufu.pub/openapi/articles/page?category='+ this.eventName + '&pageSize=10'
+  // const url = 'https://chengapi.yufu.pub/openapi/articles/list?category='+ this.eventName + '&pageSize=100'
+  const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
   axios.get(url).then(response => {
-      this.events = response.data.data.list;
+      this.events = response.data.data;
     }).catch(error => {
       console.error(error);
     });
