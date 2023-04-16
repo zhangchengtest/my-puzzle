@@ -7,8 +7,9 @@
           <span class="circle"></span>
           <div class="event">
           <div class="content">
-            <div class="date">{{ event.createDate }}</div>
-            <p>{{ event.content }}</p>
+            <div class="date">{{ event.title }}</div>
+            <!-- <div class="inner-content">{{ event.content }}</div> -->
+            <p class="inner-content" v-html="processedContent(event.content)"></p>
           </div>
         </div>
 
@@ -20,6 +21,13 @@
 </template>
 
 <style>
+
+.inner-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+
 
 .timeline::before {
   content: "";
@@ -94,6 +102,21 @@ export default {
        
       ],
     };
+  },
+  methods: {
+    processLink(link) {
+      return `<a href="${link}">${link}</a>`
+    }
+  },
+  computed: {
+    processedContent() {
+      return function(content) {
+        const regex = /(\b(https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:/~+#-]*[\w@?^=%&amp;/~+#-])?)/g;
+        this.content = content.replace(regex, this.processLink)
+        this.content = this.content.replace(/\n/g, '<br>');
+        return this.content;
+      }
+    }
   },
   created() {
     this.eventName = this.$route.query.eventName;
