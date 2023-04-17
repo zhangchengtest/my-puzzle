@@ -5,11 +5,16 @@
       <li v-for="event in events" :key="event.id">
         <div class="timeline"> 
           <span class="circle" :class="getCircleClass(event.content)"></span>
+          <span><img :src="event.avatar" class="logo" /></span>
           <div class="event">
           <div class="content">
             <div class="date">{{ event.title }}</div>
-            <!-- <div class="inner-content">{{ event.content }}</div> -->
-            <p class="inner-content" v-html="processedContent(event.content)"></p>
+            <div class="myitem">
+             <!-- <div class="inner-content">{{ event.content }}</div> -->
+             <p class="inner-content" v-html="processedContent(event.content)"></p>
+            </div>
+           
+           
           </div>
         </div>
 
@@ -27,6 +32,14 @@
   overflow-wrap: break-word;
 }
 
+.logo{
+  width: 16px;
+  height: 16px;
+  margin-bottom: -10px;
+  position: absolute;
+  left: -28px;
+  top: 58px;
+}
 
 
 .timeline::before {
