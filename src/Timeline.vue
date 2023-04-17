@@ -1,44 +1,44 @@
 <template>
-  <div > {{eventName}}</div>
-  <div >
+  <div> {{ eventName }}</div>
+  <div>
     <ul>
-      <li v-for="event in events" :key="event.id">
-        <div class="timeline"> 
-          <span class="circle" :class="getCircleClass(event.content)"></span>
-          <span><img :src="event.avatar" class="logo" /></span>
-          <div class="event">
-          <div class="content">
-            <div class="date">{{ event.title }}</div>
-            <div class="myitem">
-             <!-- <div class="inner-content">{{ event.content }}</div> -->
-             <p class="inner-content" v-html="processedContent(event.content)"></p>
+      <li v-for="event in events" :key="event.title">
+        <div v-for="(article, index) in event.articles" :key="article.id">
+          <div class="timeline">
+            <div v-if="!index">
+            <span class="circle" :class="getCircleClass(article.content)"></span>
+            <div class="date" >{{ article.title }}</div>
+           </div>
+           
+            <div class="event">
+              <span><img :src="article.avatar" class="logo" /></span>
+              <div class="content">
+                <p class="inner-content" v-html="processedContent(article.content)"></p>
+              </div>
+            
             </div>
-           
-           
           </div>
-        </div>
 
         </div>
-       
+
       </li>
     </ul>
   </div>
 </template>
 
 <style>
-
 .inner-content {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-.logo{
+.logo {
   width: 16px;
   height: 16px;
   margin-bottom: -10px;
   position: absolute;
   left: -28px;
-  top: 58px;
+  top: 20px;
 }
 
 
@@ -52,10 +52,11 @@
   height: 100%;
   background-color: black;
 }
+
 .timeline {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
 .circle {
@@ -68,11 +69,11 @@
   border-radius: 50%;
 }
 
-.circle-red{
+.circle-red {
   background-color: red;
 }
 
-.circle-black{
+.circle-black {
   background-color: black;
 }
 
@@ -90,19 +91,20 @@
   /* flex-direction: column; */
   /* border: 1px solid lightblue; */
   border-radius: 10px;
-  margin-top: 10px;
-  text-align: left; /* 将文本左对齐 */
+  text-align: left;
+  /* 将文本左对齐 */
 }
 
 .date {
   display: block;
-  margin-top: 0.5rem;
+  margin-top: 16px;
   font-size: 0.85rem;
   font-weight: bold;
   color: #999999;
+  text-align: left;
   /* border: 1px solid lightblue;
   border-radius: 10px; */
-  
+
 }
 
 ul {
@@ -119,7 +121,7 @@ export default {
     return {
       eventName: '白马山庄',
       events: [
-       
+
       ],
     };
   },
@@ -134,13 +136,13 @@ export default {
         return 'circle-black';
       }
     }
-    
+
   },
   computed: {
     processedContent() {
-      return function(content) {
+      return function (content) {
         const regex = /(\b(https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:/~+#-]*[\w@?^=%&amp;/~+#-])?)/g;
-        if(!content){
+        if (!content) {
           return '';
         }
         this.content = content.replace(regex, this.processLink)
@@ -151,9 +153,9 @@ export default {
   },
   created() {
     this.eventName = this.$route.query.eventName;
-  const url = 'https://chengapi.yufu.pub/openapi/articles/list?category='+ this.eventName + '&pageSize=100'
-  // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
-  axios.get(url).then(response => {
+    const url = 'https://chengapi.yufu.pub/openapi/articles/list?category=' + this.eventName + '&pageSize=100'
+    // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
+    axios.get(url).then(response => {
       this.events = response.data.data;
     }).catch(error => {
       console.error(error);
