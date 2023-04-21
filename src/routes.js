@@ -2,6 +2,7 @@ import Puzzle from './Puzzle.vue'
 import Callback from './Callback.vue'
 import Novel from './Novel.vue'
 import Timeline from './Timeline.vue'
+import Upload from './Upload.vue'
 
 export default [
   {
@@ -28,5 +29,10 @@ export default [
     path: '/timeline',
     name: 'Timeline',
     component: Timeline
+  },
+  {
+    path: '/upload',
+    name: 'Upload',
+    component: Upload
   }
 ]
