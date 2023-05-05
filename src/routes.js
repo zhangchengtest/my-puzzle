@@ -3,6 +3,7 @@ import Callback from './Callback.vue'
 import Novel from './Novel.vue'
 import Timeline from './Timeline.vue'
 import Upload from './Upload.vue'
+import Chess from './components/Chess.vue'
 
 export default [
   {
@@ -34,5 +35,10 @@ export default [
     path: '/upload',
     name: 'Upload',
     component: Upload
-  }
+  },
+  {
+    path: '/chess',
+    name: 'Chess',
+    component: Chess
+  },
 ]
