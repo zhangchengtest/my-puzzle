@@ -37,8 +37,8 @@ export default [
     component: Upload
   },
   {
-    path: '/chess',
-    name: 'Chess',
+    path: '/xiangqi',
+    name: 'xiangqi',
     component: Chess
   },
 ]
