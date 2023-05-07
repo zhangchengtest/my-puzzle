@@ -1,15 +1,61 @@
 <template>
-    <div class="chessboard">
-        <div class="chess-row" v-for="(row, rowIndex) in chessboard" :key="rowIndex">
-            <div class="chess-square" v-for="(square, squareIndex) in row" :key="squareIndex"
-                :class="{ selected: isSelected(rowIndex, squareIndex) }" @click="selectPiece(rowIndex, squareIndex)">
-                <div v-if="square !== null" :class="['chess-piece', square.color]">{{ square.name }}</div>
+    <div>
+        <div class="player-info">
+            <div v-if="!gameStarted">等待其他玩家加入...</div>
+            <div v-else>
+                <div @click="togglePlayerSide">你是{{ playerColorText }}方</div>
+                <div v-if="gameOver">{{ winner }}胜利！</div>
+                <div v-else>{{ currentSideText }}方下棋</div>
             </div>
+        </div>
+        <div class="chessboard">
+
+            <div class="chess-row" v-for="(row, rowIndex) in chessboard" :key="rowIndex">
+                <div class="chess-square" v-for="(square, squareIndex) in row" :key="squareIndex"
+                    :class="{ selected: isSelected(rowIndex, squareIndex) }" @click="selectPiece(rowIndex, squareIndex)">
+                    <div v-if="square !== null" :class="['chess-piece', square.color]">{{ square.name }}</div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="float-ellipsis-button" @click="toggleShareButtons">
+
+            <i class="fas fa-ellipsis-h"></i>
+        </div>
+
+        <div class="share-buttons" :style="{ display: shareButtonsVisible ? 'flex' : 'none' }">
+            <div class="float-share-button" @click="weixin">
+                <i class="fas fa-share-alt"></i>
+            </div>
+            <div class="float-exchange-button" @click="restart">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+
         </div>
     </div>
 </template>
   
 <script>
+
+const parseNestedArrays = (key, value) => {
+    if (typeof value === "string") {
+        try {
+            value = JSON.parse(value, parseNestedArrays);
+        } catch (e) { }
+    }
+    if (Array.isArray(value)) {
+        value = value.map(v => {
+            try {
+                return JSON.parse(v, parseNestedArrays);
+            } catch (e) {
+                return v;
+            }
+        });
+    }
+    return value;
+};
+
 export default {
     data() {
         return {
@@ -24,15 +70,79 @@ export default {
                 [null, { name: "炮", color: "black", type: "cannon" }, null, null, null, null, null, { name: "炮", color: "black", type: "cannon" }, null],
                 [null, null, null, null, null, null, null, null, null],
                 [{ name: "車", color: "black", type: "rook" }, { name: "馬", color: "black", type: "knight" }, { name: "象", color: "black", type: "bishop" }, { name: "士", color: "black", type: "advisor" }, { name: "將", color: "black", type: "king" }, { name: "士", color: "black", type: "advisor" }, { name: "象", color: "black", type: "bishop" }, { name: "馬", color: "black", type: "knight" }, { name: "車", color: "black", type: "rook" }]
-            ]
-            ,
+            ],
+            // chessboard: [],
             selectedPiece: null,
-            selectedSquare: null
+            selectedSquare: null,
+            socket: null,
+            gameStarted: true,
+            playerColor: 'red',
+            gameOver: false,
+            currentSide: 'red',
+            shareButtonsVisible: false,
         }
     },
+    computed: {
+        playerColorText() {
+            return this.playerColor === 'red' ? '红' : '黑';
+        },
+        currentSideText() {
+            return this.currentSide === 'red' ? '红' : '黑';
+        }
+    },
+    mounted() {
+        const roomId = this.$route.query.roomId;
+        this.playerColor = this.$route.query.side;
+        if (!this.playerColor) {
+            this.playerColor = 'red'
+        }
+        const socket = new WebSocket('ws://192.168.1.5:8080/chess');
+
+        socket.onopen = () => {
+
+            console.log('roomId ', roomId);
+            // 发送加入房间请求
+            socket.send(JSON.stringify({
+                type: 'joinRoom',
+                roomId: roomId
+            }));
+        };
+
+        socket.onmessage = (event) => {
+            const message = JSON.parse(event.data, parseNestedArrays);
+            console.log('message ', message)
+            switch (message.type) {
+                case 'chessboardState':
+                    // 更新棋盘
+                    this.chessboard = message.chessboard;
+                    this.currentSide = message.side
+                    break;
+                // 其他类型的消息处理
+                // ...
+            }
+        };
+
+        this.socket = socket;
+    },
     methods: {
+        togglePlayerSide() {
+            this.playerColor = this.playerColor === 'red' ? 'black' : 'red';
+        },
         selectPiece(row, col) {
             if (this.selectedPiece == null && this.chessboard[row][col] !== null) {
+
+                if (!this.chessboard[row][col]) {
+                    return;
+                }
+
+                if (!this.chessboard[row][col].color) {
+                    return;
+                }
+
+                if (this.chessboard[row][col].color != this.currentSide) {
+                    return;
+                }
+
                 this.selectedPiece = { row, col }
             } else if (this.selectedPiece !== null && this.canMovePiece(this.selectedPiece, row, col)) {
                 this.movePiece(this.selectedPiece, row, col)
@@ -44,7 +154,6 @@ export default {
         canMovePiece(start, row, col) {
             const piece = this.chessboard[start.row][start.col]
             console.log(piece)
-            console.log(piece.type)
             if (piece) {
                 const canMove = this[`canMove${piece.type}`](start, row, col)
                 if (canMove) {
@@ -55,6 +164,7 @@ export default {
                     return false;
                 }
             }
+
             // Add logic to check if move is valid
             return false
         },
@@ -202,13 +312,24 @@ export default {
 
         // 判断将/帅的移动规则
         canMoveking(start, row, col) {
+            console.log('a')
             const piece = this.chessboard[start.row][start.col]
             // 检查目标位置是否在九宫格内，并且是否符合规定的步长
             const deltaRow = Math.abs(row - start.row)
             const deltaCol = Math.abs(col - start.col)
             if ((deltaRow === 1 && deltaCol === 0) || (deltaRow === 0 && deltaCol === 1)) {
+                console.log('b')
+                console.log('row ', row)
+                console.log('col ', col)
                 // 检查目标位置是否在己方的九宫格内
                 if (row >= 7 && row <= 9 && col >= 3 && col <= 5) {
+                    console.log('c')
+                    // 检查目标位置是否有己方棋子，或者是否为空位
+                    return !this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color
+                }
+
+                if (row >= 0 && row <= 2 && col >= 3 && col <= 5) {
+                    console.log('d')
                     // 检查目标位置是否有己方棋子，或者是否为空位
                     return !this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color
                 }
@@ -272,17 +393,36 @@ export default {
             }
             console.log('i')
             return false // 移动不合法
-        }
-
-        ,
+        },
         movePiece(start, row, col) {
             const piece = this.chessboard[start.row][start.col]
             this.chessboard[start.row][start.col] = null
             this.chessboard[row][col] = piece
+
+            const end = { row, col }
+            const message = {
+                type: 'movePiece',
+                start: start,
+                end: end
+            };
+            this.socket.send(JSON.stringify(message));
+        },
+        toggleShareButtons() {
+            this.shareButtonsVisible = !this.shareButtonsVisible;
         },
         isSelected(row, col) {
             return this.selectedPiece !== null && this.selectedPiece.row === row && this.selectedPiece.col === col
+        },
+        weixin() {
+           
+        },
+        restart(){
+            const message = {
+                type: 'restart'
+            };
+            this.socket.send(JSON.stringify(message));
         }
+
     }
 }
 </script>
@@ -296,6 +436,22 @@ export default {
     background-size: 360px 390px;
     background-repeat: no-repeat;
 }
+
+.player-info {
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    width: 100%;
+}
+
+.player-info>div {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
 
 .chess-row {
     display: flex;
@@ -331,6 +487,57 @@ export default {
 
 .black {
     color: #000;
+}
+
+
+
+.float-ellipsis-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: lightblue;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    /* added to remove the highlight on mobile devices */
+}
+
+
+.float-share-button {
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    background-color: lightblue;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    /* added to remove the highlight on mobile devices */
+}
+
+.float-exchange-button {
+    position: fixed;
+    bottom: 20px;
+    right: 140px;
+    background-color: lightblue;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    /* added to remove the highlight on mobile devices */
 }
 </style>
   
