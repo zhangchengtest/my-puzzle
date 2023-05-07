@@ -3,9 +3,9 @@
         <div class="player-info">
             <div v-if="!gameStarted">等待其他玩家加入...</div>
             <div v-else>
-                <div @click="togglePlayerSide">你是{{ playerColorText }}方</div>
+                <div @click="togglePlayerSide">你是<span :class="playerColor"> {{ playerColorText }}</span>方</div>
                 <div v-if="gameOver">{{ winner }}胜利！</div>
-                <div v-else>{{ currentSideText }}方下棋</div>
+                <div v-else> <span :class="currentSide"> {{ currentSideText }}</span>方下棋</div>
             </div>
         </div>
         <div class="chessboard">
@@ -96,7 +96,7 @@ export default {
         if (!this.playerColor) {
             this.playerColor = 'red'
         }
-        const socket = new WebSocket('ws://192.168.1.5:8080/chess');
+        const socket = new WebSocket('ws://chengapi.yufu.pub/chess');
 
         socket.onopen = () => {
 
@@ -114,7 +114,12 @@ export default {
             switch (message.type) {
                 case 'chessboardState':
                     // 更新棋盘
-                    this.chessboard = message.chessboard;
+                    if(this.playerColor == 'red'){
+                        this.chessboard = message.chessboard.slice().reverse();
+                    }else{
+                        this.chessboard = message.chessboard;
+                    }
+                   
                     this.currentSide = message.side
                     break;
                 // 其他类型的消息处理
@@ -127,6 +132,7 @@ export default {
     methods: {
         togglePlayerSide() {
             this.playerColor = this.playerColor === 'red' ? 'black' : 'red';
+            this.chessboard = this.chessboard.slice().reverse()
         },
         selectPiece(row, col) {
             if (this.selectedPiece == null && this.chessboard[row][col] !== null) {
@@ -139,7 +145,7 @@ export default {
                     return;
                 }
 
-                if (this.chessboard[row][col].color != this.currentSide) {
+                if (this.playerColor != this.currentSide) {
                     return;
                 }
 
@@ -266,13 +272,18 @@ export default {
             // 检查象（相）是否斜着走两步
             const deltaRow = Math.abs(row - start.row)
             const deltaCol = Math.abs(col - start.col)
+            console.log('a')
             if (deltaRow === 2 && deltaCol === 2) {
+                console.log('b')
                 // 检查象（相）行走的路线中是否有棋子挡路
                 const centerRow = (start.row + row) / 2
                 const centerCol = (start.col + col) / 2
                 if (!this.chessboard[centerRow][centerCol]) { // 中心位置为空
+                    console.log('c')
                     if (!this.isCrossRiver(start.row, start.col) || this.isSameColor(centerRow, centerCol, piece.color)) { // 起点在河的同侧或中心位置有己方棋子
+                        console.log('d')
                         if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                            console.log('e')
                             return true
                         }
                     }
@@ -281,11 +292,20 @@ export default {
             return false
         },
         isCrossRiver(row, col) {
-            if (this.chessboard[row][col].color === 'red') { // 红方
+            if(this.playerColor == 'red'){
+                if (this.chessboard[row][col].color === 'black') { // 红方
                 return row >= 5
-            } else { // 黑方
-                return row <= 4
+                } else { // 黑方
+                    return row <= 4
+                }
+            }else{
+                if (this.chessboard[row][col].color === 'red') { // 红方
+                return row >= 5
+                } else { // 黑方
+                    return row <= 4
+                }
             }
+           
         }
         ,
         isSameColor(row, col, color) {
@@ -398,11 +418,24 @@ export default {
             const piece = this.chessboard[start.row][start.col]
             this.chessboard[start.row][start.col] = null
             this.chessboard[row][col] = piece
+            var end = { row, col }
+            var final_start = start
+            if(this.playerColor == 'red'){
+                var final_start_row = 9 - start.row
+                var final_end_row = 9 - row
+                console.log('start ', start)
+                var final_sart_col = start.col
+                final_start = {"row": final_start_row, "col": final_sart_col}
+                console.log('final_start_row ', final_start)
+                end = { "row": final_end_row, col }
 
-            const end = { row, col }
+                console.log('end ', end)
+            }
+            console.log('start ', start)
+            console.log('end ', end)
             const message = {
                 type: 'movePiece',
-                start: start,
+                start: final_start,
                 end: end
             };
             this.socket.send(JSON.stringify(message));
