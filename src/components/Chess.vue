@@ -114,12 +114,12 @@ export default {
             switch (message.type) {
                 case 'chessboardState':
                     // 更新棋盘
-                    if(this.playerColor == 'red'){
+                    if (this.playerColor == 'red') {
                         this.chessboard = message.chessboard.slice().reverse();
-                    }else{
+                    } else {
                         this.chessboard = message.chessboard;
                     }
-                   
+
                     this.currentSide = message.side
                     break;
                 // 其他类型的消息处理
@@ -178,34 +178,66 @@ export default {
             const piece = this.chessboard[start.row][start.col]
             const deltaRow = row - start.row
             const deltaCol = col - start.col
-            if (piece.color === 'black') { // 黑方卒（兵）
-                console.log('a')
-                if (deltaRow > 0) { // 只能向前走
-                    console.log('b')
-                    return false
-                } else if (start.row <= 4 && deltaCol !== 0) { // 已经过河，可以横着走
-                    console.log('c')
-                    return true
-                } else if (deltaRow === -1 && deltaCol === 0) { // 向前走一步
-                    if (row < 0 || row > 9 || col < 0 || col > 8) { // 目标位置越界
+            if (this.playerColor == 'red') {
+                if (piece.color === 'red') { // 黑方卒（兵）
+                    console.log('a')
+                    if (deltaRow > 0) { // 只能向前走
+                        console.log('b')
                         return false
-                    } else if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                    } else if (start.row <= 4 && deltaCol !== 0) { // 已经过河，可以横着走
+                        console.log('c')
                         return true
+                    } else if (deltaRow === -1 && deltaCol === 0) { // 向前走一步
+                        if (row < 0 || row > 9 || col < 0 || col > 8) { // 目标位置越界
+                            return false
+                        } else if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                            return true
+                        }
+                    }
+                } else { // 红方兵
+                    if (deltaRow < 0) { // 只能向前走
+                        return false
+                    } else if (start.row >= 5 && deltaCol !== 0) { // 已经过河，可以横着走
+                        return true
+                    } else if (deltaRow === 1 && deltaCol === 0) { // 向前走一步
+                        if (row < 0 || row > 9 || col < 0 || col > 8) { // 目标位置越界
+                            return false
+                        } else if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                            return true
+                        }
                     }
                 }
-            } else { // 红方兵
-                if (deltaRow < 0) { // 只能向前走
-                    return false
-                } else if (start.row >= 5 && deltaCol !== 0) { // 已经过河，可以横着走
-                    return true
-                } else if (deltaRow === 1 && deltaCol === 0) { // 向前走一步
-                    if (row < 0 || row > 9 || col < 0 || col > 8) { // 目标位置越界
+            } else {
+                if (piece.color === 'black') { // 黑方卒（兵）
+                    console.log('a')
+                    if (deltaRow > 0) { // 只能向前走
+                        console.log('b')
                         return false
-                    } else if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                    } else if (start.row <= 4 && deltaCol !== 0) { // 已经过河，可以横着走
+                        console.log('c')
                         return true
+                    } else if (deltaRow === -1 && deltaCol === 0) { // 向前走一步
+                        if (row < 0 || row > 9 || col < 0 || col > 8) { // 目标位置越界
+                            return false
+                        } else if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                            return true
+                        }
+                    }
+                } else { // 红方兵
+                    if (deltaRow < 0) { // 只能向前走
+                        return false
+                    } else if (start.row >= 5 && deltaCol !== 0) { // 已经过河，可以横着走
+                        return true
+                    } else if (deltaRow === 1 && deltaCol === 0) { // 向前走一步
+                        if (row < 0 || row > 9 || col < 0 || col > 8) { // 目标位置越界
+                            return false
+                        } else if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
+                            return true
+                        }
                     }
                 }
             }
+
             return false
         }
 
@@ -292,20 +324,20 @@ export default {
             return false
         },
         isCrossRiver(row, col) {
-            if(this.playerColor == 'red'){
+            if (this.playerColor == 'red') {
                 if (this.chessboard[row][col].color === 'black') { // 红方
-                return row >= 5
+                    return row >= 5
                 } else { // 黑方
                     return row <= 4
                 }
-            }else{
+            } else {
                 if (this.chessboard[row][col].color === 'red') { // 红方
-                return row >= 5
+                    return row >= 5
                 } else { // 黑方
                     return row <= 4
                 }
             }
-           
+
         }
         ,
         isSameColor(row, col, color) {
@@ -420,12 +452,12 @@ export default {
             this.chessboard[row][col] = piece
             var end = { row, col }
             var final_start = start
-            if(this.playerColor == 'red'){
+            if (this.playerColor == 'red') {
                 var final_start_row = 9 - start.row
                 var final_end_row = 9 - row
                 console.log('start ', start)
                 var final_sart_col = start.col
-                final_start = {"row": final_start_row, "col": final_sart_col}
+                final_start = { "row": final_start_row, "col": final_sart_col }
                 console.log('final_start_row ', final_start)
                 end = { "row": final_end_row, col }
 
@@ -447,9 +479,9 @@ export default {
             return this.selectedPiece !== null && this.selectedPiece.row === row && this.selectedPiece.col === col
         },
         weixin() {
-           
+
         },
-        restart(){
+        restart() {
             const message = {
                 type: 'restart'
             };
