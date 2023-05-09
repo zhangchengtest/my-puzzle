@@ -98,7 +98,7 @@ export default {
         this.roomId = this.$route.query.roomId;
         this.playerColor = this.$route.query.side;
         if (!this.playerColor) {
-            this.playerColor = 'red'
+            this.playerColor = 'black'
         }
         const socket = new WebSocket('wss://chengapi.yufu.pub/chess');
 
