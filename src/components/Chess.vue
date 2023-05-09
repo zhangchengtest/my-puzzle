@@ -5,7 +5,8 @@
             <div v-else>
                 <div @click="togglePlayerSide">你是<span :class="playerColor"> {{ playerColorText }}</span>方</div>
                 <div v-if="gameOver">{{ winner }}胜利！</div>
-                <div v-else> <span :class="currentSide"> {{ currentSideText }}</span>方下棋</div>
+                <div v-else>下了{{ lastRow }}: {{ lastCol }}&nbsp<span :class="currentSide">{{ currentSideText }}</span>方下棋
+                </div>
             </div>
         </div>
         <div class="chessboard">
@@ -80,6 +81,9 @@ export default {
             gameOver: false,
             currentSide: 'red',
             shareButtonsVisible: false,
+            roomId: '1001',
+            lastRow: null,
+            lastCol: null,
         }
     },
     computed: {
@@ -91,7 +95,7 @@ export default {
         }
     },
     mounted() {
-        const roomId = this.$route.query.roomId;
+        this.roomId = this.$route.query.roomId;
         this.playerColor = this.$route.query.side;
         if (!this.playerColor) {
             this.playerColor = 'red'
@@ -100,11 +104,11 @@ export default {
 
         socket.onopen = () => {
 
-            console.log('roomId ', roomId);
+            console.log('roomId ', this.roomId);
             // 发送加入房间请求
             socket.send(JSON.stringify({
                 type: 'joinRoom',
-                roomId: roomId
+                roomId: this.roomId
             }));
         };
 
@@ -116,9 +120,25 @@ export default {
                     // 更新棋盘
                     if (this.playerColor == 'red') {
                         this.chessboard = message.chessboard.slice().reverse();
+                        if (message.lastRow || message.lastRow == 0) {
+                            var final_end_row = 9 - message.lastRow
+                            this.selectedPiece = { "row": final_end_row, "col": message.lastCol }
+                        }
+
                     } else {
                         this.chessboard = message.chessboard;
+                        if (message.lastRow || message.lastRow == 0) {
+                            var final_end_row = message.lastRow
+                            this.selectedPiece = { "row": final_end_row, "col": message.lastCol }
+                        }
+
                     }
+                    if (message.lastRow || message.lastRow == 0) {
+                        this.lastCol = message.lastCol
+                        this.lastRow = message.lastRow
+                    }
+
+                 
 
                     this.currentSide = message.side
                     break;
@@ -132,7 +152,11 @@ export default {
     methods: {
         togglePlayerSide() {
             this.playerColor = this.playerColor === 'red' ? 'black' : 'red';
-            this.chessboard = this.chessboard.slice().reverse()
+            // 发送加入房间请求
+            this.socket.send(JSON.stringify({
+                type: 'joinRoom',
+                roomId: this.roomId
+            }));
         },
         selectPiece(row, col) {
             if (this.selectedPiece == null && this.chessboard[row][col] !== null) {
@@ -149,6 +173,8 @@ export default {
                     return;
                 }
 
+                this.selectedPiece = { row, col }
+            } else if (this.selectedPiece !== null && this.chessboard[this.selectedPiece.row][this.selectedPiece.col].color != this.currentSide) {
                 this.selectedPiece = { row, col }
             } else if (this.selectedPiece !== null && this.canMovePiece(this.selectedPiece, row, col)) {
                 this.movePiece(this.selectedPiece, row, col)
@@ -498,8 +524,9 @@ export default {
     flex-direction: column;
     align-items: center;
     background-image: url("../assets/chess.jpg");
-    background-size: 360px 390px;
+    background-size: 330px 390px;
     background-repeat: no-repeat;
+    background-position: center center;
 }
 
 .player-info {
@@ -544,6 +571,16 @@ export default {
 
 .chess-piece {
     font-size: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* font-size: 40px; */
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border: 0px solid #333;
+    border-radius: 50%;
+    background-color: antiquewhite;
 }
 
 .red {
