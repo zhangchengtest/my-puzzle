@@ -14,12 +14,16 @@
     "@shopify/draggable": "^1.0.0-beta.8",
     "axios": "^1.3.4",
     "babel-runtime": "^6.26.0",
+    "markdown-it": "^13.0.1",
+    "markdown-it-emoji": "^2.0.2",
+    "markdown-it-katex-external": "^1.0.0",
     "vue": "^3.2.47",
     "vue-markdown": "^2.2.4",
     "vue-router": "^4.1.6",
     "weixin-js-sdk": "^1.6.0"
   },
   "devDependencies": {
+    "@types/node": "^20.2.6",
     "@vitejs/plugin-vue": "^4.1.0",
     "vite": "^4.2.0"
   }

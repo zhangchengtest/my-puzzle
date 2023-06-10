@@ -5,17 +5,17 @@
       <li v-for="event in events" :key="event.title">
         <div v-for="(article, index) in event.articles" :key="article.id">
           <div class="timeline">
-            <div v-if="!index">
-            <span class="circle" :class="getCircleClass(article.content)"></span>
-            <div class="date" >{{ article.title }}</div>
-           </div>
-           
+            <div>
+              <span class="circle" :class="getCircleClass(article.content)"></span>
+              <div class="date">{{ article.title }}</div>
+            </div>
+
             <div class="event">
-              <span><img :src="article.avatar" class="logo" /></span>
+              <span v-if="article.avatar"><img :src="article.avatar" class="logo" /></span>
               <div class="content">
                 <p class="inner-content" v-html="processedContent(article.content)"></p>
               </div>
-            
+
             </div>
           </div>
 
@@ -116,6 +116,8 @@ ul {
 
 <script>
 import axios from 'axios';
+import markdownToHtml from '@/utils/markdown'
+
 export default {
   data() {
     return {
@@ -129,6 +131,45 @@ export default {
     processLink(link) {
       return `<a href="${link}">${link}</a>`
     },
+    convertToMarkdown(text) {
+  // 创建一个映射，用于存储已经被替换的URL
+  const replacedUrls = new Map();
+
+  
+  // 将文本中的图片URL转换为Markdown图片格式
+  const imageRegex = /(?:https?|ftp):\/\/[\n\S]+\.(?:jpg|jpeg|png|gif)/g;
+  const imageText = text.replace(imageRegex, (url) => {
+    // 检查该URL是否已经被替换了，如果是，则返回原始文本
+    if (replacedUrls.has(url)) {
+      return url;
+    }
+
+    // 将URL转换为Markdown图片格式，并添加到已替换映射中
+    const markdownImage = `![image](${url})`;
+    console.log(markdownImage)
+    replacedUrls.set(url, markdownImage);
+    return markdownImage;
+  });
+
+  // 将文本中的URL转换为Markdown链接格式
+  const linkRegex = /(?:https?|ftp):\/\/[\n\S]+/g;
+  const linkedText = imageText.replace(linkRegex, (url) => {
+    // 检查该URL是否已经被替换了，如果是，则返回原始文本
+    if (replacedUrls.has(url)) {
+      return url;
+    }
+
+    // 将URL转换为Markdown链接格式，并添加到已替换映射中
+    const markdownLink = `[${url}](${url})`;
+    replacedUrls.set(url, markdownLink);
+    return markdownLink;
+  });
+
+  return linkedText;
+},
+
+
+
     getCircleClass(item) {
       if (!item) {
         return 'circle-red';
@@ -141,12 +182,11 @@ export default {
   computed: {
     processedContent() {
       return function (content) {
-        const regex = /(\b(https?|ftp):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:/~+#-]*[\w@?^=%&amp;/~+#-])?)/g;
         if (!content) {
           return '';
         }
-        this.content = content.replace(regex, this.processLink)
-        this.content = this.content.replace(/\n/g, '<br>');
+     
+        this.content = markdownToHtml(content)
         return this.content;
       }
     }

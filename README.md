@@ -9,3 +9,7 @@ ssh root@13.228.240.187
 
 cd /ROOT/my-puzzle
 git pull
+
+象棋
+优势
+主打一个跨平台

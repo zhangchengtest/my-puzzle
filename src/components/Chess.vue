@@ -72,12 +72,13 @@ export default {
                 [null, null, null, null, null, null, null, null, null],
                 [{ name: "車", color: "black", type: "rook" }, { name: "馬", color: "black", type: "knight" }, { name: "象", color: "black", type: "bishop" }, { name: "士", color: "black", type: "advisor" }, { name: "將", color: "black", type: "king" }, { name: "士", color: "black", type: "advisor" }, { name: "象", color: "black", type: "bishop" }, { name: "馬", color: "black", type: "knight" }, { name: "車", color: "black", type: "rook" }]
             ],
-            // chessboard: [],
+            chessboardPreview: null,
+            pieces: [],
             selectedPiece: null,
             selectedSquare: null,
             socket: null,
             gameStarted: true,
-            playerColor: 'red',
+            playerColor: 'red', //playerColor代表你在棋盘下边 你的king是【9，4】
             gameOver: false,
             currentSide: 'red',
             shareButtonsVisible: false,
@@ -104,7 +105,6 @@ export default {
 
         socket.onopen = () => {
 
-            console.log('roomId ', this.roomId);
             // 发送加入房间请求
             socket.send(JSON.stringify({
                 type: 'joinRoom',
@@ -114,7 +114,7 @@ export default {
 
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data, parseNestedArrays);
-            console.log('message ', message)
+
             switch (message.type) {
                 case 'chessboardState':
                     // 更新棋盘
@@ -138,7 +138,7 @@ export default {
                         this.lastRow = message.lastRow
                     }
 
-                 
+
 
                     this.currentSide = message.side
                     break;
@@ -177,6 +177,7 @@ export default {
             } else if (this.selectedPiece !== null && this.chessboard[this.selectedPiece.row][this.selectedPiece.col].color != this.currentSide) {
                 this.selectedPiece = { row, col }
             } else if (this.selectedPiece !== null && this.canMovePiece(this.selectedPiece, row, col)) {
+                console.log('d')
                 this.movePiece(this.selectedPiece, row, col)
                 this.selectedPiece = null
             } else {
@@ -185,20 +186,112 @@ export default {
         },
         canMovePiece(start, row, col) {
             const piece = this.chessboard[start.row][start.col]
-            console.log(piece)
             if (piece) {
                 const canMove = this[`canMove${piece.type}`](start, row, col)
+                //TODO 在这里加上下完之后是否处于被将军的状态 如果是的话 canMove 就为false 
                 if (canMove) {
-                    // 进行移动操作
-                    return true
+
+                    this.preMovePiece(start, row, col)
+                   
+                    const faceFlag = this.isFaceToFace()
+                    console.log('a')
+                    if (faceFlag) {
+                        console.log('b')
+                        return false;
+                    }
+                    console.log('c')
+                    // const isCheck = this.isCheck()
+                    // if (isCheck) {
+                    //     return false;
+                    // } 
+                    return true;
                 } else {
-                    // 移动不合法
                     return false;
                 }
             }
 
-            // Add logic to check if move is valid
             return false
+        },
+        addRowColInfo(arr) {
+            return arr.map((row, rowIndex) => {
+                return row.map((piece, colIndex) => {
+                    if (piece !== null) {
+                        piece.row = rowIndex;
+                        piece.col = colIndex;
+                    }
+                    return piece;
+                });
+            });
+        }
+        ,
+        isFaceToFace() {
+            this.chessboardPreview = this.addRowColInfo( this.chessboardPreview)
+            this.pieces = this.chessboardPreview.flat().filter(piece => piece !== null);
+            // 定义变量存储将和帅的位置坐标
+            let jiangPos = null;
+            let shuaiPos = null;
+            console.log("this.pieces ", this.pieces)
+            for (let i = 0; i < this.pieces.length; i++) {
+                console.log("this.pieces[i] ", this.pieces[i])
+                if (this.pieces[i].type === 'king' && this.pieces[i].color === 'red') {
+                    jiangPos = this.pieces[i];
+                } else if (this.pieces[i].type === 'king' && this.pieces[i].color === 'black') {
+                    shuaiPos = this.pieces[i];
+                }
+            }
+            console.log('将的位置：', jiangPos);
+            console.log('帅的位置：', shuaiPos);
+            // 判断将帅之间是否存在棋子
+            let minRow = Math.min(jiangPos.row, shuaiPos.row) + 1;
+            let maxRow = Math.max(jiangPos.row, shuaiPos.row) - 1;
+            if(jiangPos.col != shuaiPos.col){
+                console.log('不在一列上不考虑面对面 ');
+                return false;
+            }
+            let col = jiangPos.col;
+            console.log('minRow ', minRow);
+            console.log('maxRow ', maxRow);
+       
+            for (let row = minRow; row <= maxRow; row++) {
+                if (this.chessboardPreview[row][col] !== null) {
+                    console.log('有障碍 ', this.chessboardPreview[row][col]);
+                    return false;
+                }
+            }
+            alert('将帅不能面对');
+            return true;
+        },
+        isCheck() {
+            // 遍历当前玩家的所有棋子
+
+            for (let i = 0; i < this.pieces.length; i++) {
+                const piece = this.pieces[i]
+                console.log('enter b')
+                if (piece.side === this.currentSide) {
+                    // 找到每个棋子可以攻击的位置
+                    const moves = this[`get${piece.type}Moves`](piece.row, piece.col)
+                    console.log('moves ', moves)
+                    for (let j = 0; j < moves.length; j++) {
+                        const move = moves[j]
+                        // 遍历对方玩家的所有棋子
+                        for (let k = 0; k < this.pieces.length; k++) {
+                            const enemyPiece = this.pieces[k]
+                            if (enemyPiece.side !== this.currentSide) {
+                                // 找到每个对方棋子可以到达的位置
+                                const enemyMoves = this[`get${enemyPiece.type}Moves`](enemyPiece.row, enemyPiece.col)
+                                if (enemyMoves.some(enemyMove => enemyMove.row === move.row && enemyMove.col === move.col && enemyPiece.type === 'King')) {
+                                    // 如果对方玩家的将军在当前玩家可以攻击的位置中，则当前玩家处于将军状态
+                                    return true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false
+        },
+        getKingMoves(row, col) {
+            // TODO 实现根据将的移动规则 获取可移动的位置piece
         },
         canMovepawn(start, row, col) {
             const piece = this.chessboard[start.row][start.col]
@@ -294,29 +387,18 @@ export default {
         canMoveknight(start, row, col) {
             const piece = this.chessboard[start.row][start.col]
             // 检查目标位置是否为“日”字形
-            console.log('a')
             const deltaRow = Math.abs(row - start.row)
             const deltaCol = Math.abs(col - start.col)
             if ((deltaRow === 2 && deltaCol === 1) || (deltaRow === 1 && deltaCol === 2)) {
-                console.log('b')
                 // 检查目标位置是否有己方棋子，或者是否为空位
                 if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) {
-                    console.log('c')
-                    console.log('start.row ', start.row)
-                    console.log('start.col ', start.col)
-                    console.log('row ', row)
-                    console.log('col ', col)
-                    console.log('(start.row + row) / 2 ', (start.row + row) / 2)
 
                     // 检查是否被卡脚
                     if (deltaRow === 2 && Number.isInteger((start.row + row) / 2) && this.chessboard[(start.row + row) / 2][start.col]) {
-                        console.log('d')
                         return false // 竖着走时，检查左右是否有棋子挡路
                     } else if (deltaCol === 2 && Number.isInteger((start.col + col) / 2) && this.chessboard[start.row][(start.col + col) / 2]) {
-                        console.log('e')
                         return false // 横着走时，检查上下是否有棋子挡路
                     }
-                    console.log('f')
                     return true
                 }
             }
@@ -330,18 +412,13 @@ export default {
             // 检查象（相）是否斜着走两步
             const deltaRow = Math.abs(row - start.row)
             const deltaCol = Math.abs(col - start.col)
-            console.log('a')
             if (deltaRow === 2 && deltaCol === 2) {
-                console.log('b')
                 // 检查象（相）行走的路线中是否有棋子挡路
                 const centerRow = (start.row + row) / 2
                 const centerCol = (start.col + col) / 2
                 if (!this.chessboard[centerRow][centerCol]) { // 中心位置为空
-                    console.log('c')
                     if (!this.isCrossRiver(start.row, start.col) || this.isSameColor(centerRow, centerCol, piece.color)) { // 起点在河的同侧或中心位置有己方棋子
-                        console.log('d')
                         if (!this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color) { // 目标位置为空或有对方棋子
-                            console.log('e')
                             return true
                         }
                     }
@@ -390,24 +467,18 @@ export default {
 
         // 判断将/帅的移动规则
         canMoveking(start, row, col) {
-            console.log('a')
             const piece = this.chessboard[start.row][start.col]
             // 检查目标位置是否在九宫格内，并且是否符合规定的步长
             const deltaRow = Math.abs(row - start.row)
             const deltaCol = Math.abs(col - start.col)
             if ((deltaRow === 1 && deltaCol === 0) || (deltaRow === 0 && deltaCol === 1)) {
-                console.log('b')
-                console.log('row ', row)
-                console.log('col ', col)
                 // 检查目标位置是否在己方的九宫格内
                 if (row >= 7 && row <= 9 && col >= 3 && col <= 5) {
-                    console.log('c')
                     // 检查目标位置是否有己方棋子，或者是否为空位
                     return !this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color
                 }
 
                 if (row >= 0 && row <= 2 && col >= 3 && col <= 5) {
-                    console.log('d')
                     // 检查目标位置是否有己方棋子，或者是否为空位
                     return !this.chessboard[row][col] || this.chessboard[row][col].color !== piece.color
                 }
@@ -417,24 +488,19 @@ export default {
 
         // 判断炮的移动规则
         canMovecannon(start, row, col) {
-            console.log('vvvv')
             const piece = this.chessboard[start.row][start.col]
             const target = this.chessboard[row][col]
 
-            console.log('a')
             if (target && target.color === piece.color) {
                 return false // 目标位置已有己方棋子，不能移动
             }
-            console.log('b')
             // 判断炮是否在同一行或同一列
             if (start.row !== row && start.col !== col) {
                 return false // 炮只能在同一行或同一列移动
             }
-            console.log('c')
             // 计算炮架数量
             let barrierCount = 0
             if (start.row === row) {
-                console.log('d')
                 // 同一行
                 const startIndex = Math.min(start.col, col) + 1
                 const endIndex = Math.max(start.col, col)
@@ -444,7 +510,6 @@ export default {
                     }
                 }
             } else {
-                console.log('e')
                 // 同一列
                 const startIndex = Math.min(start.row, row) + 1
                 const endIndex = Math.max(start.row, row)
@@ -454,25 +519,34 @@ export default {
                     }
                 }
             }
-            console.log('f')
             // 判断炮的移动方式
             if (target) {
-                console.log('g')
                 // 吃子
                 if (barrierCount === 1) {
                     return true
                 }
             } else {
-                console.log('h')
                 // 不吃子
                 if (barrierCount === 0) {
                     return true
                 }
             }
-            console.log('i')
             return false // 移动不合法
         },
+        preMovePiece(start, row, col) {
+            console.log('start ', start)
+            console.log('row ', row)
+            console.log('col ', col)
+            this.chessboardPreview = this.chessboard.map(row => [...row]);
+
+            const piece = this.chessboardPreview[start.row][start.col]
+            this.chessboardPreview[start.row][start.col] = null
+            this.chessboardPreview[row][col] = piece
+        },
         movePiece(start, row, col) {
+            console.log('start ', start)
+            console.log('row ', row)
+            console.log('col ', col)
             const piece = this.chessboard[start.row][start.col]
             this.chessboard[start.row][start.col] = null
             this.chessboard[row][col] = piece
@@ -481,16 +555,11 @@ export default {
             if (this.playerColor == 'red') {
                 var final_start_row = 9 - start.row
                 var final_end_row = 9 - row
-                console.log('start ', start)
                 var final_sart_col = start.col
                 final_start = { "row": final_start_row, "col": final_sart_col }
-                console.log('final_start_row ', final_start)
                 end = { "row": final_end_row, col }
 
-                console.log('end ', end)
             }
-            console.log('start ', start)
-            console.log('end ', end)
             const message = {
                 type: 'movePiece',
                 start: final_start,
