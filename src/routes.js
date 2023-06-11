@@ -3,6 +3,7 @@ import Callback from './Callback.vue'
 import Novel from './Novel.vue'
 import Timeline from './Timeline.vue'
 import Upload from './Upload.vue'
+import Task from './Task.vue'
 import Chess from './components/Chess.vue'
 
 export default [
@@ -41,4 +42,9 @@ export default [
     name: 'xiangqi',
     component: Chess
   },
+  {
+    path: '/task',
+    name: 'task',
+    component: Task
+  }
 ]

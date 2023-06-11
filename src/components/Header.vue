@@ -26,6 +26,7 @@ export default {
             isSticky: false,
             showDropdown: false,
             username: '',
+            userId: '',
             score:'0',
             isLoggedIn: false // 根据实际情况设置该值
         }
@@ -47,7 +48,9 @@ export default {
                 .then(response => {
                     this.isLoggedIn = true
                     this.username = response.data.data.userName
+                    this.userId = response.data.data.userId
                     localStorage.setItem('username', response.data.data.userName);
+                    localStorage.setItem('userId', response.data.data.userId);
                 })
                 .catch(error => {
                     console.log(error)
