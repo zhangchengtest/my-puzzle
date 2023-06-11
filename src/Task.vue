@@ -10,24 +10,37 @@
             <th>#</th>
             <th>描述</th>
             <th>截止时间</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus }">
+          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus }"
+          @hold="showConfirm(task)">
             <td>{{ index + 1 }}</td>
-            <td>{{ task.eventDescription }}</td>
+            <td>{{getFrequency(task.eventType)}}{{ task.eventDescription }}</td>
             <td>{{ task.deadLine }}</td>
+           <td>
+          
+            <div class="start-button"  v-if="!task.finishStatus" @click="completeTask(index)" >
+          <i class="fas fa-check"></i>
+        </div>
+          </td> 
           </tr>
         </tbody>
       </table>
     </div>
    
   </div>
+  <loading :visible="loadingVisible"/>
 </template>
 
 <script>
 import axios from 'axios';
+import Loading from '@/components/Loading.vue'
 export default {
+  components: {
+        Loading
+    },
   data() {
     return {
       tasks: [
@@ -37,6 +50,7 @@ export default {
         description: '',
         deadline: ''
       },
+      loadingVisible: true,
       editing: false,
       editingIndex: null,
       editingTask: {
@@ -46,7 +60,11 @@ export default {
     };
   },
   created() {
-    const token = localStorage.getItem('puzzle-token');
+    this.getTask();
+  },
+  methods: {
+    getTask(){
+      const token = localStorage.getItem('puzzle-token');
         // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -55,11 +73,13 @@ export default {
     // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
     axios.get(url).then(response => {
       this.tasks = response.data.data.list;
+      setTimeout( () => {
+                this.loadingVisible = false
+            }, 1 * 1000 )
     }).catch(error => {
       console.error(error);
     });
-  },
-  methods: {
+    },
     addTask() {
       const newId = Math.max(...this.tasks.map(task => task.id)) + 1;
       this.tasks.push({
@@ -85,9 +105,24 @@ export default {
     deleteTask(index) {
       this.tasks.splice(index, 1);
     },
-    completeTask(index) {
-      this.tasks[index].completed = !this.tasks[index].completed;
+    getFrequency(eventType) {
+    if(eventType === 1){
+        return "每天";
+    }else if(eventType === 4){
+        return "每周";
     }
+  },
+    completeTask(index) {
+      this.loadingVisible = true
+      axios.post('https://chengapi.yufu.pub/openapi/clocks/finish', { clockId: this.tasks[index].id})
+      .then(response => {
+        this.getTask();
+      })
+      .catch(error => {
+        console.log(error)
+      })
+      
+      }
   }
 };
 </script>
@@ -140,5 +175,14 @@ export default {
 
 .task-form button {
   margin-top: 10px;
+}
+
+.start-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* added to remove the highlight on mobile devices */
 }
 </style>
