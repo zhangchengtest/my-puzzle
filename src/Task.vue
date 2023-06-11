@@ -14,24 +14,38 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus }"
-          @hold="showConfirm(task)">
+          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus }"
+            @hold="showConfirm(task)">
             <td>{{ index + 1 }}</td>
-            <td>{{getFrequency(task.eventType)}}{{ task.eventDescription }}</td>
+            <td>{{ getFrequency(task.eventType) }}{{ task.eventDescription }}</td>
             <td>{{ task.deadLine }}</td>
-           <td>
-          
-            <div class="start-button"  v-if="!task.finishStatus" @click="completeTask(index)" >
-          <i class="fas fa-check"></i>
-        </div>
-          </td> 
+            <td>
+
+              <div class="start-button" v-if="!task.finishStatus" @click="completeTask(index)">
+                <i class="fas fa-check"></i>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
-   
+
   </div>
-  <loading :visible="loadingVisible"/>
+  <loading :visible="loadingVisible" />
+
+
+  <div class="float-ellipsis-button" @click="toggleShareButtons">
+
+    <i class="fas fa-ellipsis-h"></i>
+  </div>
+
+  <div class="share-buttons" :style="{ display: shareButtonsVisible ? 'flex' : 'none' }">
+    <div class="float-share-button" @click="rollback">
+      <i class="fas fa-reply"></i>
+    </div>
+
+
+  </div>
 </template>
 
 <script>
@@ -39,12 +53,12 @@ import axios from 'axios';
 import Loading from '@/components/Loading.vue'
 export default {
   components: {
-        Loading
-    },
+    Loading
+  },
   data() {
     return {
       tasks: [
-       
+
       ],
       newTask: {
         description: '',
@@ -53,6 +67,7 @@ export default {
       loadingVisible: true,
       editing: false,
       editingIndex: null,
+      shareButtonsVisible:false,
       editingTask: {
         description: '',
         deadline: ''
@@ -63,22 +78,22 @@ export default {
     this.getTask();
   },
   methods: {
-    getTask(){
+    getTask() {
       const token = localStorage.getItem('puzzle-token');
-        // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
-        if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-        }
-    const url = 'https://chengapi.yufu.pub/openapi/clocks/page?pageSize=100'
-    // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
-    axios.get(url).then(response => {
-      this.tasks = response.data.data.list;
-      setTimeout( () => {
-                this.loadingVisible = false
-            }, 1 * 1000 )
-    }).catch(error => {
-      console.error(error);
-    });
+      // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
+      if (token) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      }
+      const url = 'https://chengapi.yufu.pub/openapi/clocks/page?pageSize=100'
+      // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
+      axios.get(url).then(response => {
+        this.tasks = response.data.data.list;
+        setTimeout(() => {
+          this.loadingVisible = false
+        }, 1 * 1000)
+      }).catch(error => {
+        console.error(error);
+      });
     },
     addTask() {
       const newId = Math.max(...this.tasks.map(task => task.id)) + 1;
@@ -102,42 +117,52 @@ export default {
       this.tasks[this.editingIndex].deadline = this.editingTask.deadline;
       this.editing = false;
     },
-    deleteTask(index) {
-      this.tasks.splice(index, 1);
+    rollback() {
+      this.loadingVisible = true
+      axios.post('https://chengapi.yufu.pub/openapi/clocks/rollback', { })
+        .then(response => {
+          this.getTask();
+        })
+        .catch(error => {
+          console.log(error)
+        })
+
     },
     getFrequency(eventType) {
-    if(eventType === 1){
+      if (eventType === 1) {
         return "每天";
-    }else if(eventType === 4){
+      } else if (eventType === 4) {
         return "每周";
-    }
-  },
+      }
+    },
+    toggleShareButtons() {
+  this.shareButtonsVisible = !this.shareButtonsVisible;
+},
     completeTask(index) {
       this.loadingVisible = true
-      axios.post('https://chengapi.yufu.pub/openapi/clocks/finish', { clockId: this.tasks[index].id})
-      .then(response => {
-        this.getTask();
-      })
-      .catch(error => {
-        console.log(error)
-      })
-      
-      }
+      axios.post('https://chengapi.yufu.pub/openapi/clocks/finish', { clockId: this.tasks[index].id })
+        .then(response => {
+          this.getTask();
+        })
+        .catch(error => {
+          console.log(error)
+        })
+
+    }
   }
 };
 </script>
 
 <style>
-
 .completed {
-      background-color: #d8f3dc;
-    }
-    .not-completed {
-      background-color: #f5c6cb;
-    }
-
-.task-list {
+  background-color: #d8f3dc;
 }
+
+.not-completed {
+  background-color: #f5c6cb;
+}
+
+.task-list {}
 
 .task-table {
   margin-top: 20px;
