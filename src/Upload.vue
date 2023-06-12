@@ -52,9 +52,7 @@
   </script>
   
   <style>
-input {
-    margin-top: 20px;
-}
+
 .filename{
     height: 30px;
     line-height: 30px;

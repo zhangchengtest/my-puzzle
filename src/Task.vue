@@ -32,7 +32,8 @@
 
   </div>
   <loading :visible="loadingVisible" />
-
+  <modal ref="child"/>
+  <taskDelete ref="deleteChild"/>
 
   <div class="float-ellipsis-button" @click="toggleShareButtons">
 
@@ -44,6 +45,15 @@
       <i class="fas fa-reply"></i>
     </div>
 
+    <div class="float-exchange-button" @click="toAdd">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <div class="float-trash-button" @click="toDelete">
+        <i class="fas fa-trash"></i>
+    </div>
+
+
 
   </div>
 </template>
@@ -51,10 +61,15 @@
 <script>
 import axios from 'axios';
 import Loading from '@/components/Loading.vue'
+import Modal from '@/components/Modal.vue'
+import TaskDelete from '@/components/TaskDelete.vue'
+
 export default {
   components: {
-    Loading
-  },
+    Loading,
+    Modal,
+    TaskDelete
+},
   data() {
     return {
       tasks: [
@@ -94,6 +109,12 @@ export default {
       }).catch(error => {
         console.error(error);
       });
+    },
+    toAdd(){
+      this.$refs.child.openModal();
+    },
+    toDelete(){
+      this.$refs.deleteChild.openModal();
     },
     addTask() {
       const newId = Math.max(...this.tasks.map(task => task.id)) + 1;
@@ -210,4 +231,21 @@ export default {
   -webkit-tap-highlight-color: transparent;
   /* added to remove the highlight on mobile devices */
 }
+
+.float-trash-button {
+  position: fixed;
+  bottom: 20px;
+  right: 200px;
+  background-color: lightblue;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* added to remove the highlight on mobile devices */
+}
+
 </style>
