@@ -5,6 +5,8 @@ import routes from './routes' // 引入路由配置文件
 
 import App from './App.vue'
 
+
+
 const router = createRouter({
   history: createWebHistory(),
   routes
