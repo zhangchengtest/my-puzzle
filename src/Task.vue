@@ -15,11 +15,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus }"
+          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus  }"
             @hold="showConfirm(task)">
             <td>{{ index + 1 }}</td>
             <td>{{ getFrequency(task.eventType) }}{{ task.eventDescription }}</td>
-            <td>{{ task.deadLine }}</td>
+            <td >{{ task.deadLine }}</td>
             <td>
 
               <div class="start-button" v-if="!task.finishStatus" @click="completeTask(index)">
@@ -191,15 +191,16 @@ export default {
 }
 
 .completed {
-  background-color: #d8f3dc;
+  color: yellow;
 }
 
 .not-completed {
-  background-color: #f5c6cb;
+  color: white;
 }
 
 .task-list {
   padding: 2rem;
+
 }
 
 .task-table {
@@ -216,6 +217,9 @@ export default {
   text-align: center;
   padding: 10px 10px;
   font-weight: bold;
+  text-stroke: 1px red;
+-webkit-text-stroke: 1px black; /* Safari 和 Chrome 的前缀*/
+
 }
 
 .task-header {
