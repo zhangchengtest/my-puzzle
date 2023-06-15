@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div >
       <h2>{{ title }}</h2>
       <p v-html="content"></p>
       <button @click="refresh">刷新</button>
@@ -53,6 +53,7 @@ import Loading from '@/components/Loading.vue'
   </script>
   
   <style>
+
   button {
     font-size: 1rem;
     padding: 0.5rem 1rem;

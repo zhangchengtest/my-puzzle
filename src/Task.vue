@@ -1,5 +1,5 @@
 <template>
-  <div class="task-list">
+  <div class="task-list background-image">
     <div class="task-header">
       <h2>任务列表</h2>
     </div>
@@ -175,6 +175,14 @@ export default {
 </script>
 
 <style>
+
+.background-image {
+  background-image: url('./assets/road.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .completed {
   background-color: #d8f3dc;
 }
@@ -198,7 +206,6 @@ export default {
 .task-table td {
   text-align: center;
   padding: 10px 10px;
-  border-bottom: 1px solid #ccc;
 }
 
 .task-header {
