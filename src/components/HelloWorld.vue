@@ -401,21 +401,6 @@ div .puzzle+.puzzle {
   /* added to remove the highlight on mobile devices */
 }
 
-.float-ellipsis-button {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: lightblue;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  /* added to remove the highlight on mobile devices */
-}
 
 
 .float-share-button {

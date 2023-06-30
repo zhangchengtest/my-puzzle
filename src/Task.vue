@@ -32,14 +32,10 @@
     </div>
 
   </div>
+  <floating-icon v-on:my-event="toggleShareButtons"></floating-icon>
   <loading :visible="loadingVisible" />
   <modal ref="child"/>
   <taskDelete ref="deleteChild"/>
-
-  <div class="float-ellipsis-button" @click="toggleShareButtons">
-
-    <i class="fas fa-ellipsis-h"></i>
-  </div>
 
   <div class="share-buttons" :style="{ display: shareButtonsVisible ? 'flex' : 'none' }">
     <div class="float-share-button" @click="rollback">
@@ -66,11 +62,12 @@ import axios from 'axios';
 import Loading from '@/components/Loading.vue'
 import Modal from '@/components/Modal.vue'
 import TaskDelete from '@/components/TaskDelete.vue'
-
+import FloatingIcon from "@/components/FloatingIcon.vue";
 export default {
   components: {
     Loading,
     Modal,
+    FloatingIcon,
     TaskDelete
 },
   data() {
@@ -177,7 +174,8 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
+
 
 .background-image {
   top: 0;

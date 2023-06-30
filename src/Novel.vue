@@ -3,14 +3,18 @@
       <h2>{{ title }}</h2>
       <p v-html="content"></p>
       <button @click="refresh">刷新</button>
+      <floating-icon v-on:my-event="handleClick"></floating-icon>
     </div>
   </template>
   
   <script>
+  
+  import FloatingIcon from "@/components/FloatingIcon.vue";
   import axios from 'axios';
 import Loading from '@/components/Loading.vue'
   export default {
     components: {
+      FloatingIcon,
         Loading
     },
     data() {
@@ -43,7 +47,9 @@ import Loading from '@/components/Loading.vue'
             })
        
       },
-  
+      handleClick(){
+         alert("fuck")
+      },
       // 刷新按钮点击事件
       refresh() {
         this.getNovelData();
