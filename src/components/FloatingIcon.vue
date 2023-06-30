@@ -49,6 +49,7 @@ export default {
 
     methods: {
         startDrag(event) {
+            event.preventDefault();
              // 阻止事件冒泡，避免干扰click事件
             console.log('startDrag')
             this.dragging = true;
@@ -60,13 +61,13 @@ export default {
             };
         },
         showButtons(event) {
+            event.preventDefault();
             if(this.isMoving){
                 console.log('hhhh dragging ')
                 return;
             }
             console.log('hhhh')
             this.$emit('my-event');
-            event.stopPropagation();
             
         },
         stopDrag() {
@@ -85,6 +86,7 @@ export default {
             }
         },
         drag(event) {
+            event.preventDefault();
             if (this.dragging) {
      
                 let data = this.getOffset(event);
