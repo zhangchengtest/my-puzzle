@@ -1,5 +1,5 @@
 <template>
-    <div id="myButton" class="floating-icon" :style="{ top: position.y + 'px', left: position.x + 'px' }" >
+    <div id="myButton" class="floating-icon" :style="{ top: position.y + 'px', left: position.x + 'px' }" ref="box">
         <!-- <div class="icon"></div> -->
 
 
@@ -25,18 +25,20 @@ export default {
     },
     mounted() {
 
-        const button = document.getElementById('myButton');
+        
         if(isMobile){
-            button.addEventListener('touchstart', this.startDrag);
-            button.addEventListener('touchmove', this.drag);
-            button.addEventListener('touchend', this.stopDrag);
+            this.$refs.box.addEventListener('click', this.showButtons);
+             this.$refs.box.addEventListener('touchstart', this.startDrag);
+             this.$refs.box.addEventListener('touchmove', this.drag);
+             this.$refs.box.addEventListener('touchend', this.stopDrag);
         }else{
-            button.addEventListener('mousedown', this.startDrag);
-            button.addEventListener('mousemove', this.drag);
-            button.addEventListener('mouseup', this.stopDrag);
+             this.$refs.box.addEventListener('click', this.showButtons);
+             this.$refs.box.addEventListener('mousedown', this.startDrag);
+             this.$refs.box.addEventListener('mousemove', this.drag);
+             this.$refs.box.addEventListener('mouseup', this.stopDrag);
         }
      
-        button.addEventListener('click', this.showButtons);
+      
 
         let w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
         let clientW = isMobile ? w : document.body.clientWidth
@@ -49,7 +51,6 @@ export default {
 
     methods: {
         startDrag(event) {
-            event.preventDefault();
              // 阻止事件冒泡，避免干扰click事件
             console.log('startDrag')
             this.dragging = true;
@@ -61,7 +62,6 @@ export default {
             };
         },
         showButtons(event) {
-            event.preventDefault();
             if(this.isMoving){
                 console.log('hhhh dragging ')
                 return;
