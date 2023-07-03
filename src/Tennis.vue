@@ -75,15 +75,12 @@ export default {
     };
   },
   created() {
-    this.getTask();
+    this.loadData();
+    this.startTimer(); // 启动定时器
   },
   methods: {
-    getTask() {
-      const token = localStorage.getItem('puzzle-token');
-      // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      }
+    
+    loadData() {
       const url = 'https://chengapi.yufu.pub/openapi/tennis/page?pageSize=1000'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
@@ -95,66 +92,17 @@ export default {
         console.error(error);
       });
     },
-    toAdd(){
-      this.$refs.child.openModal();
+    startTimer() {
+      this.intervalId = setInterval(() => {
+        this.loadData(); // 每隔30秒重新加载数据
+      }, 10000);
     },
-    toDelete(){
-      this.$refs.deleteChild.openModal();
-    },
-    addTask() {
-      const newId = Math.max(...this.tasks.map(task => task.id)) + 1;
-      this.tasks.push({
-        id: newId,
-        description: this.newTask.description,
-        deadline: this.newTask.deadline,
-        completed: false
-      });
-      this.newTask.description = '';
-      this.newTask.deadline = '';
-    },
-    editTask(index) {
-      this.editing = true;
-      this.editingIndex = index;
-      this.editingTask.description = this.tasks[index].description;
-      this.editingTask.deadline = this.tasks[index].deadline;
-    },
-    saveTask() {
-      this.tasks[this.editingIndex].description = this.editingTask.description;
-      this.tasks[this.editingIndex].deadline = this.editingTask.deadline;
-      this.editing = false;
-    },
-    rollback() {
-      this.loadingVisible = true
-      axios.post('https://chengapi.yufu.pub/openapi/clocks/rollback', { })
-        .then(response => {
-          this.getTask();
-        })
-        .catch(error => {
-          console.log(error)
-        })
-
-    },
-    getFrequency(eventType) {
-      if (eventType === 1) {
-        return "每天";
-      } else if (eventType === 4) {
-        return "每周";
-      }
-    },
-    toggleShareButtons() {
-  this.shareButtonsVisible = !this.shareButtonsVisible;
-},
-    completeTask(index) {
-      this.loadingVisible = true
-      axios.post('https://chengapi.yufu.pub/openapi/clocks/finish', { clockId: this.tasks[index].id })
-        .then(response => {
-          this.getTask();
-        })
-        .catch(error => {
-          console.log(error)
-        })
-
+    stopTimer() {
+      clearInterval(this.intervalId); // 停止定时器
     }
+  },
+  beforeDestroy() {
+    this.stopTimer(); // 组件销毁前停止定时器，避免内存泄漏
   }
 };
 </script>
