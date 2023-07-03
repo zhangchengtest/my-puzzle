@@ -5,25 +5,32 @@
     <div class="task-header">
       <h2>{{ fuckyou.title }}</h2>
     </div>
-    <div class="task-table">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>比赛</th>
-            <th>时间</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(task, index) in fuckyou.games" :key="task.id" :class="{ 'completed': task.china, 'not-completed': !task.china  }"
-            >
-            <td>{{ index + 1 }}</td>
-            <td>{{ task.players }}</td>
-            <td >{{ task.playTime }}</td>
-           
-          </tr>
-        </tbody>
-      </table>
+    <div class="mygame" v-for="(task, index) in fuckyou.games" :key="task.id" >
+      <div> {{ index + 1 }} - {{ task.playTime }} </div>
+      <div :class="{ 'completed': task.china  }"> {{ task.playerOne }} vs {{ task.playerTwo }} </div>
+      <div> {{ task.odd1 }} - {{ task.odd2 }} </div>
+      <div class="task-table">
+      <div class="parent">
+
+  <div class="flex-child">{{ task.oneScore1 }}</div>
+  <div class="flex-child">{{ task.oneScore2 }}</div>
+  <div class="flex-child">{{ task.oneScore3 }}</div>
+  <div class="flex-child">{{ task.oneScore4 }}</div>
+  <div class="flex-child">{{ task.oneScore5 }}</div>
+  <div class="flex-child">{{ task.oneScore6 }}</div>
+</div>
+<div class="parent">
+  <div class="flex-child">{{ task.twoScore1 }}</div>
+  <div class="flex-child">{{ task.twoScore2 }}</div>
+  <div class="flex-child">{{ task.twoScore3 }}</div>
+  <div class="flex-child">{{ task.twoScore4 }}</div>
+  <div class="flex-child">{{ task.twoScore5 }}</div>
+  <div class="flex-child">{{ task.twoScore6 }}</div>
+</div>
+
+    </div>
+    
+
     </div>
 
   </div>
@@ -178,71 +185,24 @@ export default {
   padding: 2rem;
 
 }
-
-.task-table {
+.mygame{
   margin-top: 20px;
 }
 
-.task-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.task-table th,
-.task-table td {
-  text-align: center;
-  padding: 10px 10px;
-  font-weight: bold;
-  text-stroke: 1px red;
--webkit-text-stroke: 1px black; /* Safari 和 Chrome 的前缀*/
-
-}
-
-.task-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.task-form {
-  margin-top: 20px;
-}
-
-.task-form form {
+.parent {
   display: flex;
-  flex-direction: column;
 }
 
-.task-form label {
-  margin-bottom: 10px;
+.fixed-width {
+  width: 150px; /* 设置固定宽度 */
+  text-align: left;
 }
 
-.task-form button {
-  margin-top: 10px;
+.flex-child {
+  flex: 1; /* 平分父div剩余空间 */
+  border: 1px solid black; /* 仅用于演示目的，可根据需要自定义样式 */
+  min-width: 40px;
 }
 
-.start-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  /* added to remove the highlight on mobile devices */
-}
-
-.float-trash-button {
-  position: fixed;
-  bottom: 20px;
-  right: 200px;
-  background-color: lightblue;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  /* added to remove the highlight on mobile devices */
-}
 
 </style>
