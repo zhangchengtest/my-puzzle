@@ -8,6 +8,8 @@
     <div class="mygame" v-for="(task, index) in fuckyou.games" :key="task.id" >
       <div> {{ index + 1 }} - {{ task.playTime }} </div>
       <div :class="{ 'completed': task.china  }"> {{ task.playerOne }} vs {{ task.playerTwo }} </div>
+      <div > {{ task.playerOrder1 }} vs {{ task.playerOrder2 }} </div>
+      <div > {{ task.history }} </div>
       <div> {{ task.odd1 }} - {{ task.odd2 }} </div>
       <div class="task-table">
       <div class="parent">
