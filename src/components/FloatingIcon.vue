@@ -10,9 +10,11 @@
 <script>
 import {
   getModels,
+  testMy
 } from '../common/helper'
 
 let isMobile = getModels()
+testMy()
 
 export default {
     data() {

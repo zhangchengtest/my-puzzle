@@ -5,6 +5,7 @@ import Timeline from './Timeline.vue'
 import Upload from './Upload.vue'
 import Task from './Task.vue'
 import Chess from './components/Chess.vue'
+import Tennis from './Tennis.vue'
 
 export default [
   {
@@ -46,5 +47,10 @@ export default [
     path: '/task',
     name: 'task',
     component: Task
+  },
+  {
+    path: '/tennis',
+    name: 'tennis',
+    component: Tennis
   }
 ]
