@@ -6,7 +6,7 @@
                 <div class="username">{{ username }}</div>
                 <div class="dropdown" v-show="showDropdown">
                     <ul>
-                        <li v-if="isLoggedIn"><a href="#">注销</a></li>
+                        <li v-if="isLoggedIn"><a href="javascript:void(0)" @click="logout">注销</a></li>
                         <li v-else><a href="javascript:void(0)" @click="jump">登录</a></li>
                     </ul>
                 </div>
@@ -81,6 +81,10 @@ export default {
         jump() {
             console.log('ssss')
             window.location = 'https://sso.punengshuo.com?redirectUrl=' + baseUrl +'/callback'
+        },
+        logout() {
+            localStorage.clear();
+            window.reload();
         },
         generateRandomCode() {
             let code = '';
