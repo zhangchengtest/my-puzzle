@@ -100,7 +100,9 @@ export default {
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       }else{
-        window.location = 'https://sso.punengshuo.com?redirectUrl=' + baseUrl +'/callback'
+        const param = 'redirectUrl=' + baseUrl +'/callback?part=task';
+        const encodedParam = encodeURIComponent(param);
+        window.location = 'https://sso.punengshuo.com?'+encodedParam
       }
       const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
