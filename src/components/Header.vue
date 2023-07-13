@@ -84,7 +84,7 @@ export default {
         },
         logout() {
             localStorage.clear();
-            window.reload();
+            location.reload();
         },
         generateRandomCode() {
             let code = '';
