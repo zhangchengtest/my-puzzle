@@ -98,6 +98,8 @@ export default {
       // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      }else{
+        window.location = 'https://sso.punengshuo.com?redirectUrl=' + baseUrl +'/callback'
       }
       const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
