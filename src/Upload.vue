@@ -32,7 +32,7 @@
         let formData = new FormData()
         formData.append('file', this.file)
         formData.append('fileName', this.fileName)
-        axios.post('https://chengapi.yufu.pub/openapi/upload/', formData).then(response => {
+        axios.post('https://clock.cuiyi.club/openapi/upload/', formData).then(response => {
           this.fileUrl = response.data.data
         }).catch(error => {
           console.log(error)

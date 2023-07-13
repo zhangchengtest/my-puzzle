@@ -107,7 +107,7 @@ function startGame() {
 const ranks = ref([]);
 //http://st.punengshuo.com/images/20230402000000/full.jpg
 function getRank() {
-  axios.get('https://chengapi.yufu.pub/openapi/puzzleRanks/page?&url=' + url.value)
+  axios.get('https://clock.cuiyi.club/openapi/puzzleRanks/page?&url=' + url.value)
     .then(response => {
       console.log(response.data)
       ranks.value = response.data.data.list
@@ -122,7 +122,7 @@ function getRank() {
 }
 //https://api.punengshuo.com/api/game/savePuzzleRank
 function savePuzzleRank(rankData) {
-  axios.post('https://chengapi.yufu.pub/openapi/puzzleRanks/', rankData)
+  axios.post('https://clock.cuiyi.club/openapi/puzzleRanks/', rankData)
     .then(response => {
       getRank()
     })

@@ -58,7 +58,7 @@ export default {
           
         }
 
-        axios.get('https://chengapi.yufu.pub/openapi/scores/getByUserId')
+        axios.get('https://clock.cuiyi.club/openapi/scores/getByUserId')
             .then(response => {
                 this.score = response.data.data.score
             })

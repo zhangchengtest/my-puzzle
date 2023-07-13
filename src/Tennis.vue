@@ -83,7 +83,7 @@ export default {
   methods: {
     
     loadData() {
-      const url = 'https://chengapi.yufu.pub/openapi/tennis/page?pageSize=1000'
+      const url = 'https://clock.cuiyi.club/openapi/tennis/page?pageSize=1000'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
         this.tasks = response.data.data;

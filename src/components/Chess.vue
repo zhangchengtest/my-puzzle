@@ -101,7 +101,7 @@ export default {
         if (!this.playerColor) {
             this.playerColor = 'black'
         }
-        const socket = new WebSocket('wss://chengapi.yufu.pub/chess');
+        const socket = new WebSocket('wss://clock.cuiyi.club/chess');
 
         socket.onopen = () => {
 

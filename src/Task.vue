@@ -99,7 +99,7 @@ export default {
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       }
-      const url = 'https://chengapi.yufu.pub/openapi/clocks/page?pageSize=100'
+      const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
         this.tasks = response.data.data.list;
@@ -140,7 +140,7 @@ export default {
     },
     rollback() {
       this.loadingVisible = true
-      axios.post('https://chengapi.yufu.pub/openapi/clocks/rollback', { })
+      axios.post('https://clock.cuiyi.club/openapi/clocks/rollback', { })
         .then(response => {
           this.getTask();
         })
@@ -161,7 +161,7 @@ export default {
 },
     completeTask(index) {
       this.loadingVisible = true
-      axios.post('https://chengapi.yufu.pub/openapi/clocks/finish', { clockId: this.tasks[index].id })
+      axios.post('https://clock.cuiyi.club/openapi/clocks/finish', { clockId: this.tasks[index].id })
         .then(response => {
           this.getTask();
         })
