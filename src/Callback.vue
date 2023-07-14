@@ -28,7 +28,12 @@ export default {
                     // 将token保存到localStorage中
                     console.log(response.data)
                     localStorage.setItem('puzzle-token', response.data.data)
-                    this.$router.push('/'+this.part)
+                    if(this.part){
+                        this.$router.push('/'+this.part)
+                    }else{
+                        this.$router.push('/')
+                    }
+                   
                 })
                 .catch(error => {
                     console.log(error)
