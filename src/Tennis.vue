@@ -123,18 +123,6 @@ export default {
   background-repeat: no-repeat;
 }
 
-.completed {
-  color: red;
-}
-
-.not-completed {
-  color: white;
-}
-
-.task-list {
-  padding: 2rem;
-
-}
 .mygame{
   margin-top: 20px;
 }

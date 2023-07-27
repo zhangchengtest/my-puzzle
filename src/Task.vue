@@ -1,60 +1,47 @@
 <template>
-  <div class="background-image">
-  <div class="task-list ">
-    <div class="task-header">
-      <h2>任务列表</h2>
+  <div>
+    <div>
+      <div class="task-header">
+        <h2>你的任务</h2>
+      </div>
+      <div class="card" v-for="(task, index) in tasks" :key="task.id">
+        <div class="card-description">
+          <div :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus }"> <span
+              :class="{ 'red': index == 0 }" >{{ task.deadLine }}</span></div>
+          <div @click="toHistory(task.id)" class="content">{{ getFrequency(task.eventType) }}{{ task.eventDescription }}</div>
+        </div>
+        <div class="card-button">
+
+
+          <div class="start-button" @click="completeTask(index)">
+            <i class="fas fa-check"></i>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div class="task-table">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>描述</th>
-            <th>截止时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(task, index) in tasks" :key="task.id" :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus  }"
-            @hold="showConfirm(task)">
-            <td>{{ index + 1 }}</td>
-            <td>{{ getFrequency(task.eventType) }}{{ task.eventDescription }}</td>
-            <td >{{ task.deadLine }}</td>
-            <td>
+    <floating-icon v-on:my-event="toggleShareButtons"></floating-icon>
+    <loading :visible="loadingVisible" />
+    <modal ref="child" />
+    <taskDelete ref="deleteChild" />
+    <calendar ref="calendarChild" />
 
-              <div class="start-button" v-if="!task.finishStatus" @click="completeTask(index)">
-                <i class="fas fa-check"></i>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="share-buttons" :style="{ display: shareButtonsVisible ? 'flex' : 'none' }">
+      <div class="float-share-button" @click="rollback">
+        <i class="fas fa-reply"></i>
+      </div>
 
-  </div>
-  <floating-icon v-on:my-event="toggleShareButtons"></floating-icon>
-  <loading :visible="loadingVisible" />
-  <modal ref="child"/>
-  <taskDelete ref="deleteChild"/>
-
-  <div class="share-buttons" :style="{ display: shareButtonsVisible ? 'flex' : 'none' }">
-    <div class="float-share-button" @click="rollback">
-      <i class="fas fa-reply"></i>
-    </div>
-
-    <div class="float-exchange-button" @click="toAdd">
+      <div class="float-exchange-button" @click="toAdd">
         <i class="fas fa-plus"></i>
-    </div>
+      </div>
 
-    <div class="float-trash-button" @click="toDelete">
+      <div class="float-trash-button" @click="toDelete">
         <i class="fas fa-trash"></i>
+      </div>
+
     </div>
-
-
 
   </div>
-
-</div>
 </template>
 
 <script>
@@ -62,6 +49,7 @@ import axios from 'axios';
 import Loading from '@/components/Loading.vue'
 import Modal from '@/components/Modal.vue'
 import TaskDelete from '@/components/TaskDelete.vue'
+import Calendar from '@/components/Calendar.vue'
 import FloatingIcon from "@/components/FloatingIcon.vue";
 const baseUrl = import.meta.env.VITE_APP_API_URL
 export default {
@@ -69,8 +57,9 @@ export default {
     Loading,
     Modal,
     FloatingIcon,
-    TaskDelete
-},
+    TaskDelete,
+    Calendar
+  },
   data() {
     return {
       tasks: [
@@ -83,7 +72,7 @@ export default {
       loadingVisible: true,
       editing: false,
       editingIndex: null,
-      shareButtonsVisible:false,
+      shareButtonsVisible: false,
       editingTask: {
         description: '',
         deadline: ''
@@ -95,18 +84,24 @@ export default {
   },
   methods: {
     getTask() {
-      const token = localStorage.getItem('puzzle-token');
+      var token = localStorage.getItem('puzzle-token');
       // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      }else{
-        const param = baseUrl +'/callback?part=task';
+      } else {
+        const param = baseUrl + '/callback?part=task';
         const encodedParam = encodeURIComponent(param);
-        window.location = 'https://sso.punengshuo.com?redirectUrl='+encodedParam
+        window.location = 'https://sso.punengshuo.com?redirectUrl=' + encodedParam
       }
       const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
+        console.log(response.data);
+        if (response.data.code == '22001') {
+          localStorage.clear();
+          window.location = '/task';
+          return;
+        }
         this.tasks = response.data.data.list;
         setTimeout(() => {
           this.loadingVisible = false
@@ -115,11 +110,14 @@ export default {
         console.error(error);
       });
     },
-    toAdd(){
+    toAdd() {
       this.$refs.child.openModal();
     },
-    toDelete(){
+    toDelete() {
       this.$refs.deleteChild.openModal();
+    },
+    toHistory(id) {
+      this.$refs.calendarChild.openModal(id);
     },
     addTask() {
       const newId = Math.max(...this.tasks.map(task => task.id)) + 1;
@@ -145,7 +143,7 @@ export default {
     },
     rollback() {
       this.loadingVisible = true
-      axios.post('https://clock.cuiyi.club/openapi/clocks/rollback', { })
+      axios.post('https://clock.cuiyi.club/openapi/clocks/rollback', {})
         .then(response => {
           this.getTask();
         })
@@ -162,8 +160,8 @@ export default {
       }
     },
     toggleShareButtons() {
-  this.shareButtonsVisible = !this.shareButtonsVisible;
-},
+      this.shareButtonsVisible = !this.shareButtonsVisible;
+    },
     completeTask(index) {
       this.loadingVisible = true
       axios.post('https://clock.cuiyi.club/openapi/clocks/finish', { clockId: this.tasks[index].id })
@@ -173,16 +171,13 @@ export default {
         .catch(error => {
           console.log(error)
         })
-
     }
   }
 };
 </script>
 
 <style lang="scss">
-
-
-.background-image {
+body {
   top: 0;
   left: 0;
   width: 100%;
@@ -194,35 +189,11 @@ export default {
 }
 
 .completed {
-  color: yellow;
+  color: green;
 }
 
 .not-completed {
-  color: white;
-}
-
-.task-list {
-  padding: 2rem;
-
-}
-
-.task-table {
-  margin-top: 20px;
-}
-
-.task-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.task-table th,
-.task-table td {
-  text-align: center;
-  padding: 10px 10px;
-  font-weight: bold;
-  text-stroke: 1px red;
--webkit-text-stroke: 1px black; /* Safari 和 Chrome 的前缀*/
-
+  color: black;
 }
 
 .task-header {
@@ -271,5 +242,4 @@ export default {
   -webkit-tap-highlight-color: transparent;
   /* added to remove the highlight on mobile devices */
 }
-
 </style>

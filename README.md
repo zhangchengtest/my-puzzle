@@ -1,10 +1,13 @@
-npm run build
+<!-- npm run build
 git add --all
 git commit -a -m "update"
-git push origin main
+git push origin main -->
 
+ssh root@175.24.178.171
 
-cd /ROOT/my-puzzle
+D:\my-puzzle\ /ROOT/my-puzzle
+
+拷贝
 git pull
 
 象棋

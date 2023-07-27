@@ -7,7 +7,7 @@
           <div class="timeline">
             <div>
               <span class="circle" :class="getCircleClass(article.content)"></span>
-              <div class="date">{{ article.title }}</div>
+              <div class="mydate">{{ article.title }}</div>
             </div>
 
             <div class="event">
@@ -95,7 +95,7 @@
   /* 将文本左对齐 */
 }
 
-.date {
+.mydate {
   display: block;
   margin-top: 16px;
   font-size: 0.85rem;
