@@ -22,7 +22,6 @@ export function getModels() {
     var u = n.appKey
                   , s = (new Date).getTime()
                   , c = function(t) {
-                    console.log(t)
                     function test1(t, e) {
                       
                         return t << e | t >>> 32 - e
@@ -166,8 +165,5 @@ export function getModels() {
                         return (u(d) + u(h) + u(v) + u(m)).toLowerCase()
                 }(r.token + "&" + s + "&" + u + "&" + n.data)
                   ;
-                  console.log('s')
-                  console.log(s)
-                console.log(c)
 
   }

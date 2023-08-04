@@ -15,5 +15,6 @@ export default defineConfig({
         }
       ]
     })],
+    base: '/mix', // 设置publicPath
  
 })

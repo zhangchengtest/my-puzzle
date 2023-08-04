@@ -64,7 +64,7 @@ function toRedirect() {
   loadingVisible.value = true
   axios.get('https://api.punengshuo.com/api/game/queryPuzzle')
     .then(response => {
-      window.location = '/home?randomUrl=' + response.data.data.url
+      window.location = 'home?randomUrl=' + response.data.data.url
     })
     .catch(error => {
       console.log(error)

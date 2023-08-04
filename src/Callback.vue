@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div></div>
     <loading :visible="loadingVisible"/>
 </template>
@@ -42,4 +42,4 @@ export default {
     }
 };
 </script>
-  
+   -->

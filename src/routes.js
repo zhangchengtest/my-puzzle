@@ -1,5 +1,4 @@
 import Puzzle from './Puzzle.vue'
-import Callback from './Callback.vue'
 import Novel from './Novel.vue'
 import Timeline from './Timeline.vue'
 import Upload from './Upload.vue'
@@ -9,7 +8,11 @@ import Calendar from './components/Calendar.vue'
 import Card from './components/Card.vue'
 import Tennis from './Tennis.vue'
 
-export default [
+
+import { createRouter, createWebHistory } from 'vue-router';
+import { requireAuth } from './auth';
+
+const routes = [
   {
     path: '/',
     name: 'Puzzle',
@@ -19,11 +22,6 @@ export default [
     path: '/home',
     name: 'Puzzle2',
     component: Puzzle
-  },
-  {
-    path: '/callback',
-    name: 'Callback',
-    component: Callback
   },
   {
     path: '/novel',
@@ -48,7 +46,8 @@ export default [
   {
     path: '/task',
     name: 'task',
-    component: Task
+    component: Task,
+    meta: { requiresAuth: true } // 添加 meta 字段，标记该路由需要进行登录验
   },
   {
     path: '/tennis',
@@ -68,3 +67,19 @@ export default [
 
   
 ]
+
+const router = createRouter({
+  history: createWebHistory('/mix'),
+  routes
+})
+
+// 添加全局前置守卫
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    requireAuth(to, from, next);
+  } else {
+    next();
+  }
+});
+
+export default router;

@@ -7,13 +7,13 @@
       <div class="card" v-for="(task, index) in tasks" :key="task.id">
         <div class="card-description">
           <div :class="{ 'completed': task.finishStatus, 'not-completed': !task.finishStatus }"> <span
-              :class="{ 'red': index == 0 }" >{{ task.deadLine }}</span></div>
+              :class="{ 'red': index == 0 && !task.finishStatus }" >{{ task.deadLine }}</span></div>
           <div @click="toHistory(task.id)" class="content">{{ getFrequency(task.eventType) }}{{ task.eventDescription }}</div>
         </div>
         <div class="card-button">
 
 
-          <div class="start-button" @click="completeTask(index)">
+          <div class="start-button" v-if="!task.finishStatus" @click="completeTask(index)">
             <i class="fas fa-check"></i>
           </div>
         </div>
@@ -89,9 +89,10 @@ export default {
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
       } else {
-        const param = baseUrl + '/callback?part=task';
-        const encodedParam = encodeURIComponent(param);
-        window.location = 'https://sso.punengshuo.com?redirectUrl=' + encodedParam
+        // const param = baseUrl + '/callback?part=task';
+        // const encodedParam = encodeURIComponent(param);
+        const rurl = window.location;
+        window.location = 'https://sso.punengshuo.com?redirectUrl=' + rurl
       }
       const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
