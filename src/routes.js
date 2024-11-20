@@ -2,11 +2,13 @@ import Puzzle from './Puzzle.vue'
 import Novel from './Novel.vue'
 import Timeline from './Timeline.vue'
 import Upload from './Upload.vue'
+import Color from './Color.vue'
 import Task from './Task.vue'
 import Chess from './components/Chess.vue'
 import Calendar from './components/Calendar.vue'
 import Card from './components/Card.vue'
 import Tennis from './Tennis.vue'
+import RedBlackTree from './RedBlackTree.vue'
 
 
 import { createRouter, createWebHistory } from 'vue-router';
@@ -37,6 +39,16 @@ const routes = [
     path: '/upload',
     name: 'Upload',
     component: Upload
+  },
+  {
+    path: '/tree',
+    name: 'RedBlackTree',
+    component: RedBlackTree
+  },
+  {
+    path: '/color',
+    name: 'Color',
+    component: Color
   },
   {
     path: '/xiangqi',

@@ -44,7 +44,7 @@ export default {
         // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-            axios.get('https://api.punengshuo.com/api/auth/info')
+            axios.get('https://clock.cuiyi.club/api/auth/info')
                 .then(response => {
                     this.isLoggedIn = true
                     this.username = response.data.data.userName
@@ -80,7 +80,7 @@ export default {
         },
         jump() {
             console.log('ssss')
-            window.location = 'https://sso.punengshuo.com?redirectUrl=' + baseUrl +'/callback'
+            window.location = 'https://sso.cuiyi.club?redirectUrl=' + baseUrl +'/callback'
         },
         logout() {
             localStorage.clear();

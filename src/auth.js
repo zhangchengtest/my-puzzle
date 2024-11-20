@@ -23,7 +23,7 @@ export function requireAuth(to, from, next) {
   
     if(to.query.code){
       const code = to.query.code;
-      axios.get('https://api.punengshuo.com/api/auth/getByCodeForPuzzle?code=' + code)
+      axios.get('https://clock.cuiyi.club/api/auth/getByCodeForPuzzle?code=' + code)
                 .then(response => {
                     // 将token保存到localStorage中
                     console.log('to login')

@@ -23,7 +23,7 @@ export default {
     methods: {
         toRedirect(code) {
             this.loadingVisible = true
-            axios.get('https://api.punengshuo.com/api/auth/getByCodeForPuzzle?code=' + code)
+            axios.get('https://clock.cuiyi.club/api/auth/getByCodeForPuzzle?code=' + code)
                 .then(response => {
                     // 将token保存到localStorage中
                     console.log(response.data)

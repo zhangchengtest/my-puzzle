@@ -34,7 +34,7 @@ import Loading from '@/components/Loading.vue'
       getNovelData() {
 
         this.loadingVisible = true
-        axios.get('https://api.punengshuo.com/api/game/randomNovel')
+        axios.get('https://clock.cuiyi.club/api/game/randomNovel')
             .then(response => {
                 this.title = response.data.data.title
                 this.content = response.data.data.content

@@ -23,7 +23,7 @@ function toggleShareButtons() {
 
 function popButton() {
   popVisible.value = true;
-  
+
 }
 
 const hidePopup = () => {
@@ -38,19 +38,19 @@ const imageArray = ref([])
 const url = ref(null)
 
 const timer = ref()
-const rank = ref()
 const isStart = ref(false)
 const step = ref(0)
 
 
 init()
-function init(){
+function init() {
   loadingVisible.value = true
   url.value = route.query.randomUrl
   if (!route.query.randomUrl) {
     toRedirect()
   } else {
     showGame()
+    getRank()
   }
 }
 
@@ -62,7 +62,7 @@ watch(route, (newValue, oldValue) => {
 
 function toRedirect() {
   loadingVisible.value = true
-  axios.get('https://api.punengshuo.com/api/game/queryPuzzle')
+  axios.get('https://clock.cuiyi.club/api/game/queryPuzzle')
     .then(response => {
       window.location = 'home?randomUrl=' + response.data.data.url
     })
@@ -73,13 +73,13 @@ function toRedirect() {
 
 function showGame() {
   loadingVisible.value = true
-  axios.get('https://api.punengshuo.com/api/game/queryPuzzleByUrl?order_type=normal&url=' + url.value)
+  axios.get('https://clock.cuiyi.club/api/game/queryPuzzleByUrl?order_type=normal&url=' + url.value)
     .then(response => {
       imageArray.value = response.data.data.piecces
-      
-      setTimeout( () => {
+
+      setTimeout(() => {
         loadingVisible.value = false
-      }, 3 * 1000 )
+      }, 3 * 1000)
     })
     .catch(error => {
       console.log(error)
@@ -88,15 +88,15 @@ function showGame() {
 
 function startGame() {
   loadingVisible.value = true
-  axios.get('https://api.punengshuo.com/api/game/queryPuzzleByUrl?order_type=random&url=' + url.value)
+  axios.get('https://clock.cuiyi.club/api/game/queryPuzzleByUrl?order_type=random&url=' + url.value)
     .then(response => {
       imageArray.value = response.data.data.piecces
       timer.value.start()
       isStart.value = true
       swap()
-      setTimeout( () => {
+      setTimeout(() => {
         loadingVisible.value = false
-      }, 1.5 * 1000 )
+      }, 1.5 * 1000)
 
     })
     .catch(error => {
@@ -111,16 +111,15 @@ function getRank() {
     .then(response => {
       console.log(response.data)
       ranks.value = response.data.data.list
-      rank.value.openModal()
-      setTimeout( () => {
+      setTimeout(() => {
         loadingVisible.value = false
-      }, 1.5 * 1000 )
+      }, 1.5 * 1000)
     })
     .catch(error => {
       console.log(error)
     })
 }
-//https://api.punengshuo.com/api/game/savePuzzleRank
+//https://clock.cuiyi.club/api/game/savePuzzleRank
 function savePuzzleRank(rankData) {
   axios.post('https://clock.cuiyi.club/openapi/puzzleRanks/', rankData)
     .then(response => {
@@ -131,7 +130,7 @@ function savePuzzleRank(rankData) {
     })
 }
 const swappable = ref()
-function stopswap(){
+function stopswap() {
   swappable.value.destroy()
 }
 function swap() {
@@ -168,9 +167,9 @@ function move() {
   for (var i = 0; i < arr.length; i++) {
     if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('draggable-mirror')) {
     } else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('draggable--original')) {
-    }else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('popup-img')) {
+    } else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('popup-img')) {
     } else if (arr[i].getAttribute('class') && arr[i].getAttribute('class').includes('logo-img')) {
-    } 
+    }
     else {
       var s = arr[i]
         .getAttribute('src')
@@ -193,8 +192,10 @@ function gameEnd(result) {
     loadingVisible.value = true
     timer.value.stop()
     stopswap()
-    savePuzzleRank({ spendTime: timer.value.getTime(), step: step.value, username: localStorage.getItem('username'), url: url.value, title: url.value, 
-    userId: localStorage.getItem('username')})
+    savePuzzleRank({
+      spendTime: timer.value.getTime(), step: step.value, username: localStorage.getItem('username'), url: url.value, title: url.value,
+      userId: localStorage.getItem('username')
+    })
   }
 }
 
@@ -226,7 +227,7 @@ const refresh = () => {
 function weixin() {
   popButton();
   var urls = window.location.href
-  axios.get('https://api.punengshuo.com/api/wx/share?url=' + urls)
+  axios.get('https://clock.cuiyi.club/api/wx/share?url=' + urls)
     .then(res => {
       //微信加签
       var obj = {
@@ -297,24 +298,23 @@ function weixin() {
 
     </div>
 
-    <!-- Add a floating button at the bottom right corner with a light blue background color and a share icon -->
 
-    <div class="float-ellipsis-button" @click="toggleShareButtons">
 
-      <i class="fas fa-ellipsis-h"></i>
+    <div v-if="ranks.length" class="table-container">
+      <div class="table-row">
+        <div>排名</div>
+        <div class="name-column">名称</div>
+        <div>时间</div>
+        <div>步数</div>
+      </div>
+      <div v-for="(item, index) in ranks" :key="index" class="table-row">
+        <div>{{ index + 1 }}</div>
+        <div class="name-column">{{ item.username }}</div>
+        <div>{{ item.spendTime }}</div>
+        <div>{{ item.step }}</div>
+      </div>
     </div>
 
-    <div class="share-buttons" :style="{ display: shareButtonsVisible ? 'flex' : 'none' }">
-      <div class="float-share-button" @click="weixin">
-        <i class="fas fa-share-alt"></i>
-      </div>
-      <div class="float-exchange-button" @click="refresh">
-        <i class="fas fa-exchange-alt"></i>
-      </div>
-
-    </div>
-
-    <Rank ref="rank" :listData="ranks"></Rank>
 
     <div class="popup" :style="{ display: popVisible ? 'flex' : 'none' }" @click="hidePopup">
       <div class="popup-content">
@@ -329,6 +329,37 @@ function weixin() {
 </template>
 
 <style scoped>
+.table-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #f0f0f0;
+}
+
+.table-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+}
+
+.table-row .name-column {
+        flex-basis: 100px; /* 设置名称列的固定宽度 */
+        word-wrap: break-word; /* 内容超出时换行 */
+        overflow-wrap: break-word;
+    }
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -438,5 +469,6 @@ div .puzzle+.puzzle {
 .puzzle-image {
   max-width: 100%;
   max-height: 100%;
-}</style>
+}
+</style>
 

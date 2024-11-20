@@ -12,7 +12,6 @@
         </div>
         <div class="card-button">
 
-
           <div class="start-button" v-if="!task.finishStatus" @click="completeTask(index)">
             <i class="fas fa-check"></i>
           </div>
@@ -81,6 +80,8 @@ export default {
   },
   created() {
     this.getTask();
+    this.clockin();
+    this.report();
   },
   methods: {
     getTask() {
@@ -92,7 +93,7 @@ export default {
         // const param = baseUrl + '/callback?part=task';
         // const encodedParam = encodeURIComponent(param);
         const rurl = window.location;
-        window.location = 'https://sso.punengshuo.com?redirectUrl=' + rurl
+        window.location = 'https://sso.cuiyi.club?redirectUrl=' + rurl
       }
       const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
@@ -152,6 +153,22 @@ export default {
           console.log(error)
         })
 
+    },
+    report() {
+      axios.post('https://clock.cuiyi.club/openapi/report', {})
+        .then(response => {
+        })
+        .catch(error => {
+          console.log(error)
+        })
+    },
+    clockin() {
+      axios.post('https://clock.cuiyi.club/openapi/clocks/clockin', {})
+        .then(response => {
+        })
+        .catch(error => {
+          console.log(error)
+        })
     },
     getFrequency(eventType) {
       if (eventType === 1) {

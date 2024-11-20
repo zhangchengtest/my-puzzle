@@ -13,3 +13,5 @@ git pull
 象棋
 优势
 主打一个跨平台
+
+scp -r D:\my-puzzle\dist root@175.24.178.171:/ROOT/my-puzzle
