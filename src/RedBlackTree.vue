@@ -4,6 +4,15 @@
       <h3>随机数字:  {{ numbers }}</h3>
     </div>
 
+    <div>
+      <input 
+        type="text" 
+        v-model="customNumbersInput" 
+        placeholder="输入逗号分隔的数字"
+      />
+      <button @click="setCustomNumbers">设置自定义数字</button>
+    </div>
+
     <div id="log-container">
       <h3>操作日志:</h3>
       <ul class="logs">
@@ -17,8 +26,6 @@
       <div id="previous-tree" v-if="previousTreeVisible"></div>
       <div id="current-tree" style="margin-top: 50px;"></div>
     </div>
-
-    
   </div>
 </template>
 
@@ -30,6 +37,7 @@ export default {
   data() {
     return {
       numbers: this.generateUniqueNumbers(10, 100), // 生成不重复的随机数字
+      customNumbersInput: '', // 用户输入的自定义数字
       currentIndex: 0, // 当前插入的数字索引
       isComplete: false, // 是否所有数字都已插入
       previousTreeVisible: false, // 控制是否显示上一幅树
@@ -45,6 +53,33 @@ export default {
         uniqueNumbers.add(number);
       }
       return Array.from(uniqueNumbers);
+    },
+
+    // 设置用户自定义的数字
+    setCustomNumbers() {
+      if (!this.customNumbersInput) {
+        alert('请输入有效的数字！');
+        return;
+      }
+      const customNumbers = this.customNumbersInput
+        .split(',')
+        .map((num) => parseInt(num.trim(), 10))
+        .filter((num) => !isNaN(num));
+
+      if (customNumbers.length === 0) {
+        alert('请输入有效的数字！');
+        return;
+      }
+
+      // 更新数字数组和重置状态
+      this.numbers = customNumbers;
+      this.currentIndex = 0;
+      this.isComplete = false;
+      this.logs = [];
+      this.previousTreeVisible = false;
+
+      // 重新绘制树
+      this.drawCurrentTree();
     },
 
     insertNextNumber() {
@@ -63,7 +98,6 @@ export default {
         this.drawCurrentTree();
         // 绘制树
         this.drawPreviousTree();
-      
       }
     },
 
@@ -100,6 +134,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 

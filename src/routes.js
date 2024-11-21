@@ -9,6 +9,7 @@ import Calendar from './components/Calendar.vue'
 import Card from './components/Card.vue'
 import Tennis from './Tennis.vue'
 import RedBlackTree from './RedBlackTree.vue'
+import WebsiteTag from './WebsiteTag.vue'
 
 
 import { createRouter, createWebHistory } from 'vue-router';
@@ -17,8 +18,8 @@ import { requireAuth } from './auth';
 const routes = [
   {
     path: '/',
-    name: 'Puzzle',
-    component: Puzzle
+    name: 'WebsiteTag',
+    component: WebsiteTag
   },
   {
     path: '/home',
