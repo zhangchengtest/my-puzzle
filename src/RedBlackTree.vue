@@ -1,20 +1,24 @@
 <template>
   <div>
     <div>
-      <h3>随机数字:</h3>
-      <ul class="horizontal-list">
-        <li v-for="(number, index) in numbers" :key="index">
-          {{ number }}
+      <h3>随机数字:  {{ numbers }}</h3>
+    </div>
+
+    <div id="log-container">
+      <h3>操作日志:</h3>
+      <ul class="logs">
+        <li v-for="(log, index) in logs" :key="index">
+          {{ log }}
         </li>
       </ul>
     </div>
-
+    <button @click="insertNextNumber" :disabled="isComplete">下一步</button>
     <div id="tree-container">
       <div id="previous-tree" v-if="previousTreeVisible"></div>
-      <div id="current-tree"></div>
+      <div id="current-tree" style="margin-top: 50px;"></div>
     </div>
 
-    <button @click="insertNextNumber" :disabled="isComplete">下一步</button>
+    
   </div>
 </template>
 
@@ -29,6 +33,7 @@ export default {
       currentIndex: 0, // 当前插入的数字索引
       isComplete: false, // 是否所有数字都已插入
       previousTreeVisible: false, // 控制是否显示上一幅树
+      logs: [], // 操作日志
     };
   },
   methods: {
@@ -86,6 +91,7 @@ export default {
         currentTree.insert(this.numbers[i]);
       }
       currentTree.draw('#current-tree');
+      this.logs = [...currentTree.logs]; // 更新日志
     },
   },
   mounted() {
@@ -96,26 +102,37 @@ export default {
 </script>
 
 <style scoped>
+
+#log-container {
+  position: fixed; /* 固定在页面右侧 */
+  top: 20px; /* 距离页面顶部 */
+  right: 20px; /* 距离页面右侧 */
+  width: 300px; /* 日志容器宽度 */
+  max-height: 80vh; /* 最大高度 */
+  overflow-y: auto; /* 超出高度时滚动 */
+  border: 1px solid #ccc; /* 边框样式 */
+  border-radius: 8px; /* 圆角 */
+  background-color: #f9f9f9; /* 背景色 */
+  padding: 10px; /* 内边距 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 阴影效果 */
+  z-index: 1000; /* 确保悬浮容器位于页面上层 */
+}
+
+.logs li {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 button {
   margin-top: 20px;
 }
 
-ul {
-  display: flex; /* 使列表横向排列 */
-  padding: 0;
-  list-style-type: none;
-}
-
-li {
-  font-size: 16px;
-  margin-right: 10px; /* 调整数字之间的间距 */
-}
-
+/* 
 #tree-container {
   display: flex;
   justify-content: space-between;
   margin-top: 20px;
-}
+} */
 
 #previous-tree,
 #current-tree {

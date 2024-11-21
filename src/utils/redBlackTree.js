@@ -14,9 +14,11 @@ class RedBlackTree {
   constructor() {
     this.nil = new TreeNode(null, 'black');
     this.root = this.nil;
+    this.logs = []; // 存储操作日志
   }
 
   insert(key) {
+    this.logs.push(`插入节点: ${key} (红色)`); // 记录插入操作
     let newNode = new TreeNode(key, 'red');
     let parent = this.nil;
     let current = this.root;
@@ -86,6 +88,7 @@ class RedBlackTree {
   }
 
   leftRotate(x) {
+    this.logs.push(`左旋: ${x.key}`);
     let y = x.right;
     x.right = y.left;
     if (y.left !== this.nil) {
@@ -104,6 +107,7 @@ class RedBlackTree {
   }
 
   rightRotate(x) {
+    this.logs.push(`右旋: ${x.key}`);
     let y = x.left;
     x.left = y.right;
     if (y.right !== this.nil) {
