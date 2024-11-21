@@ -86,7 +86,6 @@ class RedBlackTree {
   }
 
   leftRotate(x) {
-    alert('左旋');
     let y = x.right;
     x.right = y.left;
     if (y.left !== this.nil) {
@@ -105,7 +104,6 @@ class RedBlackTree {
   }
 
   rightRotate(x) {
-    alert('右旋');
     let y = x.left;
     x.left = y.right;
     if (y.right !== this.nil) {
