@@ -1,8 +1,10 @@
 <template>
   <div class="container">
     <div class="controls">
-      <button @click="sortByClickCount">按点击次数排序</button>
-      <button @click="sortByLastVisited">按访问时间排序</button>
+      <select v-model="sortOrder" @change="sortData">
+        <option value="clickCount">按点击次数排序</option>
+        <option value="lastVisitedAt">按访问时间排序</option>
+      </select>
       <button @click="showAddTagForm = !showAddTagForm">{{ showAddTagForm ? '取消' : '新增标签' }}</button>
     </div>
 
@@ -16,9 +18,15 @@
     <div class="website-list">
       <div v-for="item in websiteTags" :key="item.id" class="website-item">
         <h3>{{ item.url }}</h3>
-        <p>标签: {{ item.tag }}</p>
+        <p>标签: 
+          <a href="javascript:void(0);" 
+         @click="handleClick(item.id, item.url)"
+         rel="noopener noreferrer">
+        {{ item.tag }}
+      </a></p>
         <p>点击次数: {{ item.clickCount }}</p>
-        <p>最新访问时间: {{ item.lastVisitedAt }}</p>
+        <p>最新访问时间: {{ item.lastVisitedAtText }}</p>
+        <button @click="confirmDelete(item.id)">删除</button> <!-- 添加删除按钮 -->
       </div>
     </div>
   </div>
@@ -29,7 +37,7 @@ export default {
   data() {
     return {
       websiteTags: [],   // 存储获取到的数据
-      sortOrder: 'clickCount',  // 默认按点击次数排序
+      sortOrder: 'lastVisitedAt',  // 默认按点击次数排序
       showAddTagForm: false,    // 控制新增标签表单显示与否
       newTag: {
         url: '',
@@ -61,7 +69,8 @@ export default {
         clickCount: item.clickCount,
         lastVisitedAt: item.lastVisitedAt,
         createdAt: item.createdAt,
-        updatedAt: item.updatedAt
+        updatedAt: item.updatedAt,
+        lastVisitedAtText: this.formatDate(item.lastVisitedAt),
       };
     },
     // 按点击次数排序
@@ -82,6 +91,22 @@ export default {
         this.websiteTags.sort((a, b) => new Date(b.lastVisitedAt) - new Date(a.lastVisitedAt)); // 按访问时间降序排列
       }
     },
+
+   formatDate(dateStr) {
+      const date = new Date(dateStr);
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+    ,
+    
     // 添加标签
     async addTag() {
       if (!this.newTag.url || !this.newTag.tag) {
@@ -100,6 +125,50 @@ export default {
         console.error('添加标签失败:', error);
       }
     }
+  ,
+
+   // 点击标签时处理逻辑
+   async handleClick(id, url) {
+    try {
+      // 调用后端 API 更新点击次数
+      await this.$http.post(`https://clock.cuiyi.club/openapi/websiteTags/click`, { id });
+      
+      // 更新本地数据，优化用户体验（可选）
+      const tag = this.websiteTags.find(item => item.id === id);
+      if (tag) {
+        tag.clickCount += 1;
+        tag.lastVisitedAt = new Date().toISOString(); // 更新访问时间
+        tag.lastVisitedAtText = this.formatDate(tag.lastVisitedAt);
+      }
+      this.sortData();
+      
+      // 跳转到目标链接
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('记录点击次数失败:', error);
+      alert('记录点击次数失败，请稍后重试');
+    }
+  },
+     // 确认删除
+  confirmDelete(tagId) {
+    if (confirm('确认要删除这个标签吗？')) {
+      this.deleteTag(tagId);
+    }
+  },
+
+  // 删除标签
+  async deleteTag(tagId) {
+    try {
+      // 调用后端删除接口
+      await this.$http.delete(`https://clock.cuiyi.club/openapi/websiteTags/delete/${tagId}`);
+      
+      // 删除成功后更新前端数据
+      this.websiteTags = this.websiteTags.filter(item => item.id !== tagId);
+    } catch (error) {
+      console.error('删除标签失败:', error);
+      alert('删除标签失败，请稍后再试');
+    }
+  }
   }
 };
 </script>
@@ -178,5 +247,26 @@ button:hover {
   .website-item {
     padding: 10px;
   }
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button.delete {
+  background-color: #dc3545; /* 红色按钮 */
+}
+
+button.delete:hover {
+  background-color: #c82333; /* 深红色 */
 }
 </style>
