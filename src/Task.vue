@@ -195,16 +195,6 @@ export default {
 </script>
 
 <style lang="scss">
-body {
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('./assets/road.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
 
 .completed {
   color: green;

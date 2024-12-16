@@ -1,90 +1,41 @@
-import Puzzle from './Puzzle.vue'
-import Novel from './Novel.vue'
-import Timeline from './Timeline.vue'
-import Upload from './Upload.vue'
-import Color from './Color.vue'
-import Task from './Task.vue'
-import Chess from './components/Chess.vue'
-import Calendar from './components/Calendar.vue'
-import Card from './components/Card.vue'
-import Tennis from './Tennis.vue'
-import RedBlackTree from './RedBlackTree.vue'
-import WebsiteTag from './WebsiteTag.vue'
-
-
 import { createRouter, createWebHistory } from 'vue-router';
 import { requireAuth } from './auth';
 
+// 动态加载所有 .vue 文件
+const modules = import.meta.glob('./*.vue');
+
 const routes = [
+  // 自动生成的路由
+  ...Object.keys(modules).map(fileName => {
+    // 获取组件名（去除路径和扩展名）
+    const componentName = fileName.replace(/^\.\//, '').replace(/\.\w+$/, '');
+
+    // 生成路由的路径
+    const path = `/${componentName.toLowerCase()}`;
+
+    // 如果是 Task 页面，需要身份验证
+    const meta = componentName === 'Task' ? { requiresAuth: true } : {};
+
+    return {
+      path: path,
+      name: componentName,
+      component: modules[fileName], // 使用动态导入
+      meta: meta,
+    };
+  }),
+
+  // 特殊的路由配置，可以手动添加
   {
     path: '/',
     name: 'WebsiteTag',
-    component: WebsiteTag
-  },
-  {
-    path: '/home',
-    name: 'Puzzle2',
-    component: Puzzle
-  },
-  {
-    path: '/novel',
-    name: 'Novel',
-    component: Novel
-  },
-  {
-    path: '/timeline',
-    name: 'Timeline',
-    component: Timeline
-  },
-  {
-    path: '/upload',
-    name: 'Upload',
-    component: Upload
-  },
-  {
-    path: '/tree',
-    name: 'RedBlackTree',
-    component: RedBlackTree
-  },
-  {
-    path: '/color',
-    name: 'Color',
-    component: Color
-  },
-  {
-    path: '/xiangqi',
-    name: 'xiangqi',
-    component: Chess
-  },
-  {
-    path: '/task',
-    name: 'task',
-    component: Task,
-    meta: { requiresAuth: true } // 添加 meta 字段，标记该路由需要进行登录验
-  },
-  {
-    path: '/tennis',
-    name: 'tennis',
-    component: Tennis
-  },
-  {
-    path: '/ca',
-    name: 'ca',
-    component: Calendar
-  },
-  {
-    path: '/card',
-    name: 'card',
-    component: Card
+    component: () => import('./WebsiteTag.vue')
   }
-
-  
-]
+];
 
 const router = createRouter({
   history: createWebHistory('/mix'),
   routes
-})
+});
 
 // 添加全局前置守卫
 router.beforeEach((to, from, next) => {

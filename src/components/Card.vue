@@ -41,9 +41,7 @@
   </script>
   
   <style>
-  body{
-    background-color: azure;
-  }
+
   /* styles.css */
   .card {
     display: flex;

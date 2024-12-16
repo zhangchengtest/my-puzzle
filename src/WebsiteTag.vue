@@ -17,7 +17,7 @@
 
     <div class="website-list">
       <div v-for="item in websiteTags" :key="item.id" class="website-item">
-        <h3>{{ item.url }}</h3>
+        <h3 style="max-width: 300px;word-wrap: break-word;">{{ item.url }}</h3>
         <p>标签: 
           <a href="javascript:void(0);" 
          @click="handleClick(item.id, item.url)"
