@@ -16,18 +16,33 @@
     </div>
 
     <div class="website-list">
-      <div v-for="item in websiteTags" :key="item.id" class="website-item">
+      <div 
+        v-for="item in websiteTags" 
+        :key="item.id" 
+        class="website-item"
+        @dblclick="openContextMenu(item, $event)"
+      >
         <h3 style="max-width: 300px;word-wrap: break-word;">{{ item.url }}</h3>
         <p>标签: 
           <a href="javascript:void(0);" 
-         @click="handleClick(item.id, item.url)"
-         rel="noopener noreferrer">
-        {{ item.tag }}
-      </a></p>
+          @click="handleClick(item.id, item.url)"
+          rel="noopener noreferrer">
+          {{ item.tag }}
+        </a></p>
         <p>点击次数: {{ item.clickCount }}</p>
         <p>最新访问时间: {{ item.lastVisitedAtText }}</p>
-        <button @click="confirmDelete(item.id)">删除</button> <!-- 添加删除按钮 -->
       </div>
+    </div>
+
+    <!-- 右键菜单 -->
+    <div 
+      v-if="contextMenuVisible" 
+      :style="{ top: contextMenuPosition.y + 'px', left: contextMenuPosition.x + 'px' }" 
+      class="context-menu"
+    >
+      <ul>
+        <li @click="confirmDelete(contextMenuTag.id)">删除标签</li>
+      </ul>
     </div>
   </div>
 </template>
@@ -42,12 +57,19 @@ export default {
       newTag: {
         url: '',
         tag: ''
-      }
+      },
+      contextMenuVisible: false,
+      contextMenuPosition: { x: 0, y: 0 },
+      contextMenuTag: null,
     };
   },
   mounted() {
     // 页面加载时获取数据
     this.fetchWebsiteTags();
+    document.addEventListener('click', this.closeContextMenu);
+  },
+  beforeDestroy() {
+    document.removeEventListener('click', this.closeContextMenu);
   },
   methods: {
     // 获取 website_tag 数据
@@ -73,16 +95,6 @@ export default {
         lastVisitedAtText: this.formatDate(item.lastVisitedAt),
       };
     },
-    // 按点击次数排序
-    sortByClickCount() {
-      this.sortOrder = 'clickCount';
-      this.sortData();
-    },
-    // 按访问时间排序
-    sortByLastVisited() {
-      this.sortOrder = 'lastVisitedAt';
-      this.sortData();
-    },
     // 排序数据
     sortData() {
       if (this.sortOrder === 'clickCount') {
@@ -92,21 +104,17 @@ export default {
       }
     },
 
-   formatDate(dateStr) {
+    formatDate(dateStr) {
       const date = new Date(dateStr);
-      
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1
       const day = String(date.getDate()).padStart(2, '0');
-      
       const hours = String(date.getHours()).padStart(2, '0');
       const minutes = String(date.getMinutes()).padStart(2, '0');
       const seconds = String(date.getSeconds()).padStart(2, '0');
-
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    }
-    ,
-    
+    },
+
     // 添加标签
     async addTag() {
       if (!this.newTag.url || !this.newTag.tag) {
@@ -118,57 +126,63 @@ export default {
         const response = await this.$http.post('https://clock.cuiyi.club/openapi/websiteTags/add', this.newTag);
          // 将新标签插入到数组的开头
         this.websiteTags.unshift(response.data.data);
-
         this.showAddTagForm = false;  // 隐藏表单
         this.newTag = { url: '', tag: '' }; // 重置表单
       } catch (error) {
         console.error('添加标签失败:', error);
       }
-    }
-  ,
+    },
 
-   // 点击标签时处理逻辑
-   async handleClick(id, url) {
-    try {
-      // 调用后端 API 更新点击次数
-      await this.$http.post(`https://clock.cuiyi.club/openapi/websiteTags/click`, { id });
-      
-      // 更新本地数据，优化用户体验（可选）
-      const tag = this.websiteTags.find(item => item.id === id);
-      if (tag) {
-        tag.clickCount += 1;
-        tag.lastVisitedAt = new Date().toISOString(); // 更新访问时间
-        tag.lastVisitedAtText = this.formatDate(tag.lastVisitedAt);
+    // 点击标签时处理逻辑
+    async handleClick(id, url) {
+      try {
+        // 调用后端 API 更新点击次数
+        await this.$http.post(`https://clock.cuiyi.club/openapi/websiteTags/click`, { id });
+        const tag = this.websiteTags.find(item => item.id === id);
+        if (tag) {
+          tag.clickCount += 1;
+          tag.lastVisitedAt = new Date().toISOString(); // 更新访问时间
+          tag.lastVisitedAtText = this.formatDate(tag.lastVisitedAt);
+        }
+        this.sortData();
+        window.open(url, '_blank');
+      } catch (error) {
+        console.error('记录点击次数失败:', error);
+        alert('记录点击次数失败，请稍后重试');
       }
-      this.sortData();
-      
-      // 跳转到目标链接
-      window.open(url, '_blank');
-    } catch (error) {
-      console.error('记录点击次数失败:', error);
-      alert('记录点击次数失败，请稍后重试');
-    }
-  },
-     // 确认删除
-  confirmDelete(tagId) {
-    if (confirm('确认要删除这个标签吗？')) {
-      this.deleteTag(tagId);
-    }
-  },
+    },
 
-  // 删除标签
-  async deleteTag(tagId) {
-    try {
-      // 调用后端删除接口
-      await this.$http.delete(`https://clock.cuiyi.club/openapi/websiteTags/delete/${tagId}`);
-      
-      // 删除成功后更新前端数据
-      this.websiteTags = this.websiteTags.filter(item => item.id !== tagId);
-    } catch (error) {
-      console.error('删除标签失败:', error);
-      alert('删除标签失败，请稍后再试');
+    // 打开右键菜单
+    openContextMenu(tag, event) {
+      event.preventDefault();
+      this.contextMenuVisible = true;
+      this.contextMenuPosition = { x: event.clientX, y: event.clientY };
+      this.contextMenuTag = tag;
+    },
+
+    // 关闭右键菜单
+    closeContextMenu() {
+      this.contextMenuVisible = false;
+      this.contextMenuTag = null;
+    },
+
+    // 确认删除
+    confirmDelete(tagId) {
+      if (confirm('确认要删除这个标签吗？')) {
+        this.deleteTag(tagId);
+      }
+    },
+
+    // 删除标签
+    async deleteTag(tagId) {
+      try {
+        await this.$http.delete(`https://clock.cuiyi.club/openapi/websiteTags/delete/${tagId}`);
+        this.websiteTags = this.websiteTags.filter(item => item.id !== tagId);
+      } catch (error) {
+        console.error('删除标签失败:', error);
+        alert('删除标签失败，请稍后再试');
+      }
     }
-  }
   }
 };
 </script>
@@ -218,7 +232,7 @@ button:hover {
 
 .website-list {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 20px;
 }
 
@@ -227,6 +241,8 @@ button:hover {
   border: 1px solid #ddd;
   border-radius: 5px;
   background-color: #f9f9f9;
+  width: calc(33.333% - 20px);
+  box-sizing: border-box;
 }
 
 .website-item h3 {
@@ -238,35 +254,43 @@ button:hover {
   margin: 5px 0;
 }
 
-@media (max-width: 768px) {
-  .controls {
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .website-item {
-    padding: 10px;
-  }
+.context-menu {
+  position: absolute;
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
-button {
+.context-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 5px 0;
+}
+
+.context-menu li {
   padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #0056b3;
+.context-menu li:hover {
+  background-color: #f0f0f0;
 }
 
-button.delete {
-  background-color: #dc3545; /* 红色按钮 */
+@media (max-width: 768px) {
+  .website-item {
+    width: calc(50% - 20px);
+  }
 }
 
-button.delete:hover {
-  background-color: #c82333; /* 深红色 */
+@media (max-width: 480px) {
+  .website-item {
+    width: calc(100% - 20px);
+  }
+}
+
+.container {
+  padding-bottom: 50px;
 }
 </style>
