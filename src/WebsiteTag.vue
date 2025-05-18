@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <div class="controls">
+      <input v-model="searchQuery" placeholder="搜索标签或网址" type="text" @input="filterTags" />
       <select v-model="sortOrder" @change="sortData">
         <option value="clickCount">按点击次数排序</option>
         <option value="lastVisitedAt">按访问时间排序</option>
@@ -17,17 +18,17 @@
 
     <div class="website-list">
       <div 
-        v-for="item in websiteTags" 
+        v-for="item in filteredTags" 
         :key="item.id" 
         class="website-item"
         @dblclick="openContextMenu(item, $event)"
       >
-        <h3 style="max-width: 300px;word-wrap: break-word;">{{ item.url }}</h3>
-        <p>标签: 
+        <h3 style="max-width: 300px;word-wrap: break-word;">{{ item.tag }}</h3>
+        <p  style="max-width: 300px;word-wrap: break-word;">网址: 
           <a href="javascript:void(0);" 
           @click="handleClick(item.id, item.url)"
           rel="noopener noreferrer">
-          {{ item.tag }}
+          {{ item.url }}
         </a></p>
         <p>点击次数: {{ item.clickCount }}</p>
         <p>最新访问时间: {{ item.lastVisitedAtText }}</p>
@@ -52,6 +53,7 @@ export default {
   data() {
     return {
       websiteTags: [],   // 存储获取到的数据
+      filteredTags: [],  // 存储过滤后的数据
       sortOrder: 'lastVisitedAt',  // 默认按点击次数排序
       showAddTagForm: false,    // 控制新增标签表单显示与否
       newTag: {
@@ -61,6 +63,7 @@ export default {
       contextMenuVisible: false,
       contextMenuPosition: { x: 0, y: 0 },
       contextMenuTag: null,
+      searchQuery: '',  // 搜索查询
     };
   },
   mounted() {
@@ -77,6 +80,7 @@ export default {
       try {
         const response = await this.$http.get('https://clock.cuiyi.club/openapi/websiteTags/all'); // 替换为你的API接口
         this.websiteTags = response.data.data.map(item => this.camelToSnake(item));
+        this.filteredTags = [...this.websiteTags]; // 初始化过滤后的数据
         this.sortData(); // 获取数据后进行排序
       } catch (error) {
         console.error('获取数据失败:', error);
@@ -98,9 +102,9 @@ export default {
     // 排序数据
     sortData() {
       if (this.sortOrder === 'clickCount') {
-        this.websiteTags.sort((a, b) => b.clickCount - a.clickCount); // 按点击次数降序排列
+        this.filteredTags.sort((a, b) => b.clickCount - a.clickCount); // 按点击次数降序排列
       } else if (this.sortOrder === 'lastVisitedAt') {
-        this.websiteTags.sort((a, b) => new Date(b.lastVisitedAt) - new Date(a.lastVisitedAt)); // 按访问时间降序排列
+        this.filteredTags.sort((a, b) => new Date(b.lastVisitedAt) - new Date(a.lastVisitedAt)); // 按访问时间降序排列
       }
     },
 
@@ -126,6 +130,7 @@ export default {
         const response = await this.$http.post('https://clock.cuiyi.club/openapi/websiteTags/add', this.newTag);
          // 将新标签插入到数组的开头
         this.websiteTags.unshift(response.data.data);
+        this.filteredTags = [...this.websiteTags]; // 更新过滤后的数据
         this.showAddTagForm = false;  // 隐藏表单
         this.newTag = { url: '', tag: '' }; // 重置表单
       } catch (error) {
@@ -144,6 +149,7 @@ export default {
           tag.lastVisitedAt = new Date().toISOString(); // 更新访问时间
           tag.lastVisitedAtText = this.formatDate(tag.lastVisitedAt);
         }
+        this.filteredTags = [...this.websiteTags]; // 更新过滤后的数据
         this.sortData();
         window.open(url, '_blank');
       } catch (error) {
@@ -178,10 +184,19 @@ export default {
       try {
         await this.$http.delete(`https://clock.cuiyi.club/openapi/websiteTags/delete/${tagId}`);
         this.websiteTags = this.websiteTags.filter(item => item.id !== tagId);
+        this.filteredTags = [...this.websiteTags]; // 更新过滤后的数据
       } catch (error) {
         console.error('删除标签失败:', error);
         alert('删除标签失败，请稍后再试');
       }
+    },
+
+    // 搜索标签或网址
+    filterTags() {
+      const query = this.searchQuery.toLowerCase();
+      this.filteredTags = this.websiteTags.filter(item => 
+        item.url.toLowerCase().includes(query) || item.tag.toLowerCase().includes(query)
+      );
     }
   }
 };
@@ -243,6 +258,7 @@ button:hover {
   background-color: #f9f9f9;
   width: calc(33.333% - 20px);
   box-sizing: border-box;
+  min-width: 290px;
 }
 
 .website-item h3 {
