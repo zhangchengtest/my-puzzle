@@ -40,10 +40,18 @@
       </ul>
     </div>
   </div>
+  <Toast ref="toast" />
+
 </template>
 
 <script>
+import Toast from './components/Toast.vue';
+
+
 export default {
+  components: {
+    Toast
+  },
   data() {
     return {
       isDragging: false,  // 标志是否正在拖拽
@@ -60,11 +68,14 @@ export default {
   },
   methods: {
     addTopMargin() {
-  this.divs.forEach(div => {
-    div.position.top += 50;
-  });
-  this.saveDivs(); // 保存更新后的位置
-},
+      this.divs.forEach(div => {
+        div.position.top += 50;
+      });
+      this.saveDivs(); // 保存更新后的位置
+    },
+    showToast(msg) {
+      this.$refs.toast.show(msg);
+    },
     randomColor() {
       const r = Math.floor(Math.random() * 256);
       const g = Math.floor(Math.random() * 256);
@@ -159,10 +170,16 @@ export default {
     },
 
     showContextMenu(e, index) {
-      this.contextMenuVisible = true;
-      this.contextMenuPosition = { x: e.clientX || e.changedTouches[0].clientX, y: e.clientY || e.changedTouches[0].clientY };
-      this.contextMenuIndex = index;
-    },
+  e.preventDefault(); // 防止默认右键菜单
+  this.contextMenuVisible = true;
+
+  const x = e.pageX || (e.changedTouches && e.changedTouches[0].pageX);
+  const y = e.pageY || (e.changedTouches && e.changedTouches[0].pageY);
+
+  this.contextMenuPosition = { x, y };
+  this.contextMenuIndex = index;
+}
+,
 
     editText(index) {
       const newText = prompt('请输入新的内容:', this.divs[index].text);
@@ -179,7 +196,7 @@ export default {
 
       // 使用 Clipboard API 复制文本
       navigator.clipboard.writeText(textToCopy).then(() => {
-        alert('内容已复制到剪贴板！');
+        this.showToast('内容已复制到剪贴板！');
       }).catch(err => {
         alert('复制失败: ' + err);
       });
