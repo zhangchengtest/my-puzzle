@@ -2,6 +2,9 @@
   <div>
     <!-- 悬浮的添加新块按钮 -->
     <button class="add-btn" @click="addDiv">添加新块</button>
+    <!-- 添加顶部空白的按钮 -->
+<button class="add-margin-btn" @click="addTopMargin">顶部加50px空白</button>
+
 
     <!-- 动态生成的可拖拽的 div 块 -->
     <div
@@ -56,6 +59,12 @@ export default {
     };
   },
   methods: {
+    addTopMargin() {
+  this.divs.forEach(div => {
+    div.position.top += 50;
+  });
+  this.saveDivs(); // 保存更新后的位置
+},
     randomColor() {
       const r = Math.floor(Math.random() * 256);
       const g = Math.floor(Math.random() * 256);
@@ -198,6 +207,26 @@ export default {
 </script>
 
 <style scoped>
+
+.add-margin-btn {
+  position: fixed;
+  bottom: 100px; /* 比添加按钮略高 */
+  right: 30px;
+  padding: 10px 20px;
+  background-color: #2196F3;
+  color: white;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.add-margin-btn:hover {
+  background-color: #1976D2;
+}
+
 .add-btn {
   position: fixed;
   bottom: 30px;
