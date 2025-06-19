@@ -31,7 +31,7 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { RedBlackTree } from './utils/redBlackTree.js';
+import { RedBlackTree } from '../utils/redBlackTree.js';
 
 export default {
   data() {

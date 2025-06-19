@@ -2,13 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { requireAuth } from './auth';
 
 // 动态加载所有 .vue 文件
-const modules = import.meta.glob('./*.vue');
+const modules = import.meta.glob('./pages/*.vue');
 
 const routes = [
   // 自动生成的路由
   ...Object.keys(modules).map(fileName => {
     // 获取组件名（去除路径和扩展名）
-    const componentName = fileName.replace(/^\.\//, '').replace(/\.\w+$/, '');
+    const componentName = fileName.replace(/^\.\//, '').replace(/\.\w+$/, '').replace("pages", '').replace(/\/+/, '');
 
     // 生成路由的路径
     const path = `/${componentName.toLowerCase()}`;
@@ -27,8 +27,8 @@ const routes = [
   // 特殊的路由配置，可以手动添加
   {
     path: '/',
-    name: 'WebsiteTag',
-    component: () => import('./WebsiteTag.vue')
+    name: 'Index',
+    component: () => import('./Index.vue')
   }
 ];
 

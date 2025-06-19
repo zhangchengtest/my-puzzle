@@ -45,11 +45,11 @@
 
 <script>
 import axios from 'axios';
-import Loading from '@/components/Loading.vue'
-import Modal from '@/components/Modal.vue'
-import TaskDelete from '@/components/TaskDelete.vue'
-import Calendar from '@/components/Calendar.vue'
-import FloatingIcon from "@/components/FloatingIcon.vue";
+import Loading from './components/Loading.vue'
+import Modal from './components/Modal.vue'
+import TaskDelete from './components/TaskDelete.vue'
+import Calendar from './components/Calendar.vue'
+import FloatingIcon from "./components/FloatingIcon.vue";
 const baseUrl = import.meta.env.VITE_APP_API_URL
 export default {
   components: {

@@ -9,9 +9,9 @@
   
   <script>
   
-  import FloatingIcon from "@/components/FloatingIcon.vue";
+  import FloatingIcon from "./components/FloatingIcon.vue";
   import axios from 'axios';
-import Loading from '@/components/Loading.vue'
+import Loading from './components/Loading.vue'
   export default {
     components: {
       FloatingIcon,

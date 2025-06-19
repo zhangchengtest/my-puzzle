@@ -4,10 +4,9 @@ import axios from 'axios';
 import { Swappable } from '@shopify/draggable'
 import { useRoute, useRouter } from 'vue-router'
 import Timer from './Timer.vue'
-import Rank from './Rank.vue'
-import Loading from '@/components/Loading.vue'
-import Header from '@/components/Header.vue'
-import { wexinShare } from '@/assets/common/weixin.js';
+import Loading from './Loading.vue'
+import Header from './Header.vue'
+import { wexinShare } from '../../assets/common/weixin.js';
 const router = useRouter()
 const route = useRoute()
 
@@ -318,7 +317,7 @@ function weixin() {
 
     <div class="popup" :style="{ display: popVisible ? 'flex' : 'none' }" @click="hidePopup">
       <div class="popup-content">
-        <img src="../assets/arrow.png" alt="Your Image" class="popup-img">
+        <img src="../../assets/arrow.png" alt="Your Image" class="popup-img">
       </div>
     </div>
 

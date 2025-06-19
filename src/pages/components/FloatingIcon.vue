@@ -11,7 +11,7 @@
 import {
   getModels,
   testMy
-} from '../common/helper'
+} from '../../common/helper'
 
 let isMobile = getModels()
 testMy()

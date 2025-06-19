@@ -46,10 +46,10 @@
 
 <script>
 import axios from 'axios';
-import Loading from '@/components/Loading.vue'
-import Modal from '@/components/Modal.vue'
-import TaskDelete from '@/components/TaskDelete.vue'
-import FloatingIcon from "@/components/FloatingIcon.vue";
+import Loading from './components/Loading.vue'
+import Modal from './components/Modal.vue'
+import TaskDelete from './components/TaskDelete.vue'
+import FloatingIcon from "./components/FloatingIcon.vue";
 export default {
   components: {
     Loading,
