@@ -14,6 +14,8 @@
     <div style="margin-bottom: 10px;">
       <button @click="formatJson" style="margin-right: 10px;">格式化</button>
       <button @click="clearInput" style="margin-right: 10px;">清空输入</button>
+      <!-- 新增导出按钮 -->
+      <button @click="exportHistory" style="background-color: #67c23a;">导出全部历史</button>
     </div>
 
     <div v-if="error" style="color: red; margin-top: 10px;">{{ error }}</div>
@@ -86,7 +88,28 @@ export default {
       history.splice(index, 1);
       localStorage.setItem('jsonFormatterHistory', JSON.stringify(history));
       this.loadHistory();
-    }
+    },
+   exportHistory() {
+  if (!this.history.length) {
+    alert('没有历史记录可导出');
+    return;
+  }
+  // 把所有历史记录拼接成纯文本，记录之间用分割线隔开
+  const text = this.history.join('\n\n----------------------------------\n\n');
+
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'json_formatter_history.txt';  // 后缀改为txt
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
   }
 };
 </script>
