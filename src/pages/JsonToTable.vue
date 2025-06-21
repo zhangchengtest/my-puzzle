@@ -31,12 +31,23 @@ export default {
         const obj = JSON.parse(this.jsonInput);
         if (typeof obj !== 'object' || Array.isArray(obj)) return '请输入合法的 JSON 对象';
         const lines = [];
+
+        // 添加主键字段，comment 也加上
+        lines.push('  `id` VARCHAR(32) PRIMARY KEY COMMENT \'主键ID\',');
+
+        // 遍历 JSON 字段
         for (const [key, value] of Object.entries(obj)) {
           const snakeKey = this.toSnakeCase(key);
-          lines.push(`  \`${snakeKey}\` ${this.mapType(value)},`);
+          const type = this.mapType(value);
+          const defaultValue = this.getDefaultValue(value);
+          const comment = key.replace(/'/g, "\\'"); // 转义单引号，防止注释报错
+          lines.push(`  \`${snakeKey}\` ${type} DEFAULT ${defaultValue} COMMENT '${comment}',`);
         }
-        lines[lines.length - 1] = lines[lines.length - 1].replace(/,$/, ''); // 去掉最后一行逗号
-        return `CREATE TABLE \`${this.tableName}\` (\n${lines.join('\n')}\n);`;
+
+        // 去掉最后一行逗号
+        lines[lines.length - 1] = lines[lines.length - 1].replace(/,$/, '');
+
+        return `CREATE TABLE \`${this.tableName}\` (\n${lines.join('\n')}\n) COMMENT='${this.tableName}';`;
       } catch (e) {
         return 'JSON 解析失败，请检查输入格式。';
       }
@@ -67,10 +78,17 @@ export default {
     },
     toSnakeCase(str) {
       return str
-        .replace(/([A-Z])/g, '_$1')     // 将大写字母前加下划线
-        .replace(/[-\s]/g, '_')         // 替换 - 或空格为下划线
+        .replace(/([A-Z])/g, '_$1')
+        .replace(/[-\s]/g, '_')
         .toLowerCase()
-        .replace(/^_+/, '');            // 去除开头的下划线
+        .replace(/^_+/, '');
+    },
+    getDefaultValue(value) {
+      const type = typeof value;
+      if (type === 'number') return 0;
+      if (type === 'boolean') return false;
+      if (type === 'string') return 'NULL';
+      return 'NULL';
     },
   },
 };
