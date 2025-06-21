@@ -2,7 +2,7 @@
   <div style="padding: 20px; font-family: monospace;">
     <h2>JSON 格式化工具</h2>
 
-    <!-- 单个 textarea 用于输入和格式化显示 -->
+    <!-- 输入框 -->
     <textarea
       v-model="input"
       rows="15"
@@ -13,10 +13,26 @@
 
     <div style="margin-bottom: 10px;">
       <button @click="formatJson" style="margin-right: 10px;">格式化</button>
-      <button @click="clear">清空</button>
+      <button @click="clearInput" style="margin-right: 10px;">清空输入</button>
     </div>
 
     <div v-if="error" style="color: red; margin-top: 10px;">{{ error }}</div>
+
+    <h3 style="margin-top: 30px;">历史记录（点击内容可回填）</h3>
+    <ul style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;">
+      <li
+        v-for="(record, index) in history"
+        :key="index"
+        style="margin-bottom: 10px; border-bottom: 1px dashed #aaa; padding-bottom: 5px;"
+      >
+        <div @click="loadFromHistory(record)" style="cursor: pointer; white-space: pre-wrap;">
+          {{ record }}
+        </div>
+        <button @click="deleteHistory(index)" style="margin-top: 5px; background-color: #f56c6c;">
+          删除该条记录
+        </button>
+      </li>
+    </ul>
   </div>
 </template>
 
@@ -25,34 +41,51 @@ export default {
   name: "JsonFormatter",
   data() {
     return {
-      input: `{
-  "name": "张三",
-  "age": 28,
-  "skills": ["JavaScript", "Vue", "Node.js"],
-  "address": {
-    "city": "上海",
-    "code": "200000"
-  }
-}`,
-      error: ''
+      input: ``,
+      error: '',
+      history: []
     };
   },
   mounted() {
-    this.formatJson(); // 初始加载时自动格式化
+    this.formatJson(); // 初始自动格式化
+    this.loadHistory(); // 加载历史记录
   },
   methods: {
     formatJson() {
       try {
         const obj = JSON.parse(this.input);
-        this.input = JSON.stringify(obj, null, 2);
+        const formatted = JSON.stringify(obj, null, 2);
+        this.input = formatted;
+        this.saveToHistory(formatted);
         this.error = '';
       } catch (e) {
         this.error = 'JSON 格式错误，请检查输入。';
       }
     },
-    clear() {
+    clearInput() {
       this.input = '';
       this.error = '';
+    },
+    saveToHistory(jsonStr) {
+      const history = JSON.parse(localStorage.getItem('jsonFormatterHistory') || '[]');
+      if (history[0] !== jsonStr) {
+        history.unshift(jsonStr);
+      }
+      localStorage.setItem('jsonFormatterHistory', JSON.stringify(history.slice(0, 20)));
+      this.loadHistory();
+    },
+    loadHistory() {
+      this.history = JSON.parse(localStorage.getItem('jsonFormatterHistory') || '[]');
+    },
+    loadFromHistory(record) {
+      this.input = record;
+      this.error = '';
+    },
+    deleteHistory(index) {
+      const history = [...this.history];
+      history.splice(index, 1);
+      localStorage.setItem('jsonFormatterHistory', JSON.stringify(history));
+      this.loadHistory();
     }
   }
 };
