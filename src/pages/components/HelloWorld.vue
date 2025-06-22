@@ -5,15 +5,14 @@ import Timer from './Timer.vue'
 import Loading from './Loading.vue'
 import Header from './Header.vue'
 
-const imageArray = ref([])             // 当前拼图数组（打乱后的）
-const originalImageArray = ref([])     // 原始正确顺序数组（上传完成时备份）
+const imageArray = ref([])
+const originalImageArray = ref([])
 const timer = ref()
 const isStart = ref(false)
 const step = ref(0)
 const loadingVisible = ref(false)
 const swappable = ref()
 
-// resizeImage 改为返回 Promise，确保图片加载完成
 function resizeImage(image, width, height) {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas')
@@ -46,7 +45,7 @@ async function handleImageUpload(event) {
       const resizedImage = await resizeImage(img, scaledWidth, scaledHeight)
       const pieces = splitImage(resizedImage, 3, scaledWidth, scaledHeight)
 
-      originalImageArray.value = pieces.slice() // 备份正确顺序
+      originalImageArray.value = pieces.map(piece => piece.id)
       imageArray.value = pieces
 
       step.value = 0
@@ -82,13 +81,15 @@ function splitImage(image, gridSize, totalWidth, totalHeight) {
         pieceWidth,
         pieceHeight
       )
-      pieces.push(canvas.toDataURL())
+      pieces.push({
+        id: y * gridSize + x,
+        src: canvas.toDataURL()
+      })
     }
   }
   return pieces
 }
 
-// 洗牌算法 - 打乱数组
 function shuffleArray(arr) {
   const newArr = arr.slice()
   for (let i = newArr.length - 1; i > 0; i--) {
@@ -101,7 +102,6 @@ function shuffleArray(arr) {
 function startGame() {
   if (imageArray.value.length !== 9) return
 
-  // 打乱拼图顺序
   imageArray.value = shuffleArray(imageArray.value)
 
   timer.value?.start()
@@ -114,7 +114,6 @@ function stopswap() {
   swappable.value?.destroy()
 }
 
-// 初始化拖拽交换
 function swap() {
   stopswap()
   swappable.value = new Swappable(document.querySelectorAll('.puzzle-all'), {
@@ -127,22 +126,30 @@ function swap() {
   })
 }
 
-// 每次拖拽完成调用
 function move() {
   if (!isStart.value) return
   step.value++
-  checkComplete()
-}
 
-// 检测拼图是否完成
-function checkComplete() {
-  const currentOrder = Array.from(document.querySelectorAll('.puzzle-all img')).map(img => img.src)
+  // 选取真实拼图图片，排除镜像元素（draggable-mirror）
+  const currentOrder = Array.from(
+    document.querySelectorAll('.puzzle-img:not(.draggable-mirror):not(.draggable--original)')
+  ).map(img => Number(img.dataset.id))
 
-  const completed = currentOrder.every((src, index) => src === originalImageArray.value[index])
+const imgs = document.querySelectorAll('.puzzle-img:not(.draggable-mirror)');
+imgs.forEach(img => {
+  console.log(img, img.dataset.id, img.className);
+  // 或者打印 classList（返回的是 DOMTokenList，可以看具体有哪些类）
+  // console.log(img, img.dataset.id, [...img.classList].join(' '));
+});
+
+
+
+  console.log(currentOrder)
+  const completed = currentOrder.every((id, index) => id === index)
 
   if (completed) {
     isStart.value = false
-    timer.value?.stop?.() // 如果 timer 组件没有 stop 方法，需实现或改用 reset
+    timer.value?.stop?.()
     stopswap()
     alert('恭喜你，拼图完成！')
   }
@@ -175,8 +182,13 @@ function refresh() {
       </div>
 
       <div class="puzzle-all">
-        <div v-for="(image, index) in imageArray" :key="index" class="child">
-          <img :src="image" class="puzzle-image" draggable="true" />
+        <div v-for="piece in imageArray" :key="piece.id" class="child">
+          <img
+            :src="piece.src"
+            class="puzzle-image puzzle-img"
+            draggable="true"
+            :data-id="piece.id"
+          />
         </div>
       </div>
 
