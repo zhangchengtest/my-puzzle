@@ -41,16 +41,19 @@
     </div>
   </div>
   <Toast ref="toast" />
+  <MultiLineInput ref="inputBox" />
 
 </template>
 
 <script>
 import Toast from './components/Toast.vue';
+import MultiLineInput from './components/MultiLineInput.vue';
 
 
 export default {
   components: {
-    Toast
+    Toast,
+    MultiLineInput
   },
   data() {
     return {
@@ -181,8 +184,9 @@ export default {
 }
 ,
 
-    editText(index) {
-      const newText = prompt('请输入新的内容:', this.divs[index].text);
+    async editText(index) {
+      const currentText = this.divs[index].text;
+      const newText = await this.$refs.inputBox.open(currentText);
       if (newText !== null) {
         this.divs[index].text = newText;
         this.saveDivs();

@@ -13,8 +13,18 @@ const routes = [
     // 生成路由的路径
     const path = `/${componentName.toLowerCase()}`;
 
-    // 如果是 Task 页面，需要身份验证
-    const meta = componentName === 'Task' ? { requiresAuth: true } : {};
+      // 自动生成页面标题
+    const titleMap = {
+      Task: '任务中心 - Elephant',
+      Profile: '个人资料 - Elephant',
+      Puzzle: '拼图挑战 - Elephant',
+      // 你可以继续补充更多组件名与标题的映射
+    };
+
+    const meta = {
+      requiresAuth: componentName === 'Task',
+      title: titleMap[componentName] || `${componentName} - Elephant`
+    };
 
     return {
       path: path,
@@ -39,6 +49,14 @@ const router = createRouter({
 
 // 添加全局前置守卫
 router.beforeEach((to, from, next) => {
+
+   // 设置页面标题
+  if (to.meta?.title) {
+    document.title = to.meta.title;
+  } else {
+    document.title = 'Elephant';
+  }
+
   if (to.meta.requiresAuth) {
     requireAuth(to, from, next);
   } else {
