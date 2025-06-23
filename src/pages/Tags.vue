@@ -37,6 +37,8 @@
         <li @click="removeDiv(contextMenuIndex)">删除</li>
         <li @click="editText(contextMenuIndex)">更改内容</li>
         <li @click="copyContent(contextMenuIndex)">复制内容</li> <!-- 新增复制功能 -->
+        <li @click="duplicateDiv(contextMenuIndex)">复制并粘贴</li>
+
       </ul>
     </div>
   </div>
@@ -206,6 +208,22 @@ export default {
       });
 
       this.contextMenuVisible = false;
+    },
+
+    duplicateDiv(index) {
+      const original = this.divs[index];
+      const newDiv = {
+        ...JSON.parse(JSON.stringify(original)), // 深拷贝
+        id: Date.now(), // 新 id
+        position: {
+          left: original.position.left + 30, // 偏移一点
+          top: original.position.top + 30
+        }
+      };
+      this.divs.push(newDiv);
+      this.saveDivs();
+      this.contextMenuVisible = false;
+      this.showToast('已复制一个新块！');
     },
 
     hideContextMenu(e) {
