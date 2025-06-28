@@ -71,7 +71,7 @@ export default {
       loadingVisible: true,
       editing: false,
       editingIndex: null,
-      shareButtonsVisible: false,
+      shareButtonsVisible: true,
       editingTask: {
         description: '',
         deadline: ''
@@ -81,20 +81,10 @@ export default {
   created() {
     this.getTask();
     this.clockin();
-    this.report();
   },
   methods: {
     getTask() {
-      var token = localStorage.getItem('puzzle-token');
-      // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
-      if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      } else {
-        // const param = baseUrl + '/callback?part=task';
-        // const encodedParam = encodeURIComponent(param);
-        const rurl = window.location;
-        window.location = 'https://sso.cuiyi.club?redirectUrl=' + rurl
-      }
+    
       const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
@@ -235,11 +225,12 @@ export default {
   /* added to remove the highlight on mobile devices */
 }
 
-.float-trash-button {
+.float-share-button {
   position: fixed;
-  bottom: 20px;
-  right: 200px;
-  background-color: lightblue;
+  bottom: 90px;
+  right: 20px;
+  background-color: #4CAF50;
+  color: white;
   width: 50px;
   height: 50px;
   border-radius: 50%;
@@ -247,7 +238,39 @@ export default {
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  /* added to remove the highlight on mobile devices */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
+
+.float-exchange-button {
+  position: fixed;
+  bottom: 150px; // 往上移动
+  right: 20px;
+  background-color: #2196F3;
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.float-trash-button {
+  position: fixed;
+  bottom: 210px; // 更高，避免和前两个重叠
+  right: 20px;
+  background-color: #f44336;
+  color: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 </style>
