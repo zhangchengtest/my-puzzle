@@ -2,7 +2,7 @@
   <div class="container">
     <!-- 播放器 -->
     <div class="player-wrapper" v-if="currentSrc">
-      <M3U8Player :src="currentSrc" />
+      <M3U8Player :key="currentSrc" :src="currentSrc" />
     </div>
 
     <!-- 播放源列表 -->

@@ -58,12 +58,17 @@ onMounted(async () => {
 // 监听播放源变化，切换视频
 watch(() => props.src, (newSrc) => {
   if (player.value && newSrc) {
+    player.value.pause()
     player.value.src({ src: newSrc, type: 'application/x-mpegURL' })
-    player.value.play().catch((err) => {
-      console.warn('播放切换失败：', err)
+    player.value.load()
+    player.value.ready(() => {
+      player.value.play().catch((err) => {
+        console.warn('切换后自动播放失败：', err)
+      })
     })
   }
 })
+
 
 // 组件卸载时释放资源
 onBeforeUnmount(() => {
