@@ -11,16 +11,16 @@
             </div>
 
             <div class="event">
-              <span v-if="article.avatar"><img :src="article.avatar" class="logo" /></span>
+              <span v-if="article.avatar">
+                <img :src="article.avatar" class="logo" />
+              </span>
               <div class="content">
                 <p class="inner-content" v-html="processedContent(article.content)"></p>
+                <button v-if="article.url" class="jump-btn" @click="jumpTo(article.url)">跳转</button>
               </div>
-
             </div>
           </div>
-
         </div>
-
       </li>
     </ul>
   </div>
@@ -40,7 +40,6 @@
   left: -28px;
   top: 20px;
 }
-
 
 .timeline::before {
   content: "";
@@ -65,6 +64,7 @@
     width: 300px;
   }
 }
+
 .circle {
   position: absolute;
   left: -20px;
@@ -87,18 +87,12 @@
   position: relative;
   display: flex;
   align-items: center;
-  /* margin-bottom: 2rem; */
 }
 
 .content {
   flex: 1;
   width: 280px;
-  /* display: flex; */
-  /* flex-direction: column; */
-  /* border: 1px solid lightblue; */
-  border-radius: 10px;
   text-align: left;
-  /* 将文本左对齐 */
 }
 
 .mydate {
@@ -108,15 +102,26 @@
   font-weight: bold;
   color: #999999;
   text-align: left;
-  /* border: 1px solid lightblue;
-  border-radius: 10px; */
-
 }
 
 ul {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.jump-btn {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background-color: #409eff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.jump-btn:hover {
+  background-color: #66b1ff;
 }
 </style>
 
@@ -128,85 +133,61 @@ export default {
   data() {
     return {
       eventName: '白马山庄',
-      thirdId:'',
-      events: [
-
-      ],
+      thirdId: '',
+      events: []
     };
   },
   methods: {
     processLink(link) {
-      return `<a href="${link}">${link}</a>`
+      return `<a href="${link}">${link}</a>`;
     },
     convertToMarkdown(text) {
-  // 创建一个映射，用于存储已经被替换的URL
-  const replacedUrls = new Map();
+      const replacedUrls = new Map();
 
-  
-  // 将文本中的图片URL转换为Markdown图片格式
-  const imageRegex = /(?:https?|ftp):\/\/[\n\S]+\.(?:jpg|jpeg|png|gif)/g;
-  const imageText = text.replace(imageRegex, (url) => {
-    // 检查该URL是否已经被替换了，如果是，则返回原始文本
-    if (replacedUrls.has(url)) {
-      return url;
-    }
+      const imageRegex = /(?:https?|ftp):\/\/[\n\S]+\.(?:jpg|jpeg|png|gif)/g;
+      const imageText = text.replace(imageRegex, (url) => {
+        if (replacedUrls.has(url)) return url;
+        const markdownImage = `![image](${url})`;
+        replacedUrls.set(url, markdownImage);
+        return markdownImage;
+      });
 
-    // 将URL转换为Markdown图片格式，并添加到已替换映射中
-    const markdownImage = `![image](${url})`;
-    console.log(markdownImage)
-    replacedUrls.set(url, markdownImage);
-    return markdownImage;
-  });
+      const linkRegex = /(?:https?|ftp):\/\/[\n\S]+/g;
+      const linkedText = imageText.replace(linkRegex, (url) => {
+        if (replacedUrls.has(url)) return url;
+        const markdownLink = `[${url}](${url})`;
+        replacedUrls.set(url, markdownLink);
+        return markdownLink;
+      });
 
-  // 将文本中的URL转换为Markdown链接格式
-  const linkRegex = /(?:https?|ftp):\/\/[\n\S]+/g;
-  const linkedText = imageText.replace(linkRegex, (url) => {
-    // 检查该URL是否已经被替换了，如果是，则返回原始文本
-    if (replacedUrls.has(url)) {
-      return url;
-    }
-
-    // 将URL转换为Markdown链接格式，并添加到已替换映射中
-    const markdownLink = `[${url}](${url})`;
-    replacedUrls.set(url, markdownLink);
-    return markdownLink;
-  });
-
-  return linkedText;
-},
-
-
-
+      return linkedText;
+    },
     getCircleClass(item) {
-      if (!item) {
-        return 'circle-red';
-      } else {
-        return 'circle-black';
-      }
+      return item ? 'circle-black' : 'circle-red';
+    },
+    jumpTo(url) {
+      window.open(url, '_blank');
     }
-
   },
   computed: {
     processedContent() {
       return function (content) {
-        if (!content) {
-          return '';
-        }
-     
-        this.content = markdownToHtml(content)
-        return this.content;
-      }
+        if (!content) return '';
+        return markdownToHtml(content);
+      };
     }
   },
   created() {
     this.eventName = this.$route.query.eventName;
-    const url = 'https://clock.cuiyi.club/openapi/articles/list?category=' + this.eventName+ '&thirdId='+ this.$route.query.thirdId+ '&pageSize=1000'
-    // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
-    axios.get(url).then(response => {
-      this.events = response.data.data;
-    }).catch(error => {
-      console.error(error);
-    });
+    const url = 'https://clock.cuiyi.club/openapi/articles/list?category=' + this.eventName +
+                '&thirdId=' + this.$route.query.thirdId + '&pageSize=1000';
+    axios.get(url)
+      .then(response => {
+        this.events = response.data.data;
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }
 };
 </script>
