@@ -59,6 +59,12 @@
   flex-direction: column;
 }
 
+/* 手机端适配 */
+@media (max-width: 600px) {
+  .timeline {
+    width: 300px;
+  }
+}
 .circle {
   position: absolute;
   left: -20px;
@@ -122,6 +128,7 @@ export default {
   data() {
     return {
       eventName: '白马山庄',
+      thirdId:'',
       events: [
 
       ],
@@ -193,7 +200,7 @@ export default {
   },
   created() {
     this.eventName = this.$route.query.eventName;
-    const url = 'https://clock.cuiyi.club/openapi/articles/list?category=' + this.eventName + '&pageSize=100'
+    const url = 'https://clock.cuiyi.club/openapi/articles/list?category=' + this.eventName+ '&thirdId='+ this.$route.query.thirdId+ '&pageSize=1000'
     // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
     axios.get(url).then(response => {
       this.events = response.data.data;
