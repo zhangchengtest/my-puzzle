@@ -1,10 +1,14 @@
 <template>
   <div>
-    <div>{{ eventName }}</div>
-    <div>
-      <input v-model="searchText" class="search-input" placeholder="搜索标题或内容..." />
+    <div v-if="!eventName">
+      <input v-model="eventNameInput" class="search-input" placeholder="请输入事件名称..." />
+      <button @click="confirmEventName">确认</button>
     </div>
-    <div>
+    <div v-else>
+      <div>{{ eventName }}</div>
+      <div>
+        <input v-model="searchText" class="search-input" placeholder="搜索标题或内容..." />
+      </div>
       <ul>
         <li v-for="event in filteredEvents" :key="event.title">
           <div v-for="(article, index) in event.articles" :key="article.id">
@@ -37,39 +41,33 @@ import markdownToHtml from '@/utils/markdown';
 export default {
   data() {
     return {
-      eventName: '白马山庄',
-      thirdId: '',
+      eventName: '',
+      eventNameInput: '',
       events: [],
       searchText: ''
     };
   },
   methods: {
-    processLink(link) {
-      return `<a href="${link}">${link}</a>`;
+    confirmEventName() {
+      if (!this.eventNameInput) {
+        alert('请输入事件名称');
+        return;
+      }
+      this.eventName = this.eventNameInput;
+      this.fetchEvents();
     },
-    convertToMarkdown(text) {
-      const replacedUrls = new Map();
-
-      const imageRegex = /(?:https?|ftp):\/\/[\n\S]+\.(?:jpg|jpeg|png|gif)/g;
-      const imageText = text.replace(imageRegex, (url) => {
-        if (replacedUrls.has(url)) return url;
-        const markdownImage = `![image](${url})`;
-        replacedUrls.set(url, markdownImage);
-        return markdownImage;
-      });
-
-      const linkRegex = /(?:https?|ftp):\/\/[\n\S]+/g;
-      const linkedText = imageText.replace(linkRegex, (url) => {
-        if (replacedUrls.has(url)) return url;
-        const markdownLink = `[${url}](${url})`;
-        replacedUrls.set(url, markdownLink);
-        return markdownLink;
-      });
-
-      return linkedText;
+    fetchEvents() {
+      const url = `https://clock.cuiyi.club/openapi/articles/list?category=${this.eventName}&pageSize=1000`;
+      axios.get(url)
+        .then(response => {
+          this.events = response.data.data;
+        })
+        .catch(error => {
+          console.error(error);
+        });
     },
-    getCircleClass(item) {
-      return item ? 'circle-black' : 'circle-red';
+    getCircleClass(content) {
+      return content ? 'circle-black' : 'circle-red';
     },
     jumpTo(url) {
       window.open(url, '_blank');
@@ -77,7 +75,7 @@ export default {
   },
   computed: {
     processedContent() {
-      return function (content) {
+      return (content) => {
         if (!content) return '';
         return markdownToHtml(content);
       };
@@ -97,16 +95,10 @@ export default {
     }
   },
   created() {
-    this.eventName = this.$route.query.eventName;
-    const url = 'https://clock.cuiyi.club/openapi/articles/list?category=' + this.eventName +
-      '&thirdId=' + this.$route.query.thirdId + '&pageSize=1000';
-    axios.get(url)
-      .then(response => {
-        this.events = response.data.data;
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    this.eventName = this.$route.query.eventName || '';
+    if (this.eventName) {
+      this.fetchEvents();
+    }
   }
 };
 </script>
@@ -143,7 +135,6 @@ export default {
   flex-direction: column;
 }
 
-/* 手机端适配 */
 @media (max-width: 600px) {
   .timeline {
     width: 300px;
