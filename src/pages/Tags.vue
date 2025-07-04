@@ -37,6 +37,8 @@
       <button @click="removeDiv(selectedIndex)">删除</button>
       <button @click="copyContent(selectedIndex)">复制</button>
       <button @click="duplicateDiv(selectedIndex)">复制粘贴</button>
+      <button @click="enlargeDiv(selectedIndex)">放大</button>
+  <button @click="shrinkDiv(selectedIndex)">缩小</button>
     </div>
 
     <Toast ref="toast" />
@@ -171,6 +173,22 @@ export default {
         alert('复制失败: ' + err);
       });
     },
+    enlargeDiv(index) {
+      this.divs[index].width += 20;
+      this.divs[index].height += 20;
+      this.saveDivs();
+    },
+    shrinkDiv(index) {
+      const minWidth = 50;
+      if (this.divs[index].width <= minWidth) {
+        this.showToast('已经是最小尺寸了！');
+        return;
+      }
+      this.divs[index].width -= 20;
+      this.divs[index].height -= 20;
+      this.saveDivs();
+    },
+
     duplicateDiv(index) {
       const original = this.divs[index];
       const newDiv = {

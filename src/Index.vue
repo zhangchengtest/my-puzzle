@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>路由列表</h1>
+    <h1>大象</h1>
     <ul class="route-list">
       <li v-for="(route, index) in routes" :key="route.path">
         <span class="number">{{ index + 1 }}</span>
