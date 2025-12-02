@@ -18,6 +18,7 @@ const routes = [
       Task: '任务中心 - Elephant',
       Profile: '个人资料 - Elephant',
       Puzzle: '拼图挑战 - Elephant',
+      NumberSum: '数字求和工具 - Elephant',
       // 你可以继续补充更多组件名与标题的映射
     };
 
