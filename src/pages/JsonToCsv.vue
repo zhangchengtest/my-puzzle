@@ -74,7 +74,7 @@
                 :key="header" 
                 style="padding: 10px; border: 1px solid #ddd;"
               >
-                {{ row[header] !== undefined ? row[header] : '' }}
+                {{ formatValue(row[header]) }}
               </td>
             </tr>
           </tbody>
@@ -115,6 +115,15 @@ export default {
     }
   },
   methods: {
+    formatValue(value) {
+      if (value === null || value === undefined) return '';
+      // 如果是对象或数组，转换为JSON字符串显示
+      if (typeof value === 'object') {
+        return JSON.stringify(value);
+      }
+      return value;
+    },
+
     updatePreview() {
       this.errorMessage = '';
       this.previewData = [];
@@ -213,7 +222,13 @@ export default {
       const escapeCSVValue = (value) => {
         if (value === null || value === undefined) return '';
         
-        const stringValue = String(value);
+        // 如果是对象或数组，转换为JSON字符串
+        let stringValue;
+        if (typeof value === 'object') {
+          stringValue = JSON.stringify(value);
+        } else {
+          stringValue = String(value);
+        }
         
         // 如果包含逗号、引号、换行符，需要用引号包裹
         if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
@@ -266,11 +281,32 @@ export default {
     }
   },
   mounted() {
-    // 设置示例数据
+    // 设置示例数据（包含嵌套对象）
     const exampleData = [
-      { "姓名": "张三", "年龄": 25, "城市": "北京", "职业": "工程师" },
-      { "姓名": "李四", "年龄": 30, "城市": "上海", "职业": "设计师" },
-      { "姓名": "王五", "年龄": 28, "城市": "深圳", "职业": "产品经理" }
+      { 
+        "姓名": "张三", 
+        "年龄": 25, 
+        "城市": "北京", 
+        "职业": "工程师",
+        "联系方式": { "电话": "13800138000", "邮箱": "zhangsan@example.com" },
+        "技能": ["Java", "Python", "Vue"]
+      },
+      { 
+        "姓名": "李四", 
+        "年龄": 30, 
+        "城市": "上海", 
+        "职业": "设计师",
+        "联系方式": { "电话": "13900139000", "邮箱": "lisi@example.com" },
+        "技能": ["Photoshop", "Figma"]
+      },
+      { 
+        "姓名": "王五", 
+        "年龄": 28, 
+        "城市": "深圳", 
+        "职业": "产品经理",
+        "联系方式": { "电话": "13700137000", "邮箱": "wangwu@example.com" },
+        "技能": ["Axure", "数据分析", "用户研究"]
+      }
     ];
     this.jsonInput = JSON.stringify(exampleData, null, 2);
   }
