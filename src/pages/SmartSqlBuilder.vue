@@ -9,6 +9,7 @@
           <textarea
             id="sql-input"
             v-model="sqlInput"
+            @input="handleSqlInput"
             placeholder="请输入SQL语句，使用?作为参数占位符"
             class="sql-textarea"
           ></textarea>
@@ -57,6 +58,10 @@ const sqlInput = ref('')
 const paramsInput = ref('')
 const finalSql = ref('')
 const errorMessage = ref('')
+
+const handleSqlInput = (event) => {
+  sqlInput.value = event.target.value.replace(/\r?\n/g, '')
+}
 
 const formattedSql = computed(() => {
   if (!finalSql.value) return ''
