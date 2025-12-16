@@ -16,7 +16,12 @@
           <div class="item-content">
             <div class="item-header">
               <span class="item-title">内容位 {{ index + 1 }}</span>
-              <span class="item-time">{{ formatTime(item.lastTouch) }}</span>
+              <div class="item-meta">
+                <span class="item-ttl" :class="{ 'ttl-warning': item.ttl < 3, 'ttl-danger': item.ttl < 1 }">
+                  TTL: {{ formatTTL(item.ttl) }}
+                </span>
+                <span class="item-time">{{ formatTime(item.lastTouch) }}</span>
+              </div>
             </div>
             <div class="item-body">
               <p>{{ item.content }}</p>
@@ -57,16 +62,17 @@ let decayTimer = null
 const resetDecay = (index) => {
   items.value[index].opacity = INITIAL_OPACITY
   items.value[index].lastTouch = Date.now()
+  items.value[index].ttl = DECAY_DURATION / 1000
 }
 
 // 初始化项目数据
 const initItems = () => {
   return [
-    { id: 1, content: '这是第一条内容，如果你不触碰它，它会慢慢变淡直到消失。', opacity: INITIAL_OPACITY, lastTouch: Date.now() },
-    { id: 2, content: '第二条内容也在等待你的关注，时间会带走一切。', opacity: INITIAL_OPACITY, lastTouch: Date.now() },
-    { id: 3, content: '第三条内容提醒你：重要的东西需要持续关注才能保留。', opacity: INITIAL_OPACITY, lastTouch: Date.now() },
-    { id: 4, content: '第四条内容展示了时间的流逝，不触碰就会消失。', opacity: INITIAL_OPACITY, lastTouch: Date.now() },
-    { id: 5, content: '最后一条内容，记住：想留住它，你必须重新触碰它。', opacity: INITIAL_OPACITY, lastTouch: Date.now() }
+    { id: 1, content: '这是第一条内容，如果你不触碰它，它会慢慢变淡直到消失。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
+    { id: 2, content: '第二条内容也在等待你的关注，时间会带走一切。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
+    { id: 3, content: '第三条内容提醒你：重要的东西需要持续关注才能保留。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
+    { id: 4, content: '第四条内容展示了时间的流逝，不触碰就会消失。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
+    { id: 5, content: '最后一条内容，记住：想留住它，你必须重新触碰它。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 }
   ]
 }
 
@@ -85,6 +91,8 @@ const updateDecay = () => {
     } else {
       // 计算当前透明度
       item.opacity = Math.max(0, 1 - (timeSinceTouch / DECAY_DURATION))
+      // 更新TTL（剩余生存时间，单位：秒）
+      item.ttl = Math.max(0, (DECAY_DURATION - timeSinceTouch) / 1000)
     }
   }
   
@@ -104,6 +112,12 @@ const formatTime = (timestamp) => {
   } else {
     return `${Math.floor(seconds / 3600)}小时前`
   }
+}
+
+// 格式化TTL（保留1位小数）
+const formatTTL = (ttl) => {
+  if (ttl <= 0) return '0.0s'
+  return `${ttl.toFixed(1)}s`
 }
 
 onMounted(() => {
@@ -193,8 +207,47 @@ onUnmounted(() => {
   color: #333;
 }
 
+.item-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.item-ttl {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #667eea;
+  font-family: 'Courier New', monospace;
+  padding: 2px 8px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.item-ttl.ttl-warning {
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.item-ttl.ttl-danger {
+  color: #f44336;
+  background: rgba(244, 67, 54, 0.1);
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
 .item-time {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #6c757d;
 }
 
