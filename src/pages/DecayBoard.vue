@@ -10,12 +10,17 @@
           :key="item.id"
           class="decay-item"
           :style="{ opacity: item.opacity }"
-          @mouseenter="resetDecay(index)"
-          @click="resetDecay(index)"
+          @mouseenter="resetDecayOnly(index)"
+          @click="resetDecayAndLRU(index)"
         >
           <div class="item-content">
             <div class="item-header">
-              <span class="item-title">内容位 {{ index + 1 }}</span>
+              <div class="item-title-section">
+                <span class="item-title">内容位 {{ item.id }}</span>
+                <span class="item-lru" :class="{ 'lru-recent': item.lruRank === 1, 'lru-old': item.lruRank >= 4 }">
+                  LRU: #{{ item.lruRank }}
+                </span>
+              </div>
               <div class="item-meta">
                 <span class="item-ttl" :class="{ 'ttl-warning': item.ttl < 3, 'ttl-danger': item.ttl < 1 }">
                   TTL: {{ formatTTL(item.ttl) }}
@@ -39,7 +44,8 @@
       </div>
       
       <div class="info-section">
-        <p class="info-text">💡 提示：鼠标悬停或点击内容位可以重置衰减</p>
+        <p class="info-text">💡 提示：鼠标悬停可重置衰减，点击可重置衰减并更新LRU（点击后最近使用的会移到最前面）</p>
+        <p class="info-text-small">LRU #1 = 最近使用 | LRU #5 = 最久未使用（将被优先淘汰）</p>
       </div>
     </div>
   </div>
@@ -58,22 +64,55 @@ const items = ref([])
 
 let decayTimer = null
 
-// 重置衰减
-const resetDecay = (index) => {
-  items.value[index].opacity = INITIAL_OPACITY
-  items.value[index].lastTouch = Date.now()
-  items.value[index].ttl = DECAY_DURATION / 1000
+// 仅重置衰减（悬停时使用，不移动位置，避免抖动）
+const resetDecayOnly = (index) => {
+  const item = items.value[index]
+  item.opacity = INITIAL_OPACITY
+  item.lastTouch = Date.now()
+  item.ttl = DECAY_DURATION / 1000
+  // 更新LRU排名但不移动位置
+  updateLRURank()
+}
+
+// 重置衰减并更新LRU（点击时使用，会移动位置）
+const resetDecayAndLRU = (index) => {
+  const item = items.value[index]
+  item.opacity = INITIAL_OPACITY
+  item.lastTouch = Date.now()
+  item.ttl = DECAY_DURATION / 1000
+  
+  // LRU更新：将该项目移到数组最前面（最近使用）
+  items.value.splice(index, 1)
+  items.value.unshift(item)
+  
+  // 更新所有项目的LRU排名
+  updateLRURank()
+}
+
+// 更新LRU排名
+const updateLRURank = () => {
+  // 按最后触碰时间排序（最近的在前面）
+  const sorted = [...items.value].sort((a, b) => b.lastTouch - a.lastTouch)
+  
+  // 为每个项目分配LRU排名
+  items.value.forEach(item => {
+    const rank = sorted.findIndex(sortedItem => sortedItem.id === item.id) + 1
+    item.lruRank = rank
+  })
 }
 
 // 初始化项目数据
 const initItems = () => {
-  return [
-    { id: 1, content: '这是第一条内容，如果你不触碰它，它会慢慢变淡直到消失。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
-    { id: 2, content: '第二条内容也在等待你的关注，时间会带走一切。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
-    { id: 3, content: '第三条内容提醒你：重要的东西需要持续关注才能保留。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
-    { id: 4, content: '第四条内容展示了时间的流逝，不触碰就会消失。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 },
-    { id: 5, content: '最后一条内容，记住：想留住它，你必须重新触碰它。', opacity: INITIAL_OPACITY, lastTouch: Date.now(), ttl: DECAY_DURATION / 1000 }
+  const now = Date.now()
+  const items = [
+    { id: 1, content: '这是第一条内容，如果你不触碰它，它会慢慢变淡直到消失。', opacity: INITIAL_OPACITY, lastTouch: now, ttl: DECAY_DURATION / 1000, lruRank: 1 },
+    { id: 2, content: '第二条内容也在等待你的关注，时间会带走一切。', opacity: INITIAL_OPACITY, lastTouch: now - 100, ttl: DECAY_DURATION / 1000, lruRank: 2 },
+    { id: 3, content: '第三条内容提醒你：重要的东西需要持续关注才能保留。', opacity: INITIAL_OPACITY, lastTouch: now - 200, ttl: DECAY_DURATION / 1000, lruRank: 3 },
+    { id: 4, content: '第四条内容展示了时间的流逝，不触碰就会消失。', opacity: INITIAL_OPACITY, lastTouch: now - 300, ttl: DECAY_DURATION / 1000, lruRank: 4 },
+    { id: 5, content: '最后一条内容，记住：想留住它，你必须重新触碰它。', opacity: INITIAL_OPACITY, lastTouch: now - 400, ttl: DECAY_DURATION / 1000, lruRank: 5 }
   ]
+  // 按LRU排序（最近使用的在最前面）
+  return items.sort((a, b) => b.lastTouch - a.lastTouch)
 }
 
 // 更新衰减
@@ -86,7 +125,7 @@ const updateDecay = () => {
     const timeSinceTouch = now - item.lastTouch
     
     if (timeSinceTouch >= DECAY_DURATION) {
-      // 完全衰减，移除该项
+      // 完全衰减，移除该项（LRU淘汰）
       items.value.splice(i, 1)
     } else {
       // 计算当前透明度
@@ -95,6 +134,9 @@ const updateDecay = () => {
       item.ttl = Math.max(0, (DECAY_DURATION - timeSinceTouch) / 1000)
     }
   }
+  
+  // 更新LRU排名
+  updateLRURank()
   
   // 如果所有项都消失了，重新初始化
   if (items.value.length === 0) {
@@ -122,6 +164,7 @@ const formatTTL = (ttl) => {
 
 onMounted(() => {
   items.value = initItems()
+  updateLRURank()
   decayTimer = setInterval(updateDecay, DECAY_INTERVAL)
 })
 
@@ -201,10 +244,38 @@ onUnmounted(() => {
   margin-bottom: 12px;
 }
 
+.item-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .item-title {
   font-size: 1.2rem;
   font-weight: 600;
   color: #333;
+}
+
+.item-lru {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+  padding: 2px 8px;
+  background: rgba(108, 117, 125, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.item-lru.lru-recent {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+  font-weight: 700;
+}
+
+.item-lru.lru-old {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
 }
 
 .item-meta {
@@ -285,6 +356,12 @@ onUnmounted(() => {
 .info-text {
   color: #6c757d;
   font-size: 0.95rem;
+  margin: 0 0 8px 0;
+}
+
+.info-text-small {
+  color: #adb5bd;
+  font-size: 0.85rem;
   margin: 0;
 }
 
