@@ -44,6 +44,14 @@
             <span>{{ panData.timeBranch }}</span>
           </div>
           <div class="info-item">
+            <span class="label">时干支：</span>
+            <span>{{ panData.timeGanZhi }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">旬首：</span>
+            <span>{{ panData.xunShou }}</span>
+          </div>
+          <div class="info-item">
             <span class="label">日干支：</span>
             <span>{{ panData.dayGanZhi }}</span>
           </div>
@@ -205,10 +213,55 @@
                   </ul>
 
                   <p><strong>5. 值符值使：</strong></p>
+                  <p><strong>值符的确定过程（奇门遁甲排盘的关键步骤）：</strong></p>
+                  <ol>
+                    <li><strong>确定旬首：</strong>
+                      <p>根据预测时辰的天干地支找出对应的旬首。六十甲子中，旬首固定为：</p>
+                      <ul>
+                        <li>甲子旬（对应六仪：戊）</li>
+                        <li>甲戌旬（对应六仪：己）</li>
+                        <li>甲申旬（对应六仪：庚）</li>
+                        <li>甲午旬（对应六仪：辛）</li>
+                        <li>甲辰旬（对应六仪：壬）</li>
+                        <li>甲寅旬（对应六仪：癸）</li>
+                      </ul>
+                      <p>例如：时辰为甲午辛时，属于甲午辛旬，旬首即为甲午。</p>
+                    </li>
+                    <li><strong>定位旬首所遁六仪的落宫：</strong>
+                      <p>根据旬首确定其在地盘九宫中的位置。需要先依据节气判断阴阳遁局数（如阳遁一局或阴遁九局），再按九宫顺序（坎一宫至兑九宫）顺数或逆数排列六仪。</p>
+                      <p>例如：旬首甲午在阳遁一局中可能落于坎一宫。</p>
+                    </li>
+                    <li><strong>确定值符九星：</strong>
+                      <p>值符即为旬首所遁六仪所在宫位对应的本位九星。各宫位的本位星：</p>
+                      <ul>
+                        <li>坎一宫：天蓬星</li>
+                        <li>坤二宫：天芮星</li>
+                        <li>震三宫：天冲星</li>
+                        <li>巽四宫：天辅星</li>
+                        <li>中五宫：天禽星</li>
+                        <li>乾六宫：天心星</li>
+                        <li>兑七宫：天柱星</li>
+                        <li>艮八宫：天任星</li>
+                        <li>离九宫：天英星</li>
+                      </ul>
+                      <p>例如：坎一宫的本位星为天蓬星，则值符为天蓬星；若落中五宫，则取天禽星为值符。</p>
+                    </li>
+                    <li><strong>值符随时干落宫：</strong>
+                      <p>值符的最终落宫由时干决定，即值符跟随时干所在的宫位。</p>
+                      <p>例如：时干辛落坎一宫，则值符（如天蓬星）及其携带的六仪（辛）进入坎一宫，形成天盘布局。</p>
+                    </li>
+                  </ol>
+                  <p><strong>值使的确定过程：</strong></p>
+                  <ol>
+                    <li>值使是当值的八门</li>
+                    <li>值使门根据时辰确定，与值符的确定方法相同</li>
+                    <li>值使门跟随值符转动，在值符所在宫位</li>
+                  </ol>
+                  <p><strong>总结：</strong></p>
                   <ul>
-                    <li>值符：根据时辰确定，是当值的天干（六仪之一）</li>
-                    <li>值使：根据时辰确定，是当值的八门</li>
-                    <li>值符和值使都跟随时辰转动</li>
+                    <li>值符的确定是奇门遁甲排盘的关键步骤</li>
+                    <li>值符确定后，值符星和值使门都跟随值符所在宫位</li>
+                    <li>值符所在宫位是当前最重要的方位</li>
                   </ul>
 
                   <p><strong>6. 排盘步骤：</strong></p>
@@ -318,13 +371,22 @@ export default {
       // 获取当前所属的节气名称和元
       const currentYuan = this.getCurrentYuan(year, month, day, yuanType);
       
+      // 计算时干支（用于确定值符）
+      const timeGanZhi = this.getTimeGanZhi(year, month, day, hour);
+      
+      // 确定旬首
+      const xunShouInfo = this.getXunShou(timeGanZhi);
+      const xunShou = `${xunShouInfo.ganZhi}（${xunShouInfo.liuYi}）`;
+      
       // 生成九宫格数据
-      const grid = this.generateGrid(juNumber, hour);
+      const grid = this.generateGrid(juNumber, hour, timeGanZhi, dunType);
       
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
         lunarDate: lunarDate,
         timeBranch: timeBranch,
+        timeGanZhi: timeGanZhi,
+        xunShou: xunShou,
         solarTerm: solarTerm,
         currentYuan: currentYuan,
         dayGanZhi: dayGanZhi,
@@ -793,20 +855,179 @@ export default {
       
       return result || '未知';
     },
-    generateGrid(juNumber, hour) {
+    // 计算时干支
+    getTimeGanZhi(year, month, day, hour) {
+      // 计算日干支
+      const dayGanZhi = this.getDayGanZhi(year, month, day);
+      const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+      const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      
+      const dayGanIndex = gan.indexOf(dayGanZhi[0]);
+      
+      // 计算时辰的地支索引
+      const timeZhiIndex = Math.floor((hour + 1) / 2) % 12;
+      
+      // 时干计算公式：根据日干确定子时的时干，然后按顺序推算
+      // 甲己日：子时为甲子（时干索引0）
+      // 乙庚日：子时为丙子（时干索引2）
+      // 丙辛日：子时为戊子（时干索引4）
+      // 丁壬日：子时为庚子（时干索引6）
+      // 戊癸日：子时为壬子（时干索引8）
+      
+      let ziShiGanIndex;
+      if (dayGanIndex === 0 || dayGanIndex === 5) {
+        // 甲己日
+        ziShiGanIndex = 0; // 甲
+      } else if (dayGanIndex === 1 || dayGanIndex === 6) {
+        // 乙庚日
+        ziShiGanIndex = 2; // 丙
+      } else if (dayGanIndex === 2 || dayGanIndex === 7) {
+        // 丙辛日
+        ziShiGanIndex = 4; // 戊
+      } else if (dayGanIndex === 3 || dayGanIndex === 8) {
+        // 丁壬日
+        ziShiGanIndex = 6; // 庚
+      } else {
+        // 戊癸日（dayGanIndex === 4 || dayGanIndex === 9）
+        ziShiGanIndex = 8; // 壬
+      }
+      
+      // 根据子时的时干和当前时支计算时干
+      const timeGanIndex = (ziShiGanIndex + timeZhiIndex) % 10;
+      
+      return gan[timeGanIndex] + zhi[timeZhiIndex];
+    },
+    // 确定旬首
+    getXunShou(timeGanZhi) {
+      const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+      const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      
+      const timeGanIndex = gan.indexOf(timeGanZhi[0]);
+      const timeZhiIndex = zhi.indexOf(timeGanZhi[1]);
+      
+      // 计算旬首：找到最近的甲日
+      let xunShouGanIndex = timeGanIndex;
+      let xunShouZhiIndex = timeZhiIndex;
+      
+      // 向前找，直到找到甲日
+      while (xunShouGanIndex % 10 !== 0) {
+        xunShouGanIndex = (xunShouGanIndex - 1 + 10) % 10;
+        xunShouZhiIndex = (xunShouZhiIndex - 1 + 12) % 12;
+      }
+      
+      const xunShou = gan[xunShouGanIndex] + zhi[xunShouZhiIndex];
+      
+      // 确定旬首对应的六仪
+      const liuYiMap = {
+        '甲子': '戊',
+        '甲戌': '己',
+        '甲申': '庚',
+        '甲午': '辛',
+        '甲辰': '壬',
+        '甲寅': '癸'
+      };
+      
+      return {
+        ganZhi: xunShou,
+        liuYi: liuYiMap[xunShou] || '戊'
+      };
+    },
+    generateGrid(juNumber, hour, timeGanZhi, dunType) {
       // 天干
       const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       // 地支
       const diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       // 八门
       const baMen = ['休', '死', '伤', '杜', '中', '开', '惊', '生', '景'];
-      // 九星
+      // 九星（按宫位顺序：坎1、坤2、震3、巽4、中5、乾6、兑7、艮8、离9）
       const jiuXing = ['天蓬', '天芮', '天冲', '天辅', '天禽', '天心', '天柱', '天任', '天英'];
       // 八神
       const baShen = ['值符', '腾蛇', '太阴', '六合', '白虎', '玄武', '九地', '九天'];
       
       // 九宫格位置（洛书顺序）
-      const positions = [4, 9, 2, 3, 5, 7, 8, 1, 6]; // 中宫为5
+      const positions = [4, 9, 2, 3, 5, 7, 8, 1, 6]; // 巽4、离9、坤2、震3、中5、兑7、艮8、坎1、乾6
+      
+      // 1. 确定旬首
+      const xunShou = this.getXunShou(timeGanZhi);
+      
+      // 2. 定位旬首所遁六仪在地盘的位置
+      const isYangDun = dunType === '阳遁';
+      
+      // 六仪在地盘的排布顺序
+      const liuYiOrder = ['戊', '己', '庚', '辛', '壬', '癸'];
+      const liuYiIndex = liuYiOrder.indexOf(xunShou.liuYi);
+      
+      // 根据局数和阴阳遁，确定六仪在地盘的起始位置
+      // 阳遁：从局数对应的宫位开始，六仪顺行排布
+      // 阴遁：从局数对应的宫位开始，六仪逆行排布
+      // 简化：局数1-9对应宫位1-9（中5宫特殊处理）
+      let startGong = juNumber;
+      if (startGong === 5) startGong = 5; // 中5宫
+      
+      // 计算旬首六仪在地盘的宫位
+      let diPanGong;
+      if (isYangDun) {
+        // 阳遁：顺行
+        diPanGong = ((startGong - 1 + liuYiIndex) % 9) + 1;
+        if (diPanGong === 0) diPanGong = 9;
+      } else {
+        // 阴遁：逆行
+        diPanGong = ((startGong - 1 - liuYiIndex + 9) % 9) + 1;
+        if (diPanGong === 0) diPanGong = 9;
+      }
+      
+      // 3. 确定值符九星（该宫位的本位星）
+      const gongToStar = {
+        1: '天蓬', 2: '天芮', 3: '天冲', 4: '天辅', 5: '天禽',
+        6: '天心', 7: '天柱', 8: '天任', 9: '天英'
+      };
+      const zhiFuStar = gongToStar[diPanGong];
+      
+      // 4. 值符随时干落宫
+      // 需要找到时干在地盘的位置，然后值符跟随时干到天盘
+      const timeGan = timeGanZhi[0];
+      
+      // 先找到时干在地盘的位置（需要根据六仪三奇的排布）
+      // 简化：根据时干索引和局数推算时干在地盘的宫位
+      const timeGanIndex = tianGan.indexOf(timeGan);
+      
+      // 找到时干在地盘的宫位（需要根据实际的六仪三奇排布）
+      // 这里简化处理：根据时干和局数推算
+      let timeGanDiPanGong;
+      if (timeGanIndex < 6) {
+        // 时干是六仪之一
+        const liuYiIndex2 = timeGanIndex;
+        if (isYangDun) {
+          timeGanDiPanGong = ((startGong - 1 + liuYiIndex2) % 9) + 1;
+        } else {
+          timeGanDiPanGong = ((startGong - 1 - liuYiIndex2 + 9) % 9) + 1;
+        }
+        if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
+      } else {
+        // 时干是三奇之一（乙、丙、丁），需要特殊处理
+        // 简化：根据时干索引推算
+        timeGanDiPanGong = ((timeGanIndex + 1) % 9) + 1;
+        if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
+      }
+      
+      // 值符跟随时干，从地盘到天盘
+      // 值符从旬首六仪所在宫位（diPanGong）移动到时干所在宫位（timeGanDiPanGong）
+      const zhiFuPosition = timeGanDiPanGong;
+      
+      // 调试信息
+      console.log('值符计算详情:', {
+        timeGanZhi,
+        xunShou: xunShou.ganZhi,
+        xunShouLiuYi: xunShou.liuYi,
+        juNumber,
+        dunType,
+        diPanGong,
+        zhiFuStar,
+        timeGan,
+        timeGanIndex,
+        timeGanDiPanGong,
+        zhiFuPosition
+      });
       
       const grid = [];
       
@@ -815,13 +1036,19 @@ export default {
         const offset = (pos + juNumber - 1) % 10;
         const dizhiOffset = (hour + pos - 1) % 12;
         
+        // 确定值符是否在此宫位
+        let bashen = null;
+        if (pos === zhiFuPosition) {
+          bashen = '值符';
+        }
+        
         grid.push({
           position: pos,
           tiangan: tianGan[offset % 10],
           dizhi: diZhi[dizhiOffset % 12],
           bamen: baMen[i % 9],
           jiuxing: jiuXing[i % 9],
-          bashen: i === 0 ? baShen[0] : null // 值符在第一个位置
+          bashen: bashen
         });
       }
       
