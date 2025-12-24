@@ -9,6 +9,16 @@
           <input type="datetime-local" v-model="selectedDateTime" @change="calculatePan" />
           <button @click="useCurrentTime" class="btn-current">当前时间</button>
         </div>
+        <div class="question-group">
+          <label>求测事项：</label>
+          <textarea 
+            v-model="question" 
+            placeholder="请输入您想要求测的事情，例如：工作、感情、财运、健康等"
+            class="question-input"
+            rows="3"
+          ></textarea>
+          <button @click="analyzePan" class="btn-analyze" :disabled="!panData || !question">开始分析</button>
+        </div>
       </div>
 
       <div class="pan-section" v-if="panData">
@@ -64,6 +74,25 @@
                 <div class="legend-item">
                   <span class="legend-label">值使：</span>
                   <span class="legend-value">值使门所在宫位</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="analysis-result" v-if="analysisResult">
+              <h3>分析结果</h3>
+              <div class="result-content">
+                <div class="result-question">
+                  <strong>求测事项：</strong>{{ question }}
+                </div>
+                <div class="result-analysis">
+                  <div v-for="(item, index) in analysisResult.items" :key="index" class="result-item">
+                    <h4>{{ item.title }}</h4>
+                    <p>{{ item.content }}</p>
+                  </div>
+                </div>
+                <div class="result-summary">
+                  <h4>综合建议</h4>
+                  <p>{{ analysisResult.summary }}</p>
                 </div>
               </div>
             </div>
@@ -206,7 +235,9 @@ export default {
   data() {
     return {
       selectedDateTime: '',
-      panData: null
+      panData: null,
+      question: '',
+      analysisResult: null
     };
   },
   mounted() {
@@ -452,6 +483,161 @@ export default {
         classes.push('center');
       }
       return classes.join(' ');
+    },
+    analyzePan() {
+      if (!this.panData || !this.question) return;
+      
+      const grid = this.panData.grid;
+      const items = [];
+      
+      // 1. 分析值符值使
+      const zhiFuCell = grid.find(cell => cell.bashen === '值符');
+      if (zhiFuCell) {
+        items.push({
+          title: '值符分析',
+          content: `值符在${this.getPositionNameByPosition(zhiFuCell.position)}宫，${zhiFuCell.jiuxing}星当值，主${this.getStarMeaning(zhiFuCell.jiuxing)}。`
+        });
+      }
+      
+      // 2. 分析八门
+      const goodGates = ['开', '休', '生'];
+      const badGates = ['死', '惊', '伤'];
+      const gateAnalysis = grid.map(cell => {
+        if (goodGates.includes(cell.bamen)) {
+          return `${this.getPositionNameByPosition(cell.position)}宫${cell.bamen}门为吉门`;
+        } else if (badGates.includes(cell.bamen)) {
+          return `${this.getPositionNameByPosition(cell.position)}宫${cell.bamen}门为凶门`;
+        }
+        return null;
+      }).filter(item => item !== null);
+      
+      if (gateAnalysis.length > 0) {
+        items.push({
+          title: '八门分析',
+          content: gateAnalysis.join('；') + '。'
+        });
+      }
+      
+      // 3. 分析九星
+      const starAnalysis = [];
+      grid.forEach(cell => {
+        if (cell.jiuxing) {
+          starAnalysis.push(`${this.getPositionNameByPosition(cell.position)}宫${cell.jiuxing}星，${this.getStarMeaning(cell.jiuxing)}`);
+        }
+      });
+      
+      if (starAnalysis.length > 0) {
+        items.push({
+          title: '九星分析',
+          content: starAnalysis.slice(0, 3).join('；') + '。'
+        });
+      }
+      
+      // 4. 根据求测事项给出针对性分析
+      const questionType = this.getQuestionType(this.question);
+      let specificAnalysis = '';
+      
+      if (questionType === 'work') {
+        const workCell = grid.find(cell => cell.bamen === '开' || cell.bamen === '生');
+        if (workCell) {
+          specificAnalysis = `工作方面，建议关注${this.getPositionNameByPosition(workCell.position)}宫，${workCell.bamen}门主${this.getGateMeaning(workCell.bamen)}，有利于事业发展。`;
+        }
+      } else if (questionType === 'love') {
+        const loveCell = grid.find(cell => cell.bamen === '休' || cell.bamen === '生');
+        if (loveCell) {
+          specificAnalysis = `感情方面，${this.getPositionNameByPosition(loveCell.position)}宫${loveCell.bamen}门主${this.getGateMeaning(loveCell.bamen)}，感情运势较好。`;
+        }
+      } else if (questionType === 'money') {
+        const moneyCell = grid.find(cell => cell.bamen === '生' || cell.bamen === '开');
+        if (moneyCell) {
+          specificAnalysis = `财运方面，${this.getPositionNameByPosition(moneyCell.position)}宫${moneyCell.bamen}门主${this.getGateMeaning(moneyCell.bamen)}，财运较旺。`;
+        }
+      } else if (questionType === 'health') {
+        const healthCell = grid.find(cell => cell.jiuxing === '天芮' || cell.jiuxing === '天心');
+        if (healthCell) {
+          specificAnalysis = `健康方面，${this.getPositionNameByPosition(healthCell.position)}宫${healthCell.jiuxing}星主${this.getStarMeaning(healthCell.jiuxing)}，需注意身体健康。`;
+        }
+      }
+      
+      if (specificAnalysis) {
+        items.push({
+          title: '针对性分析',
+          content: specificAnalysis
+        });
+      }
+      
+      // 5. 综合建议
+      const summary = this.generateSummary(grid, questionType);
+      
+      this.analysisResult = {
+        items: items,
+        summary: summary
+      };
+    },
+    getPositionNameByPosition(position) {
+      const names = {
+        1: '坎', 2: '坤', 3: '震', 4: '巽', 5: '中',
+        6: '乾', 7: '兑', 8: '艮', 9: '离'
+      };
+      return names[position] || '';
+    },
+    getStarMeaning(star) {
+      const meanings = {
+        '天蓬': '主破败、盗贼',
+        '天芮': '主疾病、学习',
+        '天冲': '主冲动、行动',
+        '天辅': '主教育、辅助',
+        '天禽': '主中正、平衡',
+        '天心': '主医药、思考',
+        '天柱': '主破坏、口舌',
+        '天任': '主诚信、稳重',
+        '天英': '主急躁、光明'
+      };
+      return meanings[star] || '';
+    },
+    getGateMeaning(gate) {
+      const meanings = {
+        '休': '休息、休养',
+        '生': '生长、生机',
+        '伤': '伤害、损失',
+        '杜': '阻塞、隐藏',
+        '景': '美景、文书',
+        '死': '死亡、终结',
+        '惊': '惊恐、变动',
+        '开': '开放、通达'
+      };
+      return meanings[gate] || '';
+    },
+    getQuestionType(question) {
+      const q = question.toLowerCase();
+      if (q.includes('工作') || q.includes('事业') || q.includes('职业') || q.includes('升职')) {
+        return 'work';
+      } else if (q.includes('感情') || q.includes('恋爱') || q.includes('婚姻') || q.includes('爱情')) {
+        return 'love';
+      } else if (q.includes('财') || q.includes('钱') || q.includes('投资') || q.includes('生意')) {
+        return 'money';
+      } else if (q.includes('健康') || q.includes('身体') || q.includes('疾病') || q.includes('病')) {
+        return 'health';
+      }
+      return 'general';
+    },
+    generateSummary(grid, questionType) {
+      const goodGates = grid.filter(cell => ['开', '休', '生'].includes(cell.bamen));
+      const badGates = grid.filter(cell => ['死', '惊', '伤'].includes(cell.bamen));
+      
+      let summary = '综合来看，';
+      
+      if (goodGates.length > badGates.length) {
+        summary += '整体运势较好，吉门较多，有利于所求之事。';
+      } else if (badGates.length > goodGates.length) {
+        summary += '需要谨慎行事，凶门较多，建议等待时机或调整策略。';
+      } else {
+        summary += '运势平稳，吉凶参半，需要把握机会，规避风险。';
+      }
+      
+      summary += '建议关注值符所在宫位，这是当前最重要的方位。同时注意避开凶门所在方位，选择吉门方位行动。';
+      
+      return summary;
     }
   }
 };
@@ -516,6 +702,55 @@ export default {
 
 .btn-current:hover {
   background-color: #66b1ff;
+}
+
+.question-group {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.question-group label {
+  font-weight: bold;
+  color: #555;
+}
+
+.question-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.question-input:focus {
+  outline: none;
+  border-color: #409eff;
+}
+
+.btn-analyze {
+  padding: 10px 20px;
+  background-color: #67c23a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  align-self: flex-start;
+}
+
+.btn-analyze:hover:not(:disabled) {
+  background-color: #85ce61;
+}
+
+.btn-analyze:disabled {
+  background-color: #c0c4cc;
+  cursor: not-allowed;
 }
 
 .pan-section {
@@ -677,6 +912,84 @@ export default {
 
 .legend-value {
   color: #333;
+}
+
+.analysis-result {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f0f9ff;
+  border-radius: 8px;
+  border: 2px solid #409eff;
+}
+
+.analysis-result h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #409eff;
+  font-size: 20px;
+  border-bottom: 2px solid #409eff;
+  padding-bottom: 10px;
+}
+
+.result-content {
+  color: #333;
+}
+
+.result-question {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #409eff;
+}
+
+.result-question strong {
+  color: #409eff;
+}
+
+.result-analysis {
+  margin-bottom: 20px;
+}
+
+.result-item {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.result-item h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #409eff;
+  font-size: 16px;
+}
+
+.result-item p {
+  margin: 0;
+  line-height: 1.6;
+  color: #666;
+}
+
+.result-summary {
+  background-color: #fff9e6;
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid #e6a23c;
+}
+
+.result-summary h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #e6a23c;
+  font-size: 16px;
+}
+
+.result-summary p {
+  margin: 0;
+  line-height: 1.6;
+  color: #666;
 }
 
 .rules {
