@@ -32,6 +32,14 @@
             <span>{{ panData.lunarDate }}</span>
           </div>
           <div class="info-item">
+            <span class="label">节气：</span>
+            <span>{{ panData.solarTerm }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">元：</span>
+            <span>{{ panData.currentYuan }}</span>
+          </div>
+          <div class="info-item">
             <span class="label">时辰：</span>
             <span>{{ panData.timeBranch }}</span>
           </div>
@@ -298,10 +306,17 @@ export default {
       // 计算日干支（用于茅山法确定局数）
       const dayGanZhi = this.getDayGanZhi(year, month, day);
       
+      // 计算节气（显示上一个和上上一个节气）
+      const solarTerm = this.getRecentSolarTerms(year, month, day);
+      
       // 计算局数（茅山法）
       const juResult = this.calculateJuNumberByMaoshan(year, month, day, dayGanZhi);
       const juNumber = juResult.juNumber;
       const dunType = juResult.dunType; // 阳遁或阴遁
+      const yuanType = juResult.yuanType; // 上元、中元、下元
+      
+      // 获取当前所属的节气名称和元
+      const currentYuan = this.getCurrentYuan(year, month, day, yuanType);
       
       // 生成九宫格数据
       const grid = this.generateGrid(juNumber, hour);
@@ -310,6 +325,8 @@ export default {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
         lunarDate: lunarDate,
         timeBranch: timeBranch,
+        solarTerm: solarTerm,
+        currentYuan: currentYuan,
         dayGanZhi: dayGanZhi,
         juNumber: juNumber,
         dunType: dunType,
@@ -562,11 +579,112 @@ export default {
         yuanType: yuanType
       };
     },
+    // 获取当前所属的节气和元
+    getCurrentYuan(year, month, day, yuanType) {
+      // 找到当前日期所属的节气（最近的已过去的节气）
+      const allTerms = [
+        { name: '立春', month: 2, day: 4 },
+        { name: '雨水', month: 2, day: 19 },
+        { name: '惊蛰', month: 3, day: 6 },
+        { name: '春分', month: 3, day: 21 },
+        { name: '清明', month: 4, day: 5 },
+        { name: '谷雨', month: 4, day: 20 },
+        { name: '立夏', month: 5, day: 6 },
+        { name: '小满', month: 5, day: 21 },
+        { name: '芒种', month: 6, day: 6 },
+        { name: '夏至', month: 6, day: 21 },
+        { name: '小暑', month: 7, day: 7 },
+        { name: '大暑', month: 7, day: 23 },
+        { name: '立秋', month: 8, day: 8 },
+        { name: '处暑', month: 8, day: 23 },
+        { name: '白露', month: 9, day: 8 },
+        { name: '秋分', month: 9, day: 23 },
+        { name: '寒露', month: 10, day: 8 },
+        { name: '霜降', month: 10, day: 23 },
+        { name: '立冬', month: 11, day: 8 },
+        { name: '小雪', month: 11, day: 22 },
+        { name: '大雪', month: 12, day: 7 },
+        { name: '冬至', month: 12, day: 21 },
+        { name: '小寒', month: 1, day: 6 },
+        { name: '大寒', month: 1, day: 20 }
+      ];
+      
+      const currentDate = new Date(year, month - 1, day);
+      
+      // 找到最近的已过去的节气和下一个节气
+      let currentTerm = null;
+      let nextTerm = null;
+      let minDaysDiff = Infinity;
+      let minFutureDaysDiff = Infinity;
+      
+      for (let term of allTerms) {
+        let termDate = new Date(year, term.month - 1, term.day);
+        
+        // 处理跨年
+        if (month === 1 && term.month === 12) {
+          termDate = new Date(year - 1, term.month - 1, term.day);
+        }
+        if (month === 12 && term.month === 1) {
+          termDate = new Date(year + 1, term.month - 1, term.day);
+        }
+        
+        const daysDiff = Math.floor((currentDate - termDate) / 86400000);
+        
+        // 找到已过去且最接近的节气
+        if (daysDiff >= 0 && daysDiff < minDaysDiff && daysDiff < 15) {
+          minDaysDiff = daysDiff;
+          currentTerm = term;
+        }
+        
+        // 找到未来的且最接近的节气
+        if (daysDiff < 0 && Math.abs(daysDiff) < minFutureDaysDiff) {
+          minFutureDaysDiff = Math.abs(daysDiff);
+          nextTerm = term;
+        }
+      }
+      
+      // 如果找不到当前节气，使用简化处理
+      if (!currentTerm) {
+        // 简化处理：根据月份判断
+        if (month === 12 && day >= 21) {
+          currentTerm = { name: '冬至' };
+        } else if (month === 12 && day >= 7) {
+          currentTerm = { name: '大雪' };
+        } else if (month === 11 && day >= 22) {
+          currentTerm = { name: '小雪' };
+        } else if (month === 11 && day >= 8) {
+          currentTerm = { name: '立冬' };
+        } else {
+          currentTerm = { name: '冬至' }; // 默认
+        }
+      }
+      
+      // 如果找不到下一个节气，根据当前节气推算
+      if (!nextTerm && currentTerm) {
+        const currentIndex = allTerms.findIndex(t => t.name === currentTerm.name);
+        if (currentIndex !== -1) {
+          const nextIndex = (currentIndex + 1) % allTerms.length;
+          nextTerm = allTerms[nextIndex];
+        }
+      }
+      
+      // 格式化显示：当前节气的元（下一个节气+日期）
+      let result = currentTerm ? `${currentTerm.name}${yuanType}` : `${yuanType}`;
+      if (nextTerm) {
+        result += `（${nextTerm.name}${nextTerm.month}月${nextTerm.day}日）`;
+      }
+      
+      return result;
+    },
     // 计算一年中的第几天
     getDayOfYear(year, month, day) {
       const startOfYear = new Date(year, 0, 1);
       const currentDate = new Date(year, month - 1, day);
       return Math.floor((currentDate - startOfYear) / 86400000) + 1;
+    },
+    // 判断是否是闰年
+    isLeapYear(year) {
+      return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
     },
     getSolarTerm(year, month, day) {
       // 简化版节气判断
@@ -588,6 +706,92 @@ export default {
       }
       // 9月、10月、11月：秋分后，阴遁
       return 9; // 阴遁
+    },
+    // 获取最近的节气（上一个和上上一个）
+    getRecentSolarTerms(year, month, day) {
+      // 24节气的顺序和大致日期（简化版，实际应该精确计算）
+      // 格式：{name: '节气名', month: 月份, day: 日期}
+      const allTerms = [
+        { name: '立春', month: 2, day: 4 },
+        { name: '雨水', month: 2, day: 19 },
+        { name: '惊蛰', month: 3, day: 6 },
+        { name: '春分', month: 3, day: 21 },
+        { name: '清明', month: 4, day: 5 },
+        { name: '谷雨', month: 4, day: 20 },
+        { name: '立夏', month: 5, day: 6 },
+        { name: '小满', month: 5, day: 21 },
+        { name: '芒种', month: 6, day: 6 },
+        { name: '夏至', month: 6, day: 21 },
+        { name: '小暑', month: 7, day: 7 },
+        { name: '大暑', month: 7, day: 23 },
+        { name: '立秋', month: 8, day: 8 },
+        { name: '处暑', month: 8, day: 23 },
+        { name: '白露', month: 9, day: 8 },
+        { name: '秋分', month: 9, day: 23 },
+        { name: '寒露', month: 10, day: 8 },
+        { name: '霜降', month: 10, day: 23 },
+        { name: '立冬', month: 11, day: 8 },
+        { name: '小雪', month: 11, day: 22 },
+        { name: '大雪', month: 12, day: 7 },
+        { name: '冬至', month: 12, day: 21 },
+        { name: '小寒', month: 1, day: 6 },
+        { name: '大寒', month: 1, day: 20 }
+      ];
+      
+      // 将当前日期转换为一年中的天数，方便比较
+      const currentDayOfYear = this.getDayOfYear(year, month, day);
+      
+      // 将所有节气转换为相对于当前日期的天数差
+      const currentDate = new Date(year, month - 1, day);
+      const termsWithDayOfYear = allTerms.map(term => {
+        // 计算节气的日期
+        let termDate = new Date(year, term.month - 1, term.day);
+        
+        // 处理跨年：如果当前是1月，12月的节气算作去年的
+        if (month === 1 && term.month === 12) {
+          termDate = new Date(year - 1, term.month - 1, term.day);
+        }
+        // 处理跨年：如果当前是12月，1月的节气（小寒、大寒）算作下一年的
+        if (month === 12 && term.month === 1) {
+          termDate = new Date(year + 1, term.month - 1, term.day);
+        }
+        
+        // 计算天数差（负数表示已过去）
+        const daysDiff = Math.floor((termDate - currentDate) / 86400000);
+        
+        return {
+          ...term,
+          date: termDate,
+          daysDiff: daysDiff
+        };
+      });
+      
+      // 找到已过去的最近两个节气（daysDiff < 0，且最接近0）
+      const pastTerms = termsWithDayOfYear
+        .filter(term => term.daysDiff < 0)
+        .sort((a, b) => b.daysDiff - a.daysDiff); // 按daysDiff降序排列（最接近0的在前面）
+      
+      let lastTerm = null;
+      let secondLastTerm = null;
+      
+      if (pastTerms.length > 0) {
+        lastTerm = pastTerms[0]; // 上一个节气
+      }
+      if (pastTerms.length > 1) {
+        secondLastTerm = pastTerms[1]; // 上上一个节气
+      }
+      
+      // 格式化显示
+      let result = '';
+      if (lastTerm) {
+        result = `${lastTerm.month}月${lastTerm.day}日${lastTerm.name}`;
+      }
+      if (secondLastTerm) {
+        if (result) result += '，';
+        result += `${secondLastTerm.month}月${secondLastTerm.day}日${secondLastTerm.name}`;
+      }
+      
+      return result || '未知';
     },
     generateGrid(juNumber, hour) {
       // 天干
