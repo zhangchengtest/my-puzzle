@@ -36,8 +36,12 @@
             <span>{{ panData.timeBranch }}</span>
           </div>
           <div class="info-item">
+            <span class="label">日干支：</span>
+            <span>{{ panData.dayGanZhi }}</span>
+          </div>
+          <div class="info-item">
             <span class="label">局数：</span>
-            <span>{{ panData.juNumber }}局</span>
+            <span>{{ panData.dunType }}{{ panData.juNumber }}局</span>
           </div>
         </div>
 
@@ -102,6 +106,13 @@
             <div class="rules">
               <h3>排盘规则</h3>
               <div class="rule-section">
+                <h4>排盘方法</h4>
+                <div class="rule-content">
+                  <p><strong>时家奇门：</strong>以时辰为主进行排盘，每个时辰一个盘。</p>
+                  <p><strong>茅山法：</strong>根据日干支和节气确定局数的方法。</p>
+                </div>
+              </div>
+              <div class="rule-section">
                 <h4>一、九宫格布局（洛书顺序）</h4>
                 <div class="rule-content">
                   <p>九宫格按洛书数字排列：</p>
@@ -120,14 +131,29 @@
               </div>
 
               <div class="rule-section">
-                <h4>二、局数计算</h4>
+                <h4>二、茅山法确定局数</h4>
                 <div class="rule-content">
-                  <p>根据节气确定阳遁或阴遁，再根据日干支计算局数：</p>
+                  <p><strong>1. 确定阴阳遁：</strong></p>
                   <ul>
-                    <li>冬至后到夏至前为阳遁</li>
-                    <li>夏至后到冬至前为阴遁</li>
-                    <li>局数范围：1-9局</li>
+                    <li>冬至后到夏至前为<strong>阳遁</strong></li>
+                    <li>夏至后到冬至前为<strong>阴遁</strong></li>
                   </ul>
+                  
+                  <p><strong>2. 根据日干支确定上中下元：</strong></p>
+                  <ul>
+                    <li><strong>上元：</strong>甲子、己卯、甲午、己酉</li>
+                    <li><strong>中元：</strong>甲戌、己丑、甲辰、己未</li>
+                    <li><strong>下元：</strong>甲申、己亥、甲寅、己巳</li>
+                  </ul>
+                  
+                  <p><strong>3. 确定局数：</strong></p>
+                  <ul>
+                    <li><strong>阳遁：</strong>上元1局、中元4局、下元7局</li>
+                    <li><strong>阴遁：</strong>上元9局、中元6局、下元3局</li>
+                  </ul>
+                  
+                  <p><strong>4. 非甲己日的推算：</strong></p>
+                  <p>如果不是甲己日，需要根据节气推算所属的元，每5天一个循环，每15天一个元。</p>
                 </div>
               </div>
 
@@ -269,8 +295,13 @@ export default {
       // 计算时辰
       const timeBranch = this.getTimeBranch(hour);
       
-      // 计算局数（简化算法）
-      const juNumber = this.calculateJuNumber(year, month, day, hour);
+      // 计算日干支（用于茅山法确定局数）
+      const dayGanZhi = this.getDayGanZhi(year, month, day);
+      
+      // 计算局数（茅山法）
+      const juResult = this.calculateJuNumberByMaoshan(year, month, day, dayGanZhi);
+      const juNumber = juResult.juNumber;
+      const dunType = juResult.dunType; // 阳遁或阴遁
       
       // 生成九宫格数据
       const grid = this.generateGrid(juNumber, hour);
@@ -279,7 +310,9 @@ export default {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
         lunarDate: lunarDate,
         timeBranch: timeBranch,
+        dayGanZhi: dayGanZhi,
         juNumber: juNumber,
+        dunType: dunType,
         grid: grid
       };
     },
@@ -415,26 +448,146 @@ export default {
       const index = Math.floor((hour + 1) / 2) % 12;
       return branches[index] + '时';
     },
-    calculateJuNumber(year, month, day, hour) {
-      // 简化版局数计算
-      // 实际奇门遁甲局数计算比较复杂，这里用简化算法
-      const solarTerm = this.getSolarTerm(month, day);
-      const isYangDun = solarTerm >= 0 && solarTerm <= 5; // 阳遁
+    // 计算日干支
+    getDayGanZhi(year, month, day) {
+      // 使用已知的准确日期作为基准：2025年12月24日是丁卯日
+      // 丁卯：天干索引3，地支索引3
+      const baseDate = new Date(2025, 11, 24); // 2025年12月24日，丁卯日
+      const baseGanIndex = 3; // 丁
+      const baseZhiIndex = 3; // 卯
       
-      if (isYangDun) {
-        // 阳遁：冬至后到夏至前
-        return ((month * 2 + day) % 9) + 1;
-      } else {
-        // 阴遁：夏至后到冬至前
-        return ((month * 2 + day) % 9) + 1;
-      }
+      const targetDate = new Date(year, month - 1, day);
+      const daysDiff = Math.floor((targetDate - baseDate) / 86400000);
+      
+      const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+      const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      
+      // 计算目标日期的干支索引
+      const ganIndex = ((baseGanIndex + daysDiff) % 10 + 10) % 10;
+      const zhiIndex = ((baseZhiIndex + daysDiff) % 12 + 12) % 12;
+      
+      return gan[ganIndex] + zhi[zhiIndex];
     },
-    getSolarTerm(month, day) {
+    // 茅山法确定局数
+    calculateJuNumberByMaoshan(year, month, day, dayGanZhi) {
+      // 判断是阳遁还是阴遁（根据节气）
+      const solarTerm = this.getSolarTerm(year, month, day);
+      const isYangDun = solarTerm >= 0 && solarTerm <= 5; // 阳遁：冬至后到夏至前
+      
+      // 茅山法：根据日干支确定局数
+      // 阳遁上元：甲子、己卯、甲午、己酉 → 1局
+      // 阳遁中元：甲戌、己丑、甲辰、己未 → 4局
+      // 阳遁下元：甲申、己亥、甲寅、己巳 → 7局
+      // 阴遁上元：甲子、己卯、甲午、己酉 → 9局
+      // 阴遁中元：甲戌、己丑、甲辰、己未 → 6局
+      // 阴遁下元：甲申、己亥、甲寅、己巳 → 3局
+      
+      const gan = dayGanZhi[0];
+      const zhi = dayGanZhi[1];
+      
+      // 判断是上元、中元还是下元（茅山法）
+      let yuanType = ''; // 上元、中元、下元
+      
+      const zhiIndex = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(zhi);
+      
+      // 茅山法：根据日干支确定元
+      // 上元：甲子、己卯、甲午、己酉（子、卯、午、酉，索引0,3,6,9）
+      // 中元：甲戌、己丑、甲辰、己未（戌、丑、辰、未，索引10,1,4,7）
+      // 下元：甲申、己亥、甲寅、己巳（申、亥、寅、巳，索引8,11,2,5）
+      
+      if (gan === '甲' || gan === '己') {
+        // 甲己日直接判断
+        if ([0, 3, 6, 9].includes(zhiIndex)) {
+          yuanType = '上元';
+        } else if ([10, 1, 4, 7].includes(zhiIndex)) {
+          yuanType = '中元';
+        } else if ([8, 11, 2, 5].includes(zhiIndex)) {
+          yuanType = '下元';
+        }
+      } else {
+        // 非甲己日，需要找到最近的甲己日（向前找）
+        // 计算距离上一个甲己日的天数
+        const ganIndex = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'].indexOf(gan);
+        let daysToJiaJi = ganIndex % 5;
+        if (daysToJiaJi === 0) {
+          // 这种情况不应该出现（因为上面已经判断了甲己日）
+          // 但作为备用，向前找5天
+          daysToJiaJi = 5;
+        }
+        
+        // 推算上一个甲己日的地支（向前推算daysToJiaJi天）
+        // 天干每5天循环一次，地支每12天循环一次
+        let prevZhiIndex = (zhiIndex - daysToJiaJi + 12) % 12;
+        
+        // 根据推算出的甲己日地支确定元
+        if ([0, 3, 6, 9].includes(prevZhiIndex)) {
+          yuanType = '上元';
+        } else if ([10, 1, 4, 7].includes(prevZhiIndex)) {
+          yuanType = '中元';
+        } else if ([8, 11, 2, 5].includes(prevZhiIndex)) {
+          yuanType = '下元';
+        }
+      }
+      
+      // 如果还是无法确定，使用简化方法（根据节气内的位置）
+      // 每个节气15天，分为上中下三元，每元5天
+      if (!yuanType) {
+        // 简化：根据当前日期在节气内的位置推算
+        // 这里需要知道当前是哪个节气，简化处理：根据月份和日期推算
+        const dayOfYear = this.getDayOfYear(year, month, day);
+        // 每个节气大约15天，简化处理
+        const cycleDay = dayOfYear % 15;
+        if (cycleDay < 5) yuanType = '上元';
+        else if (cycleDay < 10) yuanType = '中元';
+        else yuanType = '下元';
+      }
+      
+      // 根据元类型和阴阳遁确定局数
+      let juNumber;
+      if (isYangDun) {
+        // 阳遁
+        if (yuanType === '上元') juNumber = 1;
+        else if (yuanType === '中元') juNumber = 4;
+        else juNumber = 7;
+      } else {
+        // 阴遁
+        if (yuanType === '上元') juNumber = 9;
+        else if (yuanType === '中元') juNumber = 6;
+        else juNumber = 3;
+      }
+      
+      return {
+        juNumber: juNumber,
+        dunType: isYangDun ? '阳遁' : '阴遁',
+        yuanType: yuanType
+      };
+    },
+    // 计算一年中的第几天
+    getDayOfYear(year, month, day) {
+      const startOfYear = new Date(year, 0, 1);
+      const currentDate = new Date(year, month - 1, day);
+      return Math.floor((currentDate - startOfYear) / 86400000) + 1;
+    },
+    getSolarTerm(year, month, day) {
       // 简化版节气判断
       // 实际应该精确计算节气
-      if (month === 12 || month <= 2) return 0; // 冬至附近
-      if (month >= 6 && month <= 8) return 6; // 夏至附近
-      return 3; // 其他
+      // 返回0-5表示阳遁（冬至后到夏至前），6-11表示阴遁（夏至后到冬至前）
+      // 冬至通常在12月21-23日，夏至通常在6月21-23日
+      
+      // 12月、1月、2月：冬至后，阳遁
+      if (month === 12 || month === 1 || month === 2) {
+        return 0; // 阳遁
+      }
+      // 6月、7月、8月：夏至后，阴遁
+      if (month === 6 || month === 7 || month === 8) {
+        return 6; // 阴遁
+      }
+      // 3月、4月、5月：春分后，阳遁
+      if (month === 3 || month === 4 || month === 5) {
+        return 3; // 阳遁
+      }
+      // 9月、10月、11月：秋分后，阴遁
+      return 9; // 阴遁
     },
     generateGrid(juNumber, hour) {
       // 天干
