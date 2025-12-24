@@ -2,7 +2,7 @@
   <div style="padding: 20px; font-family: monospace; max-width: 1200px; margin: 0 auto;">
     <h2>文本格式化工具</h2>
     <p style="color: #666; margin-bottom: 20px;">
-      输入由空格或换行符分隔的数据，自动用单引号包裹并用逗号分隔
+      输入文本数据，选择相应的格式化功能进行处理
     </p>
 
     <!-- 输入框 -->
@@ -10,7 +10,6 @@
       <label style="display: block; margin-bottom: 8px; font-weight: bold;">输入数据：</label>
       <textarea
         v-model="input"
-        @input="formatText"
         rows="15"
         placeholder="请输入数据，支持空格或换行符分隔，例如：&#10;apple&#10;banana&#10;orange&#10;或者：apple banana orange"
         style="width: 100%; font-family: monospace; font-size: 14px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;"
@@ -18,19 +17,21 @@
     </div>
 
     <div style="margin-bottom: 20px;">
+      <button @click="formatText" :disabled="!input.trim()" style="margin-right: 10px; background-color: #409eff;">格式化（单引号+逗号）</button>
+      <button @click="removeNewlines" :disabled="!input.trim()" style="margin-right: 10px; background-color: #e6a23c;">去掉换行符</button>
       <button @click="clearInput" style="margin-right: 10px;">清空输入</button>
       <button @click="copyResult" :disabled="!formattedResult" style="background-color: #67c23a;">复制结果</button>
     </div>
 
     <!-- 结果显示 -->
     <div v-if="formattedResult" style="margin-top: 20px;">
-      <h3>格式化结果：</h3>
+      <h3>处理结果：</h3>
       <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
-        <div style="margin-bottom: 10px;">
+        <div v-if="items.length > 0" style="margin-bottom: 10px;">
           <strong>数据项数量：</strong> {{ items.length }} 个
         </div>
         <div style="margin-bottom: 10px;">
-          <strong>格式化后的文本：</strong>
+          <strong>处理后的文本：</strong>
           <div style="margin-top: 10px; padding: 10px; background-color: white; border-radius: 4px; word-break: break-all;">
             <pre style="margin: 0; white-space: pre-wrap;">{{ formattedResult }}</pre>
           </div>
@@ -89,6 +90,19 @@ export default {
         }
       } catch (e) {
         console.error('格式化出错：', e);
+      }
+    },
+    removeNewlines() {
+      if (!this.input.trim()) {
+        return;
+      }
+      
+      try {
+        // 去掉所有换行符（包括 \n 和 \r），替换为空格
+        this.formattedResult = this.input.replace(/\r?\n/g, ' ');
+        this.items = [];
+      } catch (e) {
+        console.error('去掉换行符出错：', e);
       }
     },
     clearInput() {
