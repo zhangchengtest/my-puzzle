@@ -59,6 +59,10 @@
             <span class="label">局数：</span>
             <span>{{ panData.dunType }}{{ panData.juNumber }}局</span>
           </div>
+          <div class="info-item" v-if="panData.zhiShiMen">
+            <span class="label">值使门：</span>
+            <span>{{ panData.zhiShiMen }}门</span>
+          </div>
         </div>
 
         <div class="pan-content">
@@ -95,6 +99,7 @@
                   <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
                     <span>{{ cell.bamenTianPan }}</span>
                     <span class="info-label">天盘门</span>
+                    <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
                   </div>
                   <div class="cell-jiuxing">
                     <span>{{ cell.jiuxing }}</span>
@@ -457,6 +462,10 @@ export default {
       // 生成九宫格数据
       const grid = this.generateGrid(juNumber, hour, timeGanZhi, dunType);
       
+      // 从grid中提取值使门信息
+      const zhiShiMenCell = grid.find(cell => cell.isZhiShiMen);
+      const zhiShiMen = zhiShiMenCell ? zhiShiMenCell.zhiShiMen : '';
+      
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
         lunarDate: lunarDate,
@@ -468,6 +477,7 @@ export default {
         dayGanZhi: dayGanZhi,
         juNumber: juNumber,
         dunType: dunType,
+        zhiShiMen: zhiShiMen,
         grid: grid
       };
     },
@@ -1065,6 +1075,18 @@ export default {
       };
       const zhiFuStar = gongToStar[diPanGong];
       
+      // 3.5. 确定值使门（根据旬首）
+      // 甲子->休门，甲戌->死门，甲申->伤门，甲午->杜门，甲辰->开门，甲寅->惊门
+      const xunShouToMen = {
+        '甲子': '休',
+        '甲戌': '死',
+        '甲申': '伤',
+        '甲午': '杜',
+        '甲辰': '开',
+        '甲寅': '惊'
+      };
+      const zhiShiMen = xunShouToMen[xunShou.ganZhi] || '休';
+      
       // 4. 值符跟随时干落宫（天盘）
       // 公式：直符落宫数 = 局数 + 时干在三奇六仪中所对应的次序数 - 1
       // 三奇六仪次序数：
@@ -1221,6 +1243,9 @@ export default {
           bashen = '值符';
         }
         
+        // 确定值使门是否在此宫位（值使门跟随值符移动）
+        let isZhiShiMen = (pos === zhiFuPosition);
+        
         grid.push({
           position: pos,
           tianganDiPan: tianganDiPan,
@@ -1229,7 +1254,9 @@ export default {
           bamenDiPan: bamenDiPan,
           bamenTianPan: bamenTianPan,
           jiuxing: jiuXing[i % 9],
-          bashen: bashen
+          bashen: bashen,
+          isZhiShiMen: isZhiShiMen,
+          zhiShiMen: zhiShiMen
         });
       }
       
@@ -1671,6 +1698,15 @@ export default {
   gap: 4px;
   margin: 3px 0;
   flex-wrap: wrap;
+}
+
+.zhi-shi-label {
+  font-size: 10px;
+  color: #fff;
+  background-color: #f56c6c;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: bold;
 }
 
 .cell-jiuxing {
