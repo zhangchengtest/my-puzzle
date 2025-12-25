@@ -1039,27 +1039,30 @@ export default {
       // 需要找到时干在地盘的位置，然后值符跟随时干到天盘
       const timeGan = timeGanZhi[0];
       
-      // 先找到时干在地盘的位置（需要根据六仪三奇的排布）
-      // 简化：根据时干索引和局数推算时干在地盘的宫位
-      const timeGanIndex = tianGan.indexOf(timeGan);
+      // 六仪三奇的完整顺序：戊、己、庚、辛、壬、癸、丁、丙、乙
+      const liuYiSanQiOrder = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
       
-      // 找到时干在地盘的宫位（需要根据实际的六仪三奇排布）
-      // 这里简化处理：根据时干和局数推算
+      // 先找到时干在地盘的位置（需要根据六仪三奇的排布）
+      const timeGanIndex = tianGan.indexOf(timeGan);
+      const timeGanOrderIndex = liuYiSanQiOrder.indexOf(timeGan);
+      
       let timeGanDiPanGong;
-      if (timeGanIndex < 6) {
-        // 时干是六仪之一
-        const liuYiIndex2 = timeGanIndex;
+      if (timeGanOrderIndex >= 0) {
+        // 时干在六仪三奇序列中
         if (isYangDun) {
-          timeGanDiPanGong = ((startGong - 1 + liuYiIndex2) % 9) + 1;
+          // 阳遁：从局数对应的宫位开始，六仪三奇顺行排布
+          // 例如：阳遁1局，戊在坎1宫（索引0），癸在乾6宫（索引5）
+          timeGanDiPanGong = ((startGong - 1 + timeGanOrderIndex) % 9) + 1;
+          if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
         } else {
-          timeGanDiPanGong = ((startGong - 1 - liuYiIndex2 + 9) % 9) + 1;
+          // 阴遁：从局数对应的宫位开始，六仪三奇逆行排布
+          timeGanDiPanGong = ((startGong - 1 - timeGanOrderIndex + 9) % 9) + 1;
+          if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
         }
-        if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
       } else {
-        // 时干是三奇之一（乙、丙、丁），需要特殊处理
-        // 简化：根据时干索引推算
-        timeGanDiPanGong = ((timeGanIndex + 1) % 9) + 1;
-        if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
+        // 时干是甲（索引0），甲隐藏于六仪中，不单独出现
+        // 如果时干是甲，应该找到旬首对应的六仪位置
+        timeGanDiPanGong = diPanGong;
       }
       
       // 值符跟随时干，从地盘到天盘
@@ -1073,20 +1076,40 @@ export default {
         xunShouLiuYi: xunShou.liuYi,
         juNumber,
         dunType,
+        startGong,
         diPanGong,
         zhiFuStar,
         timeGan,
         timeGanIndex,
+        timeGanOrderIndex,
         timeGanDiPanGong,
         zhiFuPosition
       });
+      
+      // 计算每个宫位的天干（地盘）
+      const getTianganByGong = (gong) => {
+        // 九宫顺序：1坎、2坤、3震、4巽、5中、6乾、7兑、8艮、9离
+        // 计算该宫位在六仪三奇序列中的索引
+        let orderIndex;
+        if (isYangDun) {
+          // 阳遁：从局数对应的宫位开始，六仪三奇顺行排布
+          // 例如：阳遁1局，戊在坎1宫（gong=1），索引0
+          orderIndex = ((gong - startGong + 9) % 9);
+        } else {
+          // 阴遁：从局数对应的宫位开始，六仪三奇逆行排布
+          orderIndex = ((startGong - gong + 9) % 9);
+        }
+        return liuYiSanQiOrder[orderIndex];
+      };
       
       const grid = [];
       
       for (let i = 0; i < 9; i++) {
         const pos = positions[i];
-        const offset = (pos + juNumber - 1) % 10;
         const dizhiOffset = (hour + pos - 1) % 12;
+        
+        // 计算该宫位的天干（地盘）
+        const tiangan = getTianganByGong(pos);
         
         // 确定值符是否在此宫位
         let bashen = null;
@@ -1096,7 +1119,7 @@ export default {
         
         grid.push({
           position: pos,
-          tiangan: tianGan[offset % 10],
+          tiangan: tiangan,
           dizhi: diZhi[dizhiOffset % 12],
           bamen: baMen[i % 9],
           jiuxing: jiuXing[i % 9],
