@@ -63,6 +63,22 @@
             <span class="label">值使门：</span>
             <span>{{ panData.zhiShiMen }}门</span>
           </div>
+          <div class="info-item" v-if="panData.zhiShiMenPosition">
+            <span class="label">值使落宫：</span>
+            <span>{{ panData.zhiShiMenPosition }}宫</span>
+          </div>
+          <div class="info-item" v-if="panData.zhiShiMenXuShu !== undefined">
+            <span class="label">值使序数：</span>
+            <span>{{ panData.zhiShiMenXuShu }}</span>
+          </div>
+          <div class="info-item" v-if="panData.timeGanXuShuInTianGan !== undefined">
+            <span class="label">时干在十天干中序数：</span>
+            <span>{{ panData.timeGanXuShuInTianGan }}</span>
+          </div>
+          <div class="info-item" v-if="panData.zhiShiMenXuShu !== undefined && panData.timeGanXuShuInTianGan !== undefined">
+            <span class="label">值使落宫计算：</span>
+            <span>{{ panData.zhiShiMenXuShu }} + {{ panData.timeGanXuShuInTianGan }} - 1 = {{ panData.zhiShiMenPosition }}</span>
+          </div>
         </div>
 
         <div class="pan-content">
@@ -460,7 +476,8 @@ export default {
       const xunShou = `${xunShouInfo.ganZhi}（${xunShouInfo.liuYi}）`;
       
       // 生成九宫格数据
-      const grid = this.generateGrid(juNumber, hour, timeGanZhi, dunType);
+      const gridResult = this.generateGrid(juNumber, hour, timeGanZhi, dunType);
+      const grid = gridResult.grid;
       
       // 从grid中提取值使门信息
       // 值使门跟随值符移动，所以值使门是在值符位置的天盘门
@@ -479,6 +496,9 @@ export default {
         juNumber: juNumber,
         dunType: dunType,
         zhiShiMen: zhiShiMen,
+        zhiShiMenXuShu: gridResult.zhiShiMenXuShu,
+        timeGanXuShuInTianGan: gridResult.timeGanXuShuInTianGan,
+        zhiShiMenPosition: gridResult.zhiShiMenPosition,
         grid: grid
       };
     },
@@ -1421,7 +1441,12 @@ export default {
         });
       }
       
-      return grid;
+      return {
+        grid: grid,
+        zhiShiMenXuShu: zhiShiMenXuShu,
+        timeGanXuShuInTianGan: timeGanXuShuInTianGan,
+        zhiShiMenPosition: zhiShiMenPosition
+      };
     },
     getPositionName(index) {
       const names = ['巽', '离', '坤', '震', '中', '兑', '艮', '坎', '乾'];
