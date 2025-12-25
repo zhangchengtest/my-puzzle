@@ -1189,17 +1189,15 @@ export default {
       };
       const zhiFuStar = gongToStar[diPanGong];
       
-      // 3.5. 确定值使门（根据旬首）
-      // 甲子->休门，甲戌->死门，甲申->伤门，甲午->杜门，甲辰->开门，甲寅->惊门
-      const xunShouToMen = {
-        '甲子': '休',
-        '甲戌': '死',
-        '甲申': '伤',
-        '甲午': '杜',
-        '甲辰': '开',
-        '甲寅': '惊'
+      // 3.5. 确定值使门（根据旬首六仪在地盘的宫位）
+      // 值使门是旬首对应的六仪在地盘所在宫位的本位门
+      // diPanGong 就是旬首六仪在地盘的宫位
+      // 根据宫位找到对应的本位门
+      const gongToMen = {
+        1: '休', 2: '死', 3: '伤', 4: '杜',
+        6: '开', 7: '惊', 8: '生', 9: '景'
       };
-      const zhiShiMen = xunShouToMen[xunShou.ganZhi] || '休';
+      const zhiShiMen = gongToMen[diPanGong] || '休';
       
       // 4. 值符跟随时干落宫（天盘）
       // 公式：直符落宫数 = 局数 + 时干在三奇六仪中所对应的次序数 - 1
@@ -1249,6 +1247,37 @@ export default {
         zhiFuPosition = 9;
       }
       
+      // 5. 计算值使门落宫
+      // 公式：值使落宫 = 值使序数 + 时干在十天干中序数 - 1
+      // 值使序数：值使门在八门中的序数（休1、死2、伤3、杜4、开5、惊6、生7、景8）
+      // 时干在十天干中序数：
+      //   阳遁：甲1、乙2、丙3、丁4、戊5、己6、庚7、辛8、壬9、癸10
+      //   阴遁：甲10、乙9、丙8、丁7、戊6、己5、庚4、辛3、壬2、癸1
+      const baMenOrder = ['休', '死', '伤', '杜', '开', '惊', '生', '景'];
+      const zhiShiMenXuShu = baMenOrder.indexOf(zhiShiMen) + 1; // 值使序数（1-8）
+      
+      // 计算时干在十天干中的序数
+      const tianGanOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+      const timeGanIndexInTianGan = tianGanOrder.indexOf(timeGan);
+      let timeGanXuShuInTianGan; // 时干在十天干中的序数
+      if (isYangDun) {
+        // 阳遁：甲1、乙2、丙3、丁4、戊5、己6、庚7、辛8、壬9、癸10
+        timeGanXuShuInTianGan = timeGanIndexInTianGan + 1;
+      } else {
+        // 阴遁：甲10、乙9、丙8、丁7、戊6、己5、庚4、辛3、壬2、癸1
+        timeGanXuShuInTianGan = 10 - timeGanIndexInTianGan;
+      }
+      
+      // 计算值使落宫数
+      let zhiShiMenPosition = zhiShiMenXuShu + timeGanXuShuInTianGan - 1;
+      // 处理超过9的情况，需要模9运算，但宫位是1-9
+      if (zhiShiMenPosition > 9) {
+        zhiShiMenPosition = ((zhiShiMenPosition - 1) % 9) + 1;
+      }
+      if (zhiShiMenPosition === 0) {
+        zhiShiMenPosition = 9;
+      }
+      
       // 调试信息
       console.log('值符计算详情:', {
         timeGanZhi,
@@ -1260,9 +1289,13 @@ export default {
         startGong,
         diPanGong,
         zhiFuStar,
+        zhiShiMen,
+        zhiShiMenXuShu,
         timeGanOrderIndex,
         timeGanXuShu,
-        zhiFuPosition
+        timeGanXuShuInTianGan,
+        zhiFuPosition,
+        zhiShiMenPosition
       });
       
       // 计算每个宫位的天干（地盘）
@@ -1309,8 +1342,22 @@ export default {
         return baMenDiPanMap[gong] || null;
       };
       
+      // 计算值使门在地盘的宫位
+      const zhiShiMenDiPanGongMap = {
+        '休': 1, '死': 2, '伤': 3, '杜': 4,
+        '开': 6, '惊': 7, '生': 8, '景': 9
+      };
+      const zhiShiMenDiPanGong = zhiShiMenDiPanGongMap[zhiShiMen] || 1;
+      
+      // 计算值使门移动的步数（从地盘到天盘）
+      // 值使门从 zhiShiMenDiPanGong 移动到 zhiShiMenPosition
+      let zhiShiMenMoveSteps = zhiShiMenPosition - zhiShiMenDiPanGong;
+      if (zhiShiMenMoveSteps < 0) {
+        zhiShiMenMoveSteps += 9;
+      }
+      
       // 计算每个宫位的门（天盘）
-      // 值使门跟随值符移动，八门也跟随值使门旋转
+      // 八门跟随值使门旋转，值使门从地盘位置移动到天盘位置
       // 八门按照九宫格顺序旋转，与天干旋转方式相同
       // 注意：中5宫始终没有门，如果旋转后对应到中5宫，继续顺时针旋转到下一个有门的宫位
       const getBamenTianPanByGong = (gong) => {
@@ -1319,8 +1366,8 @@ export default {
           return null;
         }
         // 找到旋转后，该宫位对应的原始宫位
-        // 旋转逻辑：当前宫位的天盘门 = 逆时针moveSteps步的宫位的地盘门
-        let sourceGong = ((gong - moveSteps - 1 + 9) % 9) + 1;
+        // 旋转逻辑：当前宫位的天盘门 = 逆时针zhiShiMenMoveSteps步的宫位的地盘门
+        let sourceGong = ((gong - zhiShiMenMoveSteps - 1 + 9) % 9) + 1;
         
         // 如果原始宫位是中5宫，继续顺时针旋转（逆时针找源宫位），找到下一个有门的宫位
         // 因为八门旋转时，如果对应到中5宫，应该跳过中5宫
@@ -1357,8 +1404,8 @@ export default {
           bashen = '值符';
         }
         
-        // 确定值使门是否在此宫位（值使门跟随值符移动）
-        let isZhiShiMen = (pos === zhiFuPosition);
+        // 确定值使门是否在此宫位（值使门有自己的落宫计算方法）
+        let isZhiShiMen = (pos === zhiShiMenPosition);
         
         grid.push({
           position: pos,
