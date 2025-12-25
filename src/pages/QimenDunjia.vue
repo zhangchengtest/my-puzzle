@@ -1035,39 +1035,10 @@ export default {
       };
       const zhiFuStar = gongToStar[diPanGong];
       
-      // 4. 值符随时干落宫
-      // 需要找到时干在地盘的位置，然后值符跟随时干到天盘
-      const timeGan = timeGanZhi[0];
-      
-      // 六仪三奇的完整顺序：戊、己、庚、辛、壬、癸、丁、丙、乙
-      const liuYiSanQiOrder = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
-      
-      // 先找到时干在地盘的位置（需要根据六仪三奇的排布）
-      const timeGanIndex = tianGan.indexOf(timeGan);
-      const timeGanOrderIndex = liuYiSanQiOrder.indexOf(timeGan);
-      
-      let timeGanDiPanGong;
-      if (timeGanOrderIndex >= 0) {
-        // 时干在六仪三奇序列中
-        if (isYangDun) {
-          // 阳遁：从局数对应的宫位开始，六仪三奇顺行排布
-          // 例如：阳遁1局，戊在坎1宫（索引0），癸在乾6宫（索引5）
-          timeGanDiPanGong = ((startGong - 1 + timeGanOrderIndex) % 9) + 1;
-          if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
-        } else {
-          // 阴遁：从局数对应的宫位开始，六仪三奇逆行排布
-          timeGanDiPanGong = ((startGong - 1 - timeGanOrderIndex + 9) % 9) + 1;
-          if (timeGanDiPanGong === 0) timeGanDiPanGong = 9;
-        }
-      } else {
-        // 时干是甲（索引0），甲隐藏于六仪中，不单独出现
-        // 如果时干是甲，应该找到旬首对应的六仪位置
-        timeGanDiPanGong = diPanGong;
-      }
-      
-      // 值符跟随时干，从地盘到天盘
-      // 值符从旬首六仪所在宫位（diPanGong）移动到时干所在宫位（timeGanDiPanGong）
-      const zhiFuPosition = timeGanDiPanGong;
+      // 4. 值符跟随旬首落宫
+      // 值符是旬首所遁六仪所在宫位的本位星，值符应该跟随旬首走
+      // 旬首的位置就是它所对应的六仪在地盘的宫位（diPanGong）
+      const zhiFuPosition = diPanGong;
       
       // 调试信息
       console.log('值符计算详情:', {
@@ -1079,12 +1050,11 @@ export default {
         startGong,
         diPanGong,
         zhiFuStar,
-        timeGan,
-        timeGanIndex,
-        timeGanOrderIndex,
-        timeGanDiPanGong,
         zhiFuPosition
       });
+      
+      // 六仪三奇的完整顺序：戊、己、庚、辛、壬、癸、丁、丙、乙
+      const liuYiSanQiOrder = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
       
       // 计算每个宫位的天干（地盘）
       const getTianganByGong = (gong) => {
