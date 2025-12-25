@@ -77,8 +77,12 @@
                     <span class="position-label">八卦</span>
                   </div>
                   <div class="cell-tiangan">
-                    <span>{{ cell.tiangan }}</span>
-                    <span class="info-label">天干</span>
+                    <span>{{ cell.tianganDiPan }}</span>
+                    <span class="info-label">地盘天干</span>
+                  </div>
+                  <div class="cell-tiangan-tianpan">
+                    <span>{{ cell.tianganTianPan }}</span>
+                    <span class="info-label">天盘天干</span>
                   </div>
                   <div class="cell-dizhi">
                     <span>{{ cell.dizhi }}</span>
@@ -1051,14 +1055,58 @@ export default {
       };
       const zhiFuStar = gongToStar[diPanGong];
       
-      // 4. 值符跟随旬首落宫
-      // 值符是旬首所遁六仪所在宫位的本位星，值符应该跟随旬首走
-      // 旬首的位置就是它所对应的六仪在地盘的宫位（diPanGong）
-      const zhiFuPosition = diPanGong;
+      // 4. 值符跟随时干落宫（天盘）
+      // 公式：直符落宫数 = 局数 + 时干在三奇六仪中所对应的次序数 - 1
+      // 三奇六仪次序数：
+      // 阳遁：戊1、己2、庚3、辛4、壬5、癸6、丁7、丙8、乙9
+      // 阴遁：戊1、己9、庚8、辛7、壬6、癸5、丁4、丙3、乙2
+      const timeGan = timeGanZhi[0];
+      const liuYiSanQiOrder = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
+      const timeGanOrderIndex = liuYiSanQiOrder.indexOf(timeGan);
+      
+      let timeGanXuShu; // 时干在三奇六仪中的次序数
+      if (timeGanOrderIndex >= 0) {
+        if (isYangDun) {
+          // 阳遁：戊1、己2、庚3、辛4、壬5、癸6、丁7、丙8、乙9
+          timeGanXuShu = timeGanOrderIndex + 1;
+        } else {
+          // 阴遁：戊1、己9、庚8、辛7、壬6、癸5、丁4、丙3、乙2
+          if (timeGanOrderIndex === 0) {
+            timeGanXuShu = 1; // 戊
+          } else if (timeGanOrderIndex <= 5) {
+            // 己、庚、辛、壬、癸 -> 9、8、7、6、5
+            timeGanXuShu = 11 - timeGanOrderIndex;
+          } else {
+            // 丁、丙、乙 -> 4、3、2
+            timeGanXuShu = 13 - timeGanOrderIndex;
+          }
+        }
+      } else {
+        // 时干是甲，甲隐藏于六仪中，使用旬首对应的六仪
+        // 甲子->戊(1), 甲戌->己, 甲申->庚, 甲午->辛, 甲辰->壬, 甲寅->癸
+        const xunShouGanZhi = xunShou.ganZhi;
+        const xunShouToXuShu = {
+          '甲子': 1, '甲戌': isYangDun ? 2 : 9, '甲申': isYangDun ? 3 : 8,
+          '甲午': isYangDun ? 4 : 7, '甲辰': isYangDun ? 5 : 6,
+          '甲寅': isYangDun ? 6 : 5
+        };
+        timeGanXuShu = xunShouToXuShu[xunShouGanZhi] || 1;
+      }
+      
+      // 计算值符落宫数：直符落宫数 = 局数 + 时干在三奇六仪中所对应的次序数 - 1
+      let zhiFuPosition = juNumber + timeGanXuShu - 1;
+      // 处理超过9的情况，需要模9运算，但宫位是1-9
+      if (zhiFuPosition > 9) {
+        zhiFuPosition = ((zhiFuPosition - 1) % 9) + 1;
+      }
+      if (zhiFuPosition === 0) {
+        zhiFuPosition = 9;
+      }
       
       // 调试信息
       console.log('值符计算详情:', {
         timeGanZhi,
+        timeGan,
         xunShou: xunShou.ganZhi,
         xunShouLiuYi: xunShou.liuYi,
         juNumber,
@@ -1066,11 +1114,10 @@ export default {
         startGong,
         diPanGong,
         zhiFuStar,
+        timeGanOrderIndex,
+        timeGanXuShu,
         zhiFuPosition
       });
-      
-      // 六仪三奇的完整顺序：戊、己、庚、辛、壬、癸、丁、丙、乙
-      const liuYiSanQiOrder = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
       
       // 计算每个宫位的天干（地盘）
       const getTianganByGong = (gong) => {
@@ -1088,14 +1135,40 @@ export default {
         return liuYiSanQiOrder[orderIndex];
       };
       
+      // 计算值符移动的步数（从地盘到天盘）
+      // 值符从 diPanGong 移动到 zhiFuPosition
+      // 天干按照九宫格顺序顺时针或逆时针旋转，顺序不变
+      let moveSteps = zhiFuPosition - diPanGong;
+      if (moveSteps < 0) {
+        moveSteps += 9;
+      }
+      // moveSteps 表示顺时针旋转的步数
+      // 如果 moveSteps > 4，可以转换为逆时针旋转 (9 - moveSteps) 步
+      // 但为了保持一致性，我们统一使用顺时针旋转
+      
+      // 计算每个宫位的天干（天盘）
+      // 天干按照九宫格顺序旋转：如果值符顺时针移动moveSteps步，天干也顺时针旋转moveSteps步
+      // 这意味着：当前宫位的天干 = 逆时针moveSteps步的宫位的地盘天干
+      const getTianPanTianganByGong = (gong) => {
+        // 九宫顺序：1坎、2坤、3震、4巽、5中、6乾、7兑、8艮、9离
+        // 顺时针旋转moveSteps步，意味着每个宫位的天干来自逆时针moveSteps步的宫位
+        // 例如：顺时针旋转1步，1宫的天干来自9宫，2宫的天干来自1宫...
+        let sourceGong = ((gong - moveSteps - 1 + 9) % 9) + 1;
+        // 获取原始宫位的地盘天干
+        return getTianganByGong(sourceGong);
+      };
+      
       const grid = [];
       
       for (let i = 0; i < 9; i++) {
         const pos = positions[i];
         const dizhiOffset = (hour + pos - 1) % 12;
         
-        // 计算该宫位的天干（地盘）
-        const tiangan = getTianganByGong(pos);
+        // 计算该宫位的天干（地盘，固定位置）
+        const tianganDiPan = getTianganByGong(pos);
+        
+        // 计算该宫位的天干（天盘，值符移动后的位置）
+        const tianganTianPan = getTianPanTianganByGong(pos);
         
         // 确定值符是否在此宫位
         let bashen = null;
@@ -1105,7 +1178,8 @@ export default {
         
         grid.push({
           position: pos,
-          tiangan: tiangan,
+          tianganDiPan: tianganDiPan,
+          tianganTianPan: tianganTianPan,
           dizhi: diZhi[dizhiOffset % 12],
           bamen: baMen[i % 9],
           jiuxing: jiuXing[i % 9],
@@ -1518,6 +1592,18 @@ export default {
   font-size: 18px;
   font-weight: bold;
   color: #409eff;
+}
+
+.cell-tiangan-tianpan {
+  font-size: 18px;
+  font-weight: bold;
+  color: #e6a23c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 3px 0;
+  flex-wrap: wrap;
 }
 
 .cell-dizhi {
