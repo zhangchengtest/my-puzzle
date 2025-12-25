@@ -88,9 +88,13 @@
                     <span>{{ cell.dizhi }}</span>
                     <span class="info-label">地支</span>
                   </div>
-                  <div class="cell-bamen">
-                    <span>{{ cell.bamen }}</span>
-                    <span class="info-label">门</span>
+                  <div class="cell-bamen" v-if="cell.bamenDiPan">
+                    <span>{{ cell.bamenDiPan }}</span>
+                    <span class="info-label">地盘门</span>
+                  </div>
+                  <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
+                    <span>{{ cell.bamenTianPan }}</span>
+                    <span class="info-label">天盘门</span>
                   </div>
                   <div class="cell-jiuxing">
                     <span>{{ cell.jiuxing }}</span>
@@ -1009,8 +1013,14 @@ export default {
       const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       // 地支
       const diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-      // 八门
-      const baMen = ['休', '死', '伤', '杜', '中', '开', '惊', '生', '景'];
+      // 八门的原始位置（地盘）
+      // 休门在坎1宫，死门在坤2宫，伤门在震3宫，杜门在巽4宫
+      // 开门在乾6宫，惊门在兑7宫，生门在艮8宫，景门在离9宫
+      // 中5宫没有门
+      const baMenDiPanMap = {
+        1: '休', 2: '死', 3: '伤', 4: '杜',
+        6: '开', 7: '惊', 8: '生', 9: '景'
+      };
       // 九星（按宫位顺序：坎1、坤2、震3、巽4、中5、乾6、兑7、艮8、离9）
       const jiuXing = ['天蓬', '天芮', '天冲', '天辅', '天禽', '天心', '天柱', '天任', '天英'];
       // 八神
@@ -1158,6 +1168,35 @@ export default {
         return getTianganByGong(sourceGong);
       };
       
+      // 计算每个宫位的门（地盘，固定位置）
+      const getBamenDiPanByGong = (gong) => {
+        return baMenDiPanMap[gong] || null;
+      };
+      
+      // 计算每个宫位的门（天盘）
+      // 值使门跟随值符移动，八门也跟随值使门旋转
+      // 八门按照九宫格顺序旋转，与天干旋转方式相同
+      // 注意：中5宫始终没有门，如果旋转后对应到中5宫，继续顺时针旋转到下一个有门的宫位
+      const getBamenTianPanByGong = (gong) => {
+        // 中5宫始终没有门
+        if (gong === 5) {
+          return null;
+        }
+        // 找到旋转后，该宫位对应的原始宫位
+        // 旋转逻辑：当前宫位的天盘门 = 逆时针moveSteps步的宫位的地盘门
+        let sourceGong = ((gong - moveSteps - 1 + 9) % 9) + 1;
+        
+        // 如果原始宫位是中5宫，继续顺时针旋转（逆时针找源宫位），找到下一个有门的宫位
+        // 因为八门旋转时，如果对应到中5宫，应该跳过中5宫
+        while (sourceGong === 5) {
+          // 继续逆时针找下一个宫位（顺时针旋转）
+          sourceGong = ((sourceGong - 1 - 1 + 9) % 9) + 1;
+        }
+        
+        // 获取原始宫位的地盘门
+        return getBamenDiPanByGong(sourceGong);
+      };
+      
       const grid = [];
       
       for (let i = 0; i < 9; i++) {
@@ -1170,6 +1209,12 @@ export default {
         // 计算该宫位的天干（天盘，值符移动后的位置）
         const tianganTianPan = getTianPanTianganByGong(pos);
         
+        // 计算该宫位的门（地盘，固定位置）
+        const bamenDiPan = getBamenDiPanByGong(pos);
+        
+        // 计算该宫位的门（天盘，值使门移动后的位置）
+        const bamenTianPan = getBamenTianPanByGong(pos);
+        
         // 确定值符是否在此宫位
         let bashen = null;
         if (pos === zhiFuPosition) {
@@ -1181,7 +1226,8 @@ export default {
           tianganDiPan: tianganDiPan,
           tianganTianPan: tianganTianPan,
           dizhi: diZhi[dizhiOffset % 12],
-          bamen: baMen[i % 9],
+          bamenDiPan: bamenDiPan,
+          bamenTianPan: bamenTianPan,
           jiuxing: jiuXing[i % 9],
           bashen: bashen
         });
@@ -1614,6 +1660,17 @@ export default {
 .cell-bamen {
   font-size: 14px;
   color: #e6a23c;
+}
+
+.cell-bamen-tianpan {
+  font-size: 14px;
+  color: #f56c6c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 3px 0;
+  flex-wrap: wrap;
 }
 
 .cell-jiuxing {
