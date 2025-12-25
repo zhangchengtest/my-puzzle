@@ -463,8 +463,9 @@ export default {
       const grid = this.generateGrid(juNumber, hour, timeGanZhi, dunType);
       
       // 从grid中提取值使门信息
+      // 值使门跟随值符移动，所以值使门是在值符位置的天盘门
       const zhiShiMenCell = grid.find(cell => cell.isZhiShiMen);
-      const zhiShiMen = zhiShiMenCell ? zhiShiMenCell.zhiShiMen : '';
+      const zhiShiMen = zhiShiMenCell ? zhiShiMenCell.bamenTianPan : '';
       
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
@@ -707,18 +708,23 @@ export default {
         else yuanType = '下元';
       }
       
-      // 根据元类型和阴阳遁确定局数
+      // 根据元类型、阴阳遁和具体节气确定局数
+      // 口诀：
+      // 阳遁：冬至惊蛰一七四，小寒二八五，大寒春分三九六，立春八五二。
+      //       雨水九六三，清明立夏四一七，谷雨小满五二八，芒种六三九。
+      // 阴遁：夏至白露九三六，小暑八二五，大暑秋分七一四，立秋二五八。
+      //       处暑一四七，霜降小雪五八二，寒露立冬六九三，大雪四七一。
+      
+      // 获取当前日期所属的节气
+      const currentTerm = this.getCurrentSolarTerm(year, month, day);
+      
       let juNumber;
       if (isYangDun) {
-        // 阳遁
-        if (yuanType === '上元') juNumber = 1;
-        else if (yuanType === '中元') juNumber = 4;
-        else juNumber = 7;
+        // 阳遁：根据节气和元类型确定局数
+        juNumber = this.getYangDunJuNumber(currentTerm, yuanType);
       } else {
-        // 阴遁
-        if (yuanType === '上元') juNumber = 9;
-        else if (yuanType === '中元') juNumber = 6;
-        else juNumber = 3;
+        // 阴遁：根据节气和元类型确定局数
+        juNumber = this.getYinDunJuNumber(currentTerm, yuanType);
       }
       
       return {
@@ -726,6 +732,114 @@ export default {
         dunType: isYangDun ? '阳遁' : '阴遁',
         yuanType: yuanType
       };
+    },
+    // 获取当前日期所属的节气名称
+    getCurrentSolarTerm(year, month, day) {
+      const allTerms = [
+        { name: '立春', month: 2, day: 4 },
+        { name: '雨水', month: 2, day: 19 },
+        { name: '惊蛰', month: 3, day: 6 },
+        { name: '春分', month: 3, day: 21 },
+        { name: '清明', month: 4, day: 5 },
+        { name: '谷雨', month: 4, day: 20 },
+        { name: '立夏', month: 5, day: 6 },
+        { name: '小满', month: 5, day: 21 },
+        { name: '芒种', month: 6, day: 6 },
+        { name: '夏至', month: 6, day: 21 },
+        { name: '小暑', month: 7, day: 7 },
+        { name: '大暑', month: 7, day: 23 },
+        { name: '立秋', month: 8, day: 8 },
+        { name: '处暑', month: 8, day: 23 },
+        { name: '白露', month: 9, day: 8 },
+        { name: '秋分', month: 9, day: 23 },
+        { name: '寒露', month: 10, day: 8 },
+        { name: '霜降', month: 10, day: 23 },
+        { name: '立冬', month: 11, day: 8 },
+        { name: '小雪', month: 11, day: 22 },
+        { name: '大雪', month: 12, day: 7 },
+        { name: '冬至', month: 12, day: 21 },
+        { name: '小寒', month: 1, day: 6 },
+        { name: '大寒', month: 1, day: 20 }
+      ];
+      
+      const currentDate = new Date(year, month - 1, day);
+      let currentTerm = null;
+      let minDaysDiff = Infinity;
+      
+      for (let term of allTerms) {
+        let termDate = new Date(year, term.month - 1, term.day);
+        
+        // 处理跨年
+        if (month === 1 && term.month === 12) {
+          termDate = new Date(year - 1, term.month - 1, term.day);
+        }
+        if (month === 12 && term.month === 1) {
+          termDate = new Date(year + 1, term.month - 1, term.day);
+        }
+        
+        const daysDiff = Math.floor((currentDate - termDate) / 86400000);
+        
+        // 找到已过去且最接近的节气
+        if (daysDiff >= 0 && daysDiff < minDaysDiff && daysDiff < 15) {
+          minDaysDiff = daysDiff;
+          currentTerm = term.name;
+        }
+      }
+      
+      // 如果找不到，使用默认值
+      if (!currentTerm) {
+        if (month === 12 && day >= 21) {
+          currentTerm = '冬至';
+        } else if (month === 1) {
+          currentTerm = '小寒';
+        } else {
+          currentTerm = '冬至'; // 默认
+        }
+      }
+      
+      return currentTerm;
+    },
+    // 获取阳遁节气的局数（根据口诀）
+    // 阳遁：冬至惊蛰一七四，小寒二八五，大寒春分三九六，立春八五二。
+    //       雨水九六三，清明立夏四一七，谷雨小满五二八，芒种六三九。
+    getYangDunJuNumber(termName, yuanType) {
+      const juMap = {
+        '冬至': { '上元': 1, '中元': 7, '下元': 4 },
+        '惊蛰': { '上元': 1, '中元': 7, '下元': 4 },
+        '小寒': { '上元': 2, '中元': 8, '下元': 5 },
+        '大寒': { '上元': 3, '中元': 9, '下元': 6 },
+        '春分': { '上元': 3, '中元': 9, '下元': 6 },
+        '立春': { '上元': 8, '中元': 5, '下元': 2 },
+        '雨水': { '上元': 9, '中元': 6, '下元': 3 },
+        '清明': { '上元': 4, '中元': 1, '下元': 7 },
+        '立夏': { '上元': 4, '中元': 1, '下元': 7 },
+        '谷雨': { '上元': 5, '中元': 2, '下元': 8 },
+        '小满': { '上元': 5, '中元': 2, '下元': 8 },
+        '芒种': { '上元': 6, '中元': 3, '下元': 9 }
+      };
+      
+      return juMap[termName]?.[yuanType] || 1;
+    },
+    // 获取阴遁节气的局数（根据口诀）
+    // 阴遁：夏至白露九三六，小暑八二五，大暑秋分七一四，立秋二五八。
+    //       处暑一四七，霜降小雪五八二，寒露立冬六九三，大雪四七一。
+    getYinDunJuNumber(termName, yuanType) {
+      const juMap = {
+        '夏至': { '上元': 9, '中元': 3, '下元': 6 },
+        '白露': { '上元': 9, '中元': 3, '下元': 6 },
+        '小暑': { '上元': 8, '中元': 2, '下元': 5 },
+        '大暑': { '上元': 7, '中元': 1, '下元': 4 },
+        '秋分': { '上元': 7, '中元': 1, '下元': 4 },
+        '立秋': { '上元': 2, '中元': 5, '下元': 8 },
+        '处暑': { '上元': 1, '中元': 4, '下元': 7 },
+        '霜降': { '上元': 5, '中元': 8, '下元': 2 },
+        '小雪': { '上元': 5, '中元': 8, '下元': 2 },
+        '寒露': { '上元': 6, '中元': 9, '下元': 3 },
+        '立冬': { '上元': 6, '中元': 9, '下元': 3 },
+        '大雪': { '上元': 4, '中元': 7, '下元': 1 }
+      };
+      
+      return juMap[termName]?.[yuanType] || 9;
     },
     // 获取当前所属的节气和元
     getCurrentYuan(year, month, day, yuanType) {
