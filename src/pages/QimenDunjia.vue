@@ -74,12 +74,28 @@
                   <div class="cell-position">
                     <span>{{ getPositionName(index) }}</span>
                     <span class="position-number">{{ cell.position }}</span>
+                    <span class="position-label">八卦</span>
                   </div>
-                  <div class="cell-tiangan">{{ cell.tiangan }}</div>
-                  <div class="cell-dizhi">{{ cell.dizhi }}</div>
-                  <div class="cell-bamen">{{ cell.bamen }}</div>
-                  <div class="cell-jiuxing">{{ cell.jiuxing }}</div>
-                  <div class="cell-bashen" v-if="cell.bashen">{{ cell.bashen }}</div>
+                  <div class="cell-tiangan">
+                    <span>{{ cell.tiangan }}</span>
+                    <span class="info-label">天干</span>
+                  </div>
+                  <div class="cell-dizhi">
+                    <span>{{ cell.dizhi }}</span>
+                    <span class="info-label">地支</span>
+                  </div>
+                  <div class="cell-bamen">
+                    <span>{{ cell.bamen }}</span>
+                    <span class="info-label">门</span>
+                  </div>
+                  <div class="cell-jiuxing">
+                    <span>{{ cell.jiuxing }}</span>
+                    <span class="info-label">星</span>
+                  </div>
+                  <div class="cell-bashen" v-if="cell.bashen">
+                    <span>{{ cell.bashen }}</span>
+                    <span class="info-label">神</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1467,6 +1483,7 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 3px;
+  flex-wrap: wrap;
 }
 
 .position-number {
@@ -1475,29 +1492,47 @@ export default {
   font-size: 18px;
 }
 
+.position-label {
+  font-size: 10px;
+  color: #909399;
+  background-color: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: normal;
+}
+
+.cell-tiangan,
+.cell-dizhi,
+.cell-bamen,
+.cell-jiuxing,
+.cell-bashen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 3px 0;
+  flex-wrap: wrap;
+}
+
 .cell-tiangan {
   font-size: 18px;
   font-weight: bold;
   color: #409eff;
-  margin: 3px 0;
 }
 
 .cell-dizhi {
   font-size: 16px;
   color: #67c23a;
-  margin: 3px 0;
 }
 
 .cell-bamen {
   font-size: 14px;
   color: #e6a23c;
-  margin: 3px 0;
 }
 
 .cell-jiuxing {
   font-size: 13px;
   color: #909399;
-  margin: 3px 0;
 }
 
 .cell-bashen {
@@ -1507,6 +1542,15 @@ export default {
   margin-top: 5px;
   padding-top: 5px;
   border-top: 1px solid #ddd;
+}
+
+.info-label {
+  font-size: 10px;
+  color: #909399;
+  background-color: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: normal;
 }
 
 .legend {
