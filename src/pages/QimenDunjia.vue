@@ -116,6 +116,18 @@
             <span class="label">值使落宫计算：</span>
             <span>{{ panData.zhiShiMenXuShu }} + {{ panData.timeGanXuShuInTianGan }} - 1 = {{ panData.zhiShiMenPosition }}</span>
           </div>
+          <div class="info-item" v-if="panData.zhiShiMenMoveSteps !== undefined">
+            <span class="label">值使门移动步数：</span>
+            <span>{{ panData.zhiShiMenMoveSteps }}步</span>
+          </div>
+          <div class="info-item" v-if="panData.zhiFuTianganMoveSteps !== undefined">
+            <span class="label">值符天干移动步数：</span>
+            <span>{{ panData.zhiFuTianganMoveSteps }}步</span>
+          </div>
+          <div class="info-item" v-if="panData.zhiFuStarMoveSteps !== undefined">
+            <span class="label">值符星移动步数：</span>
+            <span>{{ panData.zhiFuStarMoveSteps }}步</span>
+          </div>
           <div class="info-item" v-if="panData.currentDate">
             <span class="label">当前日期时间：</span>
             <span>{{ panData.currentDate }}</span>
@@ -327,6 +339,9 @@ export default {
         zhiShiMenXuShu: gridResult.zhiShiMenXuShu,
         timeGanXuShuInTianGan: gridResult.timeGanXuShuInTianGan,
         zhiShiMenPosition: gridResult.zhiShiMenPosition,
+        zhiShiMenMoveSteps: gridResult.zhiShiMenMoveSteps,
+        zhiFuTianganMoveSteps: gridResult.zhiFuTianganMoveSteps,
+        zhiFuStarMoveSteps: gridResult.zhiFuStarMoveSteps,
         currentDate: formatDateTime(currentDate),
         termDate: formatDateTime(termDate),
         grid: grid,
@@ -1351,7 +1366,10 @@ export default {
         timeGanXuShuInTianGan: timeGanXuShuInTianGan,
         zhiShiMenPosition: zhiShiMenPosition,
         zhiShiMenDiPanGong: zhiShiMenDiPanGong,
-        zhiShiMen: zhiShiMen
+        zhiShiMen: zhiShiMen,
+        zhiShiMenMoveSteps: zhiShiMenMoveSteps,
+        zhiFuTianganMoveSteps: zhiFuTianganMoveSteps,
+        zhiFuStarMoveSteps: zhiFuStarMoveSteps
       };
     },
     getPositionName(index) {
