@@ -79,6 +79,14 @@
             <span class="label">值使落宫计算：</span>
             <span>{{ panData.zhiShiMenXuShu }} + {{ panData.timeGanXuShuInTianGan }} - 1 = {{ panData.zhiShiMenPosition }}</span>
           </div>
+          <div class="info-item" v-if="panData.currentDate">
+            <span class="label">当前日期时间：</span>
+            <span>{{ panData.currentDate }}</span>
+          </div>
+          <div class="info-item" v-if="panData.termDate">
+            <span class="label">节气日期时间：</span>
+            <span>{{ panData.termDate }}</span>
+          </div>
         </div>
 
         <div class="pan-content">
@@ -414,6 +422,8 @@
 </template>
 
 <script>
+import { getCurrentSolarTermWithDate, getCurrentSolarTerm, calculate } from '@/utils/solarTerm';
+
 export default {
   name: 'QimenDunjia',
   data() {
@@ -465,6 +475,8 @@ export default {
       const juNumber = juResult.juNumber;
       const dunType = juResult.dunType; // 阳遁或阴遁
       const yuanType = juResult.yuanType; // 上元、中元、下元
+      const currentDate = juResult.currentDate; // 当前日期时间
+      const termDate = juResult.termDate; // 节气日期时间
       
       // 获取当前所属的节气名称和元
       const currentYuan = this.getCurrentYuan(year, month, day, yuanType);
@@ -483,6 +495,18 @@ export default {
       // 值使门名称已经在generateGrid中从地盘确定，直接使用
       const zhiShiMen = gridResult.zhiShiMen || '';
       
+      // 格式化日期时间显示
+      const formatDateTime = (date) => {
+        if (!date) return '';
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        const s = String(date.getSeconds()).padStart(2, '0');
+        return `${y}-${m}-${d} ${h}:${min}:${s}`;
+      };
+
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
         lunarDate: lunarDate,
@@ -498,6 +522,8 @@ export default {
         zhiShiMenXuShu: gridResult.zhiShiMenXuShu,
         timeGanXuShuInTianGan: gridResult.timeGanXuShuInTianGan,
         zhiShiMenPosition: gridResult.zhiShiMenPosition,
+        currentDate: formatDateTime(currentDate),
+        termDate: formatDateTime(termDate),
         grid: grid
       };
     },
@@ -687,7 +713,6 @@ export default {
       // 1-5天：上元
       // 6-10天：中元
       // 11-15天：下元
-      debugger;
       if (daysInTerm >= 1 && daysInTerm <= 5) {
         yuanType = '上元';
       } else if (daysInTerm >= 6 && daysInTerm <= 10) {
@@ -727,86 +752,18 @@ export default {
       return {
         juNumber: juNumber,
         dunType: isYangDun ? '阳遁' : '阴遁',
-        yuanType: yuanType
+        yuanType: yuanType,
+        currentDate: currentDate,
+        termDate: termDate
       };
     },
     // 获取当前日期所属的节气名称和日期
     getCurrentSolarTermWithDate(year, month, day, hour = 0, minute = 0) {
-      const allTerms = [
-        { name: '立春', month: 2, day: 4, hour: 4, minute: 50 },
-        { name: '雨水', month: 2, day: 19, hour: 0, minute: 42 },
-        { name: '惊蛰', month: 3, day: 6, hour: 4, minute: 36 },
-        { name: '春分', month: 3, day: 21, hour: 5, minute: 24 },
-        { name: '清明', month: 4, day: 5, hour: 9, minute: 13 },
-        { name: '谷雨', month: 4, day: 20, hour: 16, minute: 14 },
-        { name: '立夏', month: 5, day: 6, hour: 2, minute: 18 },
-        { name: '小满', month: 5, day: 21, hour: 15, minute: 9 },
-        { name: '芒种', month: 6, day: 6, hour: 6, minute: 18 },
-        { name: '夏至', month: 6, day: 21, hour: 22, minute: 58 },
-        { name: '小暑', month: 7, day: 7, hour: 10, minute: 38 },
-        { name: '大暑', month: 7, day: 23, hour: 4, minute: 7 },
-        { name: '立秋', month: 8, day: 8, hour: 20, minute: 29 },
-        { name: '处暑', month: 8, day: 23, hour: 11, minute: 16 },
-        { name: '白露', month: 9, day: 8, hour: 5, minute: 27 },
-        { name: '秋分', month: 9, day: 23, hour: 14, minute: 50 },
-        { name: '寒露', month: 10, day: 8, hour: 9, minute: 39 },
-        { name: '霜降', month: 10, day: 23, hour: 12, minute: 51 },
-        { name: '立冬', month: 11, day: 8, hour: 7, minute: 14 },
-        { name: '小雪', month: 11, day: 22, hour: 4, minute: 40 },
-        { name: '大雪', month: 12, day: 7, hour: 11, minute: 46 },
-        { name: '冬至', month: 12, day: 21, hour: 18, minute: 2 },
-        { name: '小寒', month: 1, day: 6, hour: 4, minute: 49 },
-        { name: '大寒', month: 1, day: 20, hour: 22, minute: 7 }
-      ];
-      
-      const currentDate = new Date(year, month - 1, day, hour, minute);
-      let currentTerm = null;
-      let currentTermDate = null;
-      let minTimeDiff = Infinity;
-      
-      for (let term of allTerms) {
-        let termDate = new Date(year, term.month - 1, term.day, term.hour, term.minute);
-        
-        // 处理跨年
-        if (month === 1 && term.month === 12) {
-          termDate = new Date(year - 1, term.month - 1, term.day, term.hour, term.minute);
-        }
-        if (month === 12 && term.month === 1) {
-          termDate = new Date(year + 1, term.month - 1, term.day, term.hour, term.minute);
-        }
-        
-        const timeDiff = currentDate - termDate; // 毫秒差
-        
-        // 找到已过去且最接近的节气（15天内）
-        if (timeDiff >= 0 && timeDiff < minTimeDiff && timeDiff < 15 * 24 * 60 * 60 * 1000) {
-          minTimeDiff = timeDiff;
-          currentTerm = term.name;
-          currentTermDate = termDate;
-        }
-      }
-      
-      // 如果找不到，使用默认值
-      if (!currentTerm) {
-        if (month === 12 && (day > 21 || (day === 21 && hour >= 18))) {
-          currentTerm = '冬至';
-          currentTermDate = new Date(year, 11, 21, 18, 2); // 12月21日 18:02
-        } else if (month === 1) {
-          currentTerm = '小寒';
-          currentTermDate = new Date(year, 0, 6, 4, 49); // 1月6日 4:49
-        } else {
-          currentTerm = '冬至'; // 默认
-          currentTermDate = new Date(year - 1, 11, 21, 18, 2); // 上一年的12月21日 18:02
-        }
-      }
-      
-      return {
-        name: currentTerm,
-        date: currentTermDate
-      };
+      return getCurrentSolarTermWithDate(year, month, day, hour, minute);
     },
     // 获取当前日期所属的节气名称
     getCurrentSolarTerm(year, month, day) {
-      return this.getCurrentSolarTermWithDate(year, month, day).name;
+      return getCurrentSolarTerm(year, month, day);
     },
     // 获取阳遁节气的局数（根据口诀）
     // 阳遁：冬至惊蛰一七四，小寒二八五，大寒春分三九六，立春八五二。
@@ -980,65 +937,53 @@ export default {
     },
     // 获取最近的节气（上一个和上上一个）
     getRecentSolarTerms(year, month, day) {
-      // 24节气的顺序和大致日期（简化版，实际应该精确计算）
-      // 格式：{name: '节气名', month: 月份, day: 日期}
-      const allTerms = [
-        { name: '立春', month: 2, day: 4 },
-        { name: '雨水', month: 2, day: 19 },
-        { name: '惊蛰', month: 3, day: 6 },
-        { name: '春分', month: 3, day: 21 },
-        { name: '清明', month: 4, day: 5 },
-        { name: '谷雨', month: 4, day: 20 },
-        { name: '立夏', month: 5, day: 6 },
-        { name: '小满', month: 5, day: 21 },
-        { name: '芒种', month: 6, day: 6 },
-        { name: '夏至', month: 6, day: 21 },
-        { name: '小暑', month: 7, day: 7 },
-        { name: '大暑', month: 7, day: 23 },
-        { name: '立秋', month: 8, day: 8 },
-        { name: '处暑', month: 8, day: 23 },
-        { name: '白露', month: 9, day: 8 },
-        { name: '秋分', month: 9, day: 23 },
-        { name: '寒露', month: 10, day: 8 },
-        { name: '霜降', month: 10, day: 23 },
-        { name: '立冬', month: 11, day: 8 },
-        { name: '小雪', month: 11, day: 22 },
-        { name: '大雪', month: 12, day: 7 },
-        { name: '冬至', month: 12, day: 21 },
-        { name: '小寒', month: 1, day: 6 },
-        { name: '大寒', month: 1, day: 20 }
-      ];
-      
-      // 将当前日期转换为一年中的天数，方便比较
-      const currentDayOfYear = this.getDayOfYear(year, month, day);
-      
-      // 将所有节气转换为相对于当前日期的天数差
+      // 使用精确的节气计算工具
       const currentDate = new Date(year, month - 1, day);
-      const termsWithDayOfYear = allTerms.map(term => {
-        // 计算节气的日期
-        let termDate = new Date(year, term.month - 1, term.day);
-        
-        // 处理跨年：如果当前是1月，12月的节气算作去年的
-        if (month === 1 && term.month === 12) {
-          termDate = new Date(year - 1, term.month - 1, term.day);
+      
+      // 获取当前年份、上一年和下一年所有节气
+      const currentYearTerms = calculate(year);
+      const prevYearTerms = calculate(year - 1);
+      const nextYearTerms = calculate(year + 1);
+      
+      // 合并所有相关节气
+      const allTerms = [];
+      
+      // 添加上一年的后几个节气（用于处理跨年）
+      for (const [name, date] of prevYearTerms) {
+        if (date.getFullYear() === year - 1 && date.getMonth() >= 10) {
+          allTerms.push({ name, date });
         }
-        // 处理跨年：如果当前是12月，1月的节气（小寒、大寒）算作下一年的
-        if (month === 12 && term.month === 1) {
-          termDate = new Date(year + 1, term.month - 1, term.day);
+      }
+      
+      // 添加当前年的所有节气
+      for (const [name, date] of currentYearTerms) {
+        allTerms.push({ name, date });
+      }
+      
+      // 添加下一年的前几个节气（用于处理跨年）
+      for (const [name, date] of nextYearTerms) {
+        if (date.getFullYear() === year + 1 && date.getMonth() < 2) {
+          allTerms.push({ name, date });
         }
-        
-        // 计算天数差（负数表示已过去）
-        const daysDiff = Math.floor((termDate - currentDate) / 86400000);
-        
+      }
+      
+      // 按时间排序
+      allTerms.sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      // 计算每个节气相对于当前日期的天数差（负数表示已过去）
+      const termsWithDiff = allTerms.map(term => {
+        const daysDiff = Math.floor((term.date.getTime() - currentDate.getTime()) / 86400000);
         return {
-          ...term,
-          date: termDate,
+          name: term.name,
+          date: term.date,
+          month: term.date.getMonth() + 1,
+          day: term.date.getDate(),
           daysDiff: daysDiff
         };
       });
       
       // 找到已过去的最近两个节气（daysDiff < 0，且最接近0）
-      const pastTerms = termsWithDayOfYear
+      const pastTerms = termsWithDiff
         .filter(term => term.daysDiff < 0)
         .sort((a, b) => b.daysDiff - a.daysDiff); // 按daysDiff降序排列（最接近0的在前面）
       
