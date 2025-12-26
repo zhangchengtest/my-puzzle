@@ -1334,26 +1334,70 @@ export default {
         return liuYiSanQiOrder[orderIndex];
       };
       
+      // 天干旋转顺序：与八门和九星相同 [6, 1, 8, 3, 4, 9, 2, 7]（不包括中5宫）
+      const tianganOrder = [6, 1, 8, 3, 4, 9, 2, 7]; // 天干宫位顺序（不包括中5宫）
+      
       // 计算值符移动的步数（从地盘到天盘）
       // 值符从 diPanGong 移动到 zhiFuPosition
-      // 天干按照九宫格顺序顺时针或逆时针旋转，顺序不变
-      let moveSteps = zhiFuPosition - diPanGong;
-      if (moveSteps < 0) {
-        moveSteps += 9;
+      // 计算在天干顺序中的移动步数（参考八门和九星的旋转方式）
+      const getTianganOrderIndex = (gong) => {
+        return tianganOrder.indexOf(gong);
+      };
+      
+      // 如果值符在地盘是5宫，需要特殊处理
+      let zhiFuTianganDiPanIndex, zhiFuTianganTianPanIndex;
+      if (diPanGong === 5) {
+        // 值符在地盘是5宫，计算天盘位置在天干顺序中的索引
+        zhiFuTianganDiPanIndex = -1; // 5宫不在天干顺序中
+        zhiFuTianganTianPanIndex = getTianganOrderIndex(zhiFuPosition);
+      } else {
+        // 值符在地盘不是5宫，正常计算
+        zhiFuTianganDiPanIndex = getTianganOrderIndex(diPanGong);
+        zhiFuTianganTianPanIndex = getTianganOrderIndex(zhiFuPosition);
       }
-      // moveSteps 表示顺时针旋转的步数
-      // 如果 moveSteps > 4，可以转换为逆时针旋转 (9 - moveSteps) 步
-      // 但为了保持一致性，我们统一使用顺时针旋转
+      
+      let zhiFuTianganMoveSteps = 0;
+      if (zhiFuTianganDiPanIndex !== -1 && zhiFuTianganTianPanIndex !== -1) {
+        zhiFuTianganMoveSteps = zhiFuTianganTianPanIndex - zhiFuTianganDiPanIndex;
+        if (zhiFuTianganMoveSteps < 0) {
+          zhiFuTianganMoveSteps += tianganOrder.length;
+        }
+      } else if (zhiFuTianganDiPanIndex === -1 && zhiFuTianganTianPanIndex !== -1) {
+        // 值符在地盘是5宫，移动到天盘位置
+        // 移动步数就是天盘位置在顺序中的索引
+        zhiFuTianganMoveSteps = zhiFuTianganTianPanIndex;
+      }
       
       // 计算每个宫位的天干（天盘）
-      // 天干按照九宫格顺序旋转：如果值符顺时针移动moveSteps步，天干也顺时针旋转moveSteps步
-      // 这意味着：当前宫位的天干 = 逆时针moveSteps步的宫位的地盘天干
+      // 天干按照指定顺序旋转，值符从地盘位置移动到天盘位置
+      // 所有天干都按照相同的步数在天干顺序中旋转（参考八门和九星的旋转方式）
       const getTianPanTianganByGong = (gong) => {
-        // 九宫顺序：1坎、2坤、3震、4巽、5中、6乾、7兑、8艮、9离
-        // 顺时针旋转moveSteps步，意味着每个宫位的天干来自逆时针moveSteps步的宫位
-        // 例如：顺时针旋转1步，1宫的天干来自9宫，2宫的天干来自1宫...
-        let sourceGong = ((gong - moveSteps - 1 + 9) % 9) + 1;
+        // 如果当前宫位是值符在天盘的位置
+        if (gong === zhiFuPosition) {
+          // 显示值符对应的天干（地盘天干）
+          return getTianganByGong(diPanGong);
+        }
+        
+        // 如果当前宫位是5宫
+        if (gong === 5) {
+          // 5宫的天干跟随值符移动
+          // 如果值符在地盘是5宫，那么5宫的天盘天干就是5宫的地盘天干
+          // 如果值符在地盘不是5宫，那么5宫的地盘天干会跟随值符移动到天盘位置
+          // 所以5宫的天盘天干应该是值符在地盘位置的天干
+          return getTianganByGong(diPanGong);
+        }
+        
+        // 找到该宫位在天干顺序中的索引
+        const gongIndex = getTianganOrderIndex(gong);
+        if (gongIndex === -1) {
+          return null;
+        }
+        
+        // 计算旋转后对应的原始宫位索引（逆时针旋转zhiFuTianganMoveSteps步）
+        let sourceIndex = (gongIndex - zhiFuTianganMoveSteps + tianganOrder.length) % tianganOrder.length;
+        
         // 获取原始宫位的地盘天干
+        const sourceGong = tianganOrder[sourceIndex];
         return getTianganByGong(sourceGong);
       };
       
