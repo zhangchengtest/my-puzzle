@@ -31,16 +31,6 @@
                 :class="getCellClass(cell)"
               >
                 <div class="cell-content">
-                  <div class="cell-position">
-                    <span>{{ getPositionName(index) }}</span>
-                    <span class="position-number">{{ cell.position }}</span>
-                    <span class="position-label">八卦</span>
-                  </div>
-                  <div class="cell-bashen" v-if="cell.bashen">
-                    <span>{{ cell.bashen }}</span>
-                    <span class="info-label">神</span>
-                  </div>
-                  
                   <!-- 空行分隔 -->
                   <div class="section-divider"></div>
                   
@@ -78,6 +68,19 @@
                       <span>{{ cell.jiuxingDiPan }}</span>
                       <span class="info-label">地盘星</span>
                     </div>
+                  </div>
+                  
+                  <!-- 值符信息放在右上角 -->
+                  <div class="cell-bashen" v-if="cell.bashen">
+                    <span>{{ cell.bashen }}</span>
+                    <span class="info-label">神</span>
+                  </div>
+                  
+                  <!-- 八卦信息放在右下角 -->
+                  <div class="cell-position">
+                    <span>{{ getPositionName(index) }}</span>
+                    <span class="position-number">{{ cell.position }}</span>
+                    <span class="position-label">八卦</span>
                   </div>
                 </div>
               </div>
@@ -1771,18 +1774,22 @@ export default {
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
+  position: relative;
 }
 
 .cell-position {
-  font-size: 14px;
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 12px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 3px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 3px;
   flex-wrap: wrap;
+  z-index: 10;
 }
 
 .position-number {
@@ -1803,8 +1810,7 @@ export default {
 .cell-tiangan,
 .cell-dizhi,
 .cell-bamen,
-.cell-jiuxing,
-.cell-bashen {
+.cell-jiuxing {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1890,12 +1896,18 @@ export default {
 }
 
 .cell-bashen {
+  position: absolute;
+  top: 4px;
+  right: 4px;
   font-size: 12px;
   font-weight: bold;
   color: #f56c6c;
-  margin-top: 3px;
-  padding-top: 3px;
-  border-top: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  flex-wrap: wrap;
+  z-index: 10;
 }
 
 .section-divider {
@@ -2127,17 +2139,18 @@ export default {
   }
   
   .cell-position {
-    font-size: 11px;
-    margin-bottom: 2px;
+    font-size: 10px;
+    bottom: 2px;
+    right: 2px;
   }
   
   .position-number {
-    font-size: 13px;
+    font-size: 11px;
   }
   
   .position-label {
-    font-size: 8px;
-    padding: 1px 3px;
+    font-size: 7px;
+    padding: 1px 2px;
   }
   
   .cell-tiangan,
@@ -2155,8 +2168,8 @@ export default {
   
   .cell-bashen {
     font-size: 10px;
-    margin-top: 2px;
-    padding-top: 2px;
+    top: 2px;
+    right: 2px;
   }
   
   .info-label {
@@ -2193,11 +2206,18 @@ export default {
   }
   
   .cell-position {
-    font-size: 10px;
+    font-size: 9px;
+    bottom: 2px;
+    right: 2px;
   }
   
   .position-number {
-    font-size: 12px;
+    font-size: 10px;
+  }
+  
+  .position-label {
+    font-size: 6px;
+    padding: 1px 2px;
   }
   
   .cell-tiangan,
@@ -2211,6 +2231,12 @@ export default {
   .cell-jiuxing-dipan,
   .cell-jiuxing-tianpan {
     font-size: 9px;
+  }
+  
+  .cell-bashen {
+    font-size: 9px;
+    top: 2px;
+    right: 2px;
   }
   
   .info-label {
