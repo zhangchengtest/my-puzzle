@@ -164,9 +164,13 @@
                     <span class="info-label">天盘门</span>
                     <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
                   </div>
-                  <div class="cell-jiuxing">
-                    <span>{{ cell.jiuxing }}</span>
-                    <span class="info-label">星</span>
+                  <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
+                    <span>{{ cell.jiuxingDiPan }}</span>
+                    <span class="info-label">地盘星</span>
+                  </div>
+                  <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
+                    <span>{{ cell.jiuxingTianPan }}</span>
+                    <span class="info-label">天盘星</span>
                   </div>
                   <div class="cell-bashen" v-if="cell.bashen">
                     <span>{{ cell.bashen }}</span>
@@ -1395,6 +1399,24 @@ export default {
         return getBamenDiPanByGong(sourceGong);
       };
       
+      // 计算每个宫位的星（地盘，固定位置）
+      // 九星固定位置：坎1宫天蓬、坤2宫天芮、震3宫天冲、巽4宫天辅、中5宫天禽、乾6宫天心、兑7宫天柱、艮8宫天任、离9宫天英
+      const getJiuxingDiPanByGong = (gong) => {
+        return gongToStar[gong] || null;
+      };
+      
+      // 计算每个宫位的星（天盘，跟随值符旋转）
+      // 九星按照九宫顺序旋转，值符星从地盘位置移动到天盘位置
+      // 所有星都按照相同的步数在九宫顺序中旋转
+      const getJiuxingTianPanByGong = (gong) => {
+        // 九宫顺序：1坎、2坤、3震、4巽、5中、6乾、7兑、8艮、9离
+        // 计算旋转后对应的原始宫位（逆时针旋转moveSteps步）
+        let sourceGong = ((gong - moveSteps - 1 + 9) % 9) + 1;
+        
+        // 获取原始宫位的地盘星
+        return getJiuxingDiPanByGong(sourceGong);
+      };
+      
       const grid = [];
       
       for (let i = 0; i < 9; i++) {
@@ -1412,6 +1434,12 @@ export default {
         
         // 计算该宫位的门（天盘，值使门移动后的位置）
         const bamenTianPan = getBamenTianPanByGong(pos);
+        
+        // 计算该宫位的星（地盘，固定位置）
+        const jiuxingDiPan = getJiuxingDiPanByGong(pos);
+        
+        // 计算该宫位的星（天盘，值符移动后的位置）
+        const jiuxingTianPan = getJiuxingTianPanByGong(pos);
         
         // 确定值符是否在此宫位
         let bashen = null;
@@ -1431,7 +1459,9 @@ export default {
           dizhi: diZhi[dizhiOffset % 12],
           bamenDiPan: bamenDiPan,
           bamenTianPan: bamenTianPan,
-          jiuxing: jiuXing[i % 9],
+          jiuxingDiPan: jiuxingDiPan,
+          jiuxingTianPan: jiuxingTianPan,
+          jiuxing: jiuxingDiPan, // 保留原有字段以兼容，使用地盘星
           bashen: bashen,
           isZhiShiMen: isZhiShiMen, // 天盘位置
           isZhiShiMenDiPan: isZhiShiMenDiPan, // 地盘位置
@@ -1475,9 +1505,10 @@ export default {
       // 1. 分析值符值使
       const zhiFuCell = grid.find(cell => cell.bashen === '值符');
       if (zhiFuCell) {
+        const starName = zhiFuCell.jiuxingTianPan || zhiFuCell.jiuxing;
         items.push({
           title: '值符分析',
-          content: `值符在${this.getPositionNameByPosition(zhiFuCell.position)}宫，${zhiFuCell.jiuxing}星当值，主${this.getStarMeaning(zhiFuCell.jiuxing)}。`
+          content: `值符在${this.getPositionNameByPosition(zhiFuCell.position)}宫，${starName}星当值，主${this.getStarMeaning(starName)}。`
         });
       }
       
@@ -1503,8 +1534,9 @@ export default {
       // 3. 分析九星
       const starAnalysis = [];
       grid.forEach(cell => {
-        if (cell.jiuxing) {
-          starAnalysis.push(`${this.getPositionNameByPosition(cell.position)}宫${cell.jiuxing}星，${this.getStarMeaning(cell.jiuxing)}`);
+        const starName = cell.jiuxingTianPan || cell.jiuxing;
+        if (starName) {
+          starAnalysis.push(`${this.getPositionNameByPosition(cell.position)}宫${starName}星，${this.getStarMeaning(starName)}`);
         }
       });
       
@@ -1535,9 +1567,13 @@ export default {
           specificAnalysis = `财运方面，${this.getPositionNameByPosition(moneyCell.position)}宫${moneyCell.bamen}门主${this.getGateMeaning(moneyCell.bamen)}，财运较旺。`;
         }
       } else if (questionType === 'health') {
-        const healthCell = grid.find(cell => cell.jiuxing === '天芮' || cell.jiuxing === '天心');
+        const healthCell = grid.find(cell => {
+          const starName = cell.jiuxingTianPan || cell.jiuxing;
+          return starName === '天芮' || starName === '天心';
+        });
         if (healthCell) {
-          specificAnalysis = `健康方面，${this.getPositionNameByPosition(healthCell.position)}宫${healthCell.jiuxing}星主${this.getStarMeaning(healthCell.jiuxing)}，需注意身体健康。`;
+          const starName = healthCell.jiuxingTianPan || healthCell.jiuxing;
+          specificAnalysis = `健康方面，${this.getPositionNameByPosition(healthCell.position)}宫${starName}星主${this.getStarMeaning(starName)}，需注意身体健康。`;
         }
       }
       
@@ -1935,6 +1971,29 @@ export default {
 .cell-jiuxing {
   font-size: 13px;
   color: #909399;
+}
+
+.cell-jiuxing-dipan {
+  font-size: 13px;
+  color: #909399;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 3px 0;
+  flex-wrap: wrap;
+}
+
+.cell-jiuxing-tianpan {
+  font-size: 13px;
+  color: #9c27b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 3px 0;
+  flex-wrap: wrap;
+  font-weight: bold;
 }
 
 .cell-bashen {
