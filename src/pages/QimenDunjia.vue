@@ -479,10 +479,8 @@ export default {
       const gridResult = this.generateGrid(juNumber, hour, timeGanZhi, dunType);
       const grid = gridResult.grid;
       
-      // 从grid中提取值使门信息
-      // 值使门跟随值符移动，所以值使门是在值符位置的天盘门
-      const zhiShiMenCell = grid.find(cell => cell.isZhiShiMen);
-      const zhiShiMen = zhiShiMenCell ? zhiShiMenCell.bamenTianPan : '';
+      // 值使门名称已经在generateGrid中从地盘确定，直接使用
+      const zhiShiMen = gridResult.zhiShiMen || '';
       
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
@@ -656,9 +654,16 @@ export default {
     },
     // 茅山法确定局数
     calculateJuNumberByMaoshan(year, month, day, dayGanZhi) {
+      // 获取当前日期所属的节气及其日期
+      const currentTermInfo = this.getCurrentSolarTermWithDate(year, month, day);
+      const currentTerm = currentTermInfo.name;
+      const termDate = currentTermInfo.date;
+      
       // 判断是阳遁还是阴遁（根据节气）
-      const solarTerm = this.getSolarTerm(year, month, day);
-      const isYangDun = solarTerm >= 0 && solarTerm <= 5; // 阳遁：冬至后到夏至前
+      // 阳遁节气：冬至、小寒、大寒、立春、雨水、惊蛰、春分、清明、谷雨、立夏、小满、芒种
+      // 阴遁节气：夏至、小暑、大暑、立秋、处暑、白露、秋分、寒露、霜降、立冬、小雪、大雪
+      const yangDunTerms = ['冬至', '小寒', '大寒', '立春', '雨水', '惊蛰', '春分', '清明', '谷雨', '立夏', '小满', '芒种'];
+      const isYangDun = yangDunTerms.includes(currentTerm);
       
       // 茅山法：根据日干支确定局数
       // 阳遁上元：甲子、己卯、甲午、己酉 → 1局
@@ -671,61 +676,34 @@ export default {
       const gan = dayGanZhi[0];
       const zhi = dayGanZhi[1];
       
-      // 判断是上元、中元还是下元（茅山法）
+      // 判断是上元、中元还是下元（根据节气内的天数）
       let yuanType = ''; // 上元、中元、下元
       
-      const zhiIndex = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'].indexOf(zhi);
-      
-      // 茅山法：根据日干支确定元
-      // 上元：甲子、己卯、甲午、己酉（子、卯、午、酉，索引0,3,6,9）
-      // 中元：甲戌、己丑、甲辰、己未（戌、丑、辰、未，索引10,1,4,7）
-      // 下元：甲申、己亥、甲寅、己巳（申、亥、寅、巳，索引8,11,2,5）
-      
-      if (gan === '甲' || gan === '己') {
-        // 甲己日直接判断
-        if ([0, 3, 6, 9].includes(zhiIndex)) {
-          yuanType = '上元';
-        } else if ([10, 1, 4, 7].includes(zhiIndex)) {
-          yuanType = '中元';
-        } else if ([8, 11, 2, 5].includes(zhiIndex)) {
-          yuanType = '下元';
-        }
+      // 计算当前日期距离该节气开始的天数（从1开始，即节气当天是第1天）
+      const currentDate = new Date(year, month - 1, day);
+      const daysInTerm = Math.floor((currentDate - termDate) / 86400000)+1;
+      // 根据天数判断元类型
+      // 1-5天：上元
+      // 6-10天：中元
+      // 11-15天：下元
+      if (daysInTerm >= 1 && daysInTerm <= 5) {
+        yuanType = '上元';
+      } else if (daysInTerm >= 6 && daysInTerm <= 10) {
+        yuanType = '中元';
+      } else if (daysInTerm >= 11 && daysInTerm <= 15) {
+        yuanType = '下元';
       } else {
-        // 非甲己日，需要找到最近的甲己日（向前找）
-        // 计算距离上一个甲己日的天数
-        const ganIndex = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'].indexOf(gan);
-        let daysToJiaJi = ganIndex % 5;
-        if (daysToJiaJi === 0) {
-          // 这种情况不应该出现（因为上面已经判断了甲己日）
-          // 但作为备用，向前找5天
-          daysToJiaJi = 5;
-        }
-        
-        // 推算上一个甲己日的地支（向前推算daysToJiaJi天）
-        // 天干每5天循环一次，地支每12天循环一次
-        let prevZhiIndex = (zhiIndex - daysToJiaJi + 12) % 12;
-        
-        // 根据推算出的甲己日地支确定元
-        if ([0, 3, 6, 9].includes(prevZhiIndex)) {
+        // 如果超过15天，说明已经进入下一个节气，需要重新计算
+        // 这种情况理论上不应该出现，但作为容错处理
+        // 使用模15的方式处理
+        const cycleDay = ((daysInTerm - 1) % 15) + 1;
+        if (cycleDay <= 5) {
           yuanType = '上元';
-        } else if ([10, 1, 4, 7].includes(prevZhiIndex)) {
+        } else if (cycleDay <= 10) {
           yuanType = '中元';
-        } else if ([8, 11, 2, 5].includes(prevZhiIndex)) {
+        } else {
           yuanType = '下元';
         }
-      }
-      
-      // 如果还是无法确定，使用简化方法（根据节气内的位置）
-      // 每个节气15天，分为上中下三元，每元5天
-      if (!yuanType) {
-        // 简化：根据当前日期在节气内的位置推算
-        // 这里需要知道当前是哪个节气，简化处理：根据月份和日期推算
-        const dayOfYear = this.getDayOfYear(year, month, day);
-        // 每个节气大约15天，简化处理
-        const cycleDay = dayOfYear % 15;
-        if (cycleDay < 5) yuanType = '上元';
-        else if (cycleDay < 10) yuanType = '中元';
-        else yuanType = '下元';
       }
       
       // 根据元类型、阴阳遁和具体节气确定局数
@@ -734,9 +712,6 @@ export default {
       //       雨水九六三，清明立夏四一七，谷雨小满五二八，芒种六三九。
       // 阴遁：夏至白露九三六，小暑八二五，大暑秋分七一四，立秋二五八。
       //       处暑一四七，霜降小雪五八二，寒露立冬六九三，大雪四七一。
-      
-      // 获取当前日期所属的节气
-      const currentTerm = this.getCurrentSolarTerm(year, month, day);
       
       let juNumber;
       if (isYangDun) {
@@ -753,8 +728,8 @@ export default {
         yuanType: yuanType
       };
     },
-    // 获取当前日期所属的节气名称
-    getCurrentSolarTerm(year, month, day) {
+    // 获取当前日期所属的节气名称和日期
+    getCurrentSolarTermWithDate(year, month, day) {
       const allTerms = [
         { name: '立春', month: 2, day: 4 },
         { name: '雨水', month: 2, day: 19 },
@@ -784,6 +759,7 @@ export default {
       
       const currentDate = new Date(year, month - 1, day);
       let currentTerm = null;
+      let currentTermDate = null;
       let minDaysDiff = Infinity;
       
       for (let term of allTerms) {
@@ -803,6 +779,7 @@ export default {
         if (daysDiff >= 0 && daysDiff < minDaysDiff && daysDiff < 15) {
           minDaysDiff = daysDiff;
           currentTerm = term.name;
+          currentTermDate = termDate;
         }
       }
       
@@ -810,14 +787,24 @@ export default {
       if (!currentTerm) {
         if (month === 12 && day >= 21) {
           currentTerm = '冬至';
+          currentTermDate = new Date(year, 11, 21); // 12月21日
         } else if (month === 1) {
           currentTerm = '小寒';
+          currentTermDate = new Date(year, 0, 6); // 1月6日
         } else {
           currentTerm = '冬至'; // 默认
+          currentTermDate = new Date(year - 1, 11, 21); // 上一年的12月21日
         }
       }
       
-      return currentTerm;
+      return {
+        name: currentTerm,
+        date: currentTermDate
+      };
+    },
+    // 获取当前日期所属的节气名称
+    getCurrentSolarTerm(year, month, day) {
+      return this.getCurrentSolarTermWithDate(year, month, day).name;
     },
     // 获取阳遁节气的局数（根据口诀）
     // 阳遁：冬至惊蛰一七四，小寒二八五，大寒春分三九六，立春八五二。
@@ -1184,23 +1171,30 @@ export default {
       const liuYiIndex = liuYiOrder.indexOf(xunShou.liuYi);
       
       // 根据局数和阴阳遁，确定六仪在地盘的起始位置
-      // 阳遁：从局数对应的宫位开始，六仪顺行排布
-      // 阴遁：从局数对应的宫位开始，六仪逆行排布
-      // 简化：局数1-9对应宫位1-9（中5宫特殊处理）
-      let startGong = juNumber;
-      if (startGong === 5) startGong = 5; // 中5宫
+      // 阳遁：从局数对应的宫位开始，六仪三奇按照1->2->3->4->5->6->7->8->9->1的顺序顺行排布
+      // 阴遁：从局数对应的宫位开始，六仪三奇按照1->9->8->7->6->5->4->3->2->1的顺序逆行排布
+      // 例如：阳遁1局，戊在1宫，己在2宫，...，乙在9宫
+      //      阳遁2局，戊在2宫，己在3宫，...，乙在1宫
+      //      阴遁1局，戊在1宫，己在9宫，庚在8宫，...，乙在2宫
+      //      阴遁2局，戊在2宫，己在1宫，庚在9宫，...，乙在3宫
       
       // 计算旬首六仪在地盘的宫位
+      // 六仪三奇顺序：戊、己、庚、辛、壬、癸、丁、丙、乙（索引0-8）
       let diPanGong;
       if (isYangDun) {
-        // 阳遁：顺行
-        diPanGong = ((startGong - 1 + liuYiIndex) % 9) + 1;
+        // 阳遁：顺行，戊从局数对应的宫位开始
+        // 例如：局1，戊在1宫，己在2宫，...，乙在9宫
+        //      局2，戊在2宫，己在3宫，...，乙在1宫
+        diPanGong = ((juNumber - 1 + liuYiIndex) % 9) + 1;
         if (diPanGong === 0) diPanGong = 9;
       } else {
-        // 阴遁：逆行
-        diPanGong = ((startGong - 1 - liuYiIndex + 9) % 9) + 1;
+        // 阴遁：逆行，戊从局数对应的宫位开始
+        // 例如：局1，戊在1宫，己在9宫，庚在8宫，...，乙在2宫
+        //      局2，戊在2宫，己在1宫，庚在9宫，...，乙在3宫
+        diPanGong = ((juNumber - 1 - liuYiIndex + 9) % 9) + 1;
         if (diPanGong === 0) diPanGong = 9;
       }
+
       
       // 3. 确定值符九星（该宫位的本位星）
       const gongToStar = {
@@ -1218,7 +1212,6 @@ export default {
         6: '开', 7: '惊', 8: '生', 9: '景'
       };
       const zhiShiMen = gongToMen[diPanGong] || '休';
-      
       // 4. 值符跟随时干落宫（天盘）
       // 公式：直符落宫数 = 局数 + 时干在三奇六仪中所对应的次序数 - 1
       // 三奇六仪次序数：
@@ -1306,7 +1299,7 @@ export default {
         xunShouLiuYi: xunShou.liuYi,
         juNumber,
         dunType,
-        startGong,
+        liuYiIndex,
         diPanGong,
         zhiFuStar,
         zhiShiMen,
@@ -1321,15 +1314,19 @@ export default {
       // 计算每个宫位的天干（地盘）
       const getTianganByGong = (gong) => {
         // 九宫顺序：1坎、2坤、3震、4巽、5中、6乾、7兑、8艮、9离
+        // 六仪三奇顺序：戊、己、庚、辛、壬、癸、丁、丙、乙（索引0-8）
         // 计算该宫位在六仪三奇序列中的索引
         let orderIndex;
         if (isYangDun) {
-          // 阳遁：从局数对应的宫位开始，六仪三奇顺行排布
-          // 例如：阳遁1局，戊在坎1宫（gong=1），索引0
-          orderIndex = ((gong - startGong + 9) % 9);
+          // 阳遁：从局数对应的宫位开始，六仪三奇按照1->2->3->4->5->6->7->8->9->1的顺序顺行排布
+          // 例如：阳遁1局，gong=1时，戊（索引0）；gong=2时，己（索引1）；...；gong=9时，乙（索引8）
+          //      阳遁2局，gong=2时，戊（索引0）；gong=3时，己（索引1）；...；gong=1时，乙（索引8）
+          orderIndex = ((gong - juNumber + 9) % 9);
         } else {
-          // 阴遁：从局数对应的宫位开始，六仪三奇逆行排布
-          orderIndex = ((startGong - gong + 9) % 9);
+          // 阴遁：从局数对应的宫位开始，六仪三奇按照1->9->8->7->6->5->4->3->2->1的顺序逆行排布
+          // 例如：阴遁1局，gong=1时，戊（索引0）；gong=9时，己（索引1）；gong=8时，庚（索引2）；...；gong=2时，乙（索引8）
+          //      阴遁2局，gong=2时，戊（索引0）；gong=1时，己（索引1）；gong=9时，庚（索引2）；...；gong=3时，乙（索引8）
+          orderIndex = ((juNumber - gong + 9) % 9);
         }
         return liuYiSanQiOrder[orderIndex];
       };
@@ -1424,8 +1421,10 @@ export default {
           bashen = '值符';
         }
         
-        // 确定值使门是否在此宫位（值使门有自己的落宫计算方法）
+        // 确定值使门是否在此宫位（天盘位置）
         let isZhiShiMen = (pos === zhiShiMenPosition);
+        // 确定值使门是否在此宫位（地盘位置）
+        let isZhiShiMenDiPan = (pos === zhiShiMenDiPanGong);
         
         grid.push({
           position: pos,
@@ -1436,7 +1435,8 @@ export default {
           bamenTianPan: bamenTianPan,
           jiuxing: jiuXing[i % 9],
           bashen: bashen,
-          isZhiShiMen: isZhiShiMen,
+          isZhiShiMen: isZhiShiMen, // 天盘位置
+          isZhiShiMenDiPan: isZhiShiMenDiPan, // 地盘位置
           zhiShiMen: zhiShiMen
         });
       }
@@ -1445,7 +1445,9 @@ export default {
         grid: grid,
         zhiShiMenXuShu: zhiShiMenXuShu,
         timeGanXuShuInTianGan: timeGanXuShuInTianGan,
-        zhiShiMenPosition: zhiShiMenPosition
+        zhiShiMenPosition: zhiShiMenPosition,
+        zhiShiMenDiPanGong: zhiShiMenDiPanGong,
+        zhiShiMen: zhiShiMen
       };
     },
     getPositionName(index) {
