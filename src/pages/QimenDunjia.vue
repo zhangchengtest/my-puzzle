@@ -143,38 +143,48 @@
                     <span class="position-number">{{ cell.position }}</span>
                     <span class="position-label">八卦</span>
                   </div>
-                  <div class="cell-tiangan">
-                    <span>{{ cell.tianganDiPan }}</span>
-                    <span class="info-label">地盘天干</span>
-                  </div>
-                  <div class="cell-tiangan-tianpan">
-                    <span>{{ cell.tianganTianPan }}</span>
-                    <span class="info-label">天盘天干</span>
-                  </div>
-                  <div class="cell-dizhi">
-                    <span>{{ cell.dizhi }}</span>
-                    <span class="info-label">地支</span>
-                  </div>
-                  <div class="cell-bamen" v-if="cell.bamenDiPan">
-                    <span>{{ cell.bamenDiPan }}</span>
-                    <span class="info-label">地盘门</span>
-                  </div>
-                  <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
-                    <span>{{ cell.bamenTianPan }}</span>
-                    <span class="info-label">天盘门</span>
-                    <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
-                  </div>
-                  <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
-                    <span>{{ cell.jiuxingDiPan }}</span>
-                    <span class="info-label">地盘星</span>
-                  </div>
-                  <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
-                    <span>{{ cell.jiuxingTianPan }}</span>
-                    <span class="info-label">天盘星</span>
-                  </div>
                   <div class="cell-bashen" v-if="cell.bashen">
                     <span>{{ cell.bashen }}</span>
                     <span class="info-label">神</span>
+                  </div>
+                  
+                  <!-- 空行分隔 -->
+                  <div class="section-divider"></div>
+                  
+                  <!-- 天盘部分 -->
+                  <div class="tianpan-section">
+                    <div class="cell-tiangan-tianpan">
+                      <span>{{ cell.tianganTianPan }}</span>
+                      <span class="info-label">天盘天干</span>
+                    </div>
+                    <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
+                      <span>{{ cell.bamenTianPan }}</span>
+                      <span class="info-label">天盘门</span>
+                      <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
+                    </div>
+                    <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
+                      <span>{{ cell.jiuxingTianPan }}</span>
+                      <span class="info-label">天盘星</span>
+                    </div>
+                  </div>
+                  
+                  <!-- 空行分隔 -->
+                  <div class="section-divider"></div>
+                  
+                  <!-- 地盘部分 -->
+                  <div class="dipan-section">
+                    <div class="cell-tiangan">
+                      <span>{{ cell.tianganDiPan }}</span>
+                      <span class="info-label">地盘天干</span>
+                    </div>
+                    <div class="cell-bamen" v-if="cell.bamenDiPan">
+                      <span>{{ cell.bamenDiPan }}</span>
+                      <span class="info-label">地盘门</span>
+                    </div>
+                    <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
+                      <span>{{ cell.jiuxingDiPan }}</span>
+                      <span class="info-label">地盘星</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2075,6 +2085,11 @@ export default {
   margin-top: 5px;
   padding-top: 5px;
   border-top: 1px solid #ddd;
+}
+
+.section-divider {
+  height: 10px;
+  margin: 5px 0;
 }
 
 .info-label {
