@@ -1230,14 +1230,10 @@ export default {
         zhiFuPosition = 9;
       }
       
-      // 5. 计算值使门落宫
-      // 公式：值使落宫 = 值使序数 + 时干在十天干中序数 - 1
-      // 值使序数：值使门在八门中的序数（休1、死2、伤3、杜4、开5、惊6、生7、景8）
-      // 时干在十天干中序数：
-      //   阳遁：甲1、乙2、丙3、丁4、戊5、己6、庚7、辛8、壬9、癸10
-      //   阴遁：甲10、乙9、丙8、丁7、戊6、己5、庚4、辛3、壬2、癸1
-      const baMenOrder = ['休', '死', '伤', '杜', '开', '惊', '生', '景'];
-      const zhiShiMenXuShu = baMenOrder.indexOf(zhiShiMen) + 1; // 值使序数（1-8）
+     
+      // zhiShiMenXuShu 就是 zhiShiMen 的宫位数字
+      // 由于 zhiShiMen = gongToMen[diPanGong]，所以 zhiShiMenXuShu 就是 diPanGong
+      const zhiShiMenXuShu = diPanGong; // 值使门宫位数字
       
       // 计算时干在十天干中的序数
       const tianGanOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
