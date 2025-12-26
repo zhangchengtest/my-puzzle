@@ -65,14 +65,12 @@
               <table class="sanqi-table">
                 <thead>
                   <tr>
-                    <th>天干</th>
-                    <th>宫位</th>
+                    <th v-for="(gong, tiangan) in panData.sanQiLiuYiMap" :key="tiangan">{{ tiangan }}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(gong, tiangan) in panData.sanQiLiuYiMap" :key="tiangan">
-                    <td>{{ tiangan }}</td>
-                    <td>{{ gong }}宫</td>
+                  <tr>
+                    <td v-for="(gong, tiangan) in panData.sanQiLiuYiMap" :key="tiangan">{{ gong }}宫</td>
                   </tr>
                 </tbody>
               </table>
@@ -129,8 +127,7 @@
         </div>
 
         <div class="pan-content">
-          <div class="pan-left">
-            <div class="jiugong-grid">
+          <div class="jiugong-grid">
               <div 
                 v-for="(cell, index) in panData.grid" 
                 :key="index"
@@ -190,20 +187,6 @@
               </div>
             </div>
 
-            <div class="legend">
-              <h3>图例说明</h3>
-              <div class="legend-items">
-                <div class="legend-item">
-                  <span class="legend-label">值符：</span>
-                  <span class="legend-value">值符所在宫位</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-label">值使：</span>
-                  <span class="legend-value">值使门所在宫位</span>
-                </div>
-              </div>
-            </div>
-
             <div class="analysis-result" v-if="analysisResult">
               <h3>分析结果</h3>
               <div class="result-content">
@@ -222,7 +205,6 @@
                 </div>
               </div>
             </div>
-          </div>
         </div>
 
         <!-- 排盘规则 -->
@@ -1700,13 +1682,9 @@ export default {
 
 .pan-content {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 30px;
-  align-items: flex-start;
-}
-
-.pan-left {
-  flex: 1;
-  min-width: 0;
 }
 
 .pan-info {
@@ -1732,22 +1710,25 @@ export default {
 
 .jiugong-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  max-width: 600px;
+  grid-template-columns: repeat(3, 180px);
+  grid-template-rows: repeat(3, 180px);
+  gap: 0;
   margin: 0 auto;
+  justify-content: center;
 }
 
 .grid-cell {
-  aspect-ratio: 1;
+  width: 180px;
+  height: 180px;
   border: 2px solid #333;
-  border-radius: 4px;
-  padding: 10px;
+  border-radius: 0;
+  padding: 5px;
   background-color: #fff;
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .grid-cell.center {
@@ -1763,13 +1744,19 @@ export default {
 .cell-content {
   text-align: center;
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .cell-position {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1780,7 +1767,7 @@ export default {
 .position-number {
   color: #409eff;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .position-label {
@@ -1800,47 +1787,47 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin: 3px 0;
+  gap: 3px;
+  margin: 2px 0;
   flex-wrap: wrap;
 }
 
 .cell-tiangan {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: bold;
   color: #409eff;
 }
 
 .cell-tiangan-tianpan {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: bold;
   color: #e6a23c;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin: 3px 0;
+  gap: 3px;
+  margin: 2px 0;
   flex-wrap: wrap;
 }
 
 .cell-dizhi {
-  font-size: 16px;
+  font-size: 14px;
   color: #67c23a;
 }
 
 .cell-bamen {
-  font-size: 14px;
+  font-size: 12px;
   color: #e6a23c;
 }
 
 .cell-bamen-tianpan {
-  font-size: 14px;
+  font-size: 12px;
   color: #f56c6c;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin: 3px 0;
+  gap: 3px;
+  margin: 2px 0;
   flex-wrap: wrap;
 }
 
@@ -1859,40 +1846,40 @@ export default {
 }
 
 .cell-jiuxing-dipan {
-  font-size: 13px;
+  font-size: 12px;
   color: #909399;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin: 3px 0;
+  gap: 3px;
+  margin: 2px 0;
   flex-wrap: wrap;
 }
 
 .cell-jiuxing-tianpan {
-  font-size: 13px;
+  font-size: 12px;
   color: #9c27b0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  margin: 3px 0;
+  gap: 3px;
+  margin: 2px 0;
   flex-wrap: wrap;
   font-weight: bold;
 }
 
 .cell-bashen {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   color: #f56c6c;
-  margin-top: 5px;
-  padding-top: 5px;
+  margin-top: 3px;
+  padding-top: 3px;
   border-top: 1px solid #ddd;
 }
 
 .section-divider {
-  height: 10px;
-  margin: 5px 0;
+  height: 5px;
+  margin: 2px 0;
 }
 
 .info-label {
