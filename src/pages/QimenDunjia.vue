@@ -1355,34 +1355,43 @@ export default {
       };
       const zhiShiMenDiPanGong = zhiShiMenDiPanGongMap[zhiShiMen] || 1;
       
+      // 八门旋转顺序：开(6) -> 休(1) -> 生(8) -> 伤(3) -> 杜(4) -> 景(9) -> 死(2) -> 惊(7) -> 开(6)...
+      const bamenOrder = [6, 1, 8, 3, 4, 9, 2, 7]; // 有门的宫位顺序（不包括中5宫）
+      
       // 计算值使门移动的步数（从地盘到天盘）
       // 值使门从 zhiShiMenDiPanGong 移动到 zhiShiMenPosition
-      let zhiShiMenMoveSteps = zhiShiMenPosition - zhiShiMenDiPanGong;
+      // 计算在八门顺序中的移动步数
+      const getBamenOrderIndex = (gong) => {
+        return bamenOrder.indexOf(gong);
+      };
+      
+      const zhiShiMenDiPanIndex = getBamenOrderIndex(zhiShiMenDiPanGong);
+      const zhiShiMenTianPanIndex = getBamenOrderIndex(zhiShiMenPosition);
+      let zhiShiMenMoveSteps = zhiShiMenTianPanIndex - zhiShiMenDiPanIndex;
       if (zhiShiMenMoveSteps < 0) {
-        zhiShiMenMoveSteps += 9;
+        zhiShiMenMoveSteps += bamenOrder.length;
       }
       
       // 计算每个宫位的门（天盘）
-      // 八门跟随值使门旋转，值使门从地盘位置移动到天盘位置
-      // 八门按照九宫格顺序旋转，与天干旋转方式相同
-      // 注意：中5宫始终没有门，如果旋转后对应到中5宫，继续顺时针旋转到下一个有门的宫位
+      // 八门按照指定顺序旋转，值使门从地盘位置移动到天盘位置
+      // 所有门都按照相同的步数在八门顺序中旋转
       const getBamenTianPanByGong = (gong) => {
         // 中5宫始终没有门
         if (gong === 5) {
           return null;
         }
-        // 找到旋转后，该宫位对应的原始宫位
-        // 旋转逻辑：当前宫位的天盘门 = 逆时针zhiShiMenMoveSteps步的宫位的地盘门
-        let sourceGong = ((gong - zhiShiMenMoveSteps - 1 + 9) % 9) + 1;
         
-        // 如果原始宫位是中5宫，继续顺时针旋转（逆时针找源宫位），找到下一个有门的宫位
-        // 因为八门旋转时，如果对应到中5宫，应该跳过中5宫
-        while (sourceGong === 5) {
-          // 继续逆时针找下一个宫位（顺时针旋转）
-          sourceGong = ((sourceGong - 1 - 1 + 9) % 9) + 1;
+        // 找到该宫位在八门顺序中的索引
+        const gongIndex = getBamenOrderIndex(gong);
+        if (gongIndex === -1) {
+          return null;
         }
         
+        // 计算旋转后对应的原始宫位索引（逆时针旋转zhiShiMenMoveSteps步）
+        let sourceIndex = (gongIndex - zhiShiMenMoveSteps + bamenOrder.length) % bamenOrder.length;
+        
         // 获取原始宫位的地盘门
+        const sourceGong = bamenOrder[sourceIndex];
         return getBamenDiPanByGong(sourceGong);
       };
       
