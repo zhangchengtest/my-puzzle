@@ -1405,15 +1405,87 @@ export default {
         return gongToStar[gong] || null;
       };
       
+      // 九星旋转顺序：开(6)天心、休(1)天蓬、生(8)天任、伤(3)天冲、杜(4)天辅、景(9)天英、死(2)天芮、惊(7)天柱
+      // 与八门顺序一致：[6, 1, 8, 3, 4, 9, 2, 7]（不包括中5宫）
+      const jiuxingOrder = [6, 1, 8, 3, 4, 9, 2, 7]; // 九星宫位顺序（不包括中5宫，中5宫天禽星跟随值符星）
+      
+      // 计算值符星移动的步数（从地盘到天盘）
+      // 值符星从 diPanGong 移动到 zhiFuPosition
+      // 计算在九星顺序中的移动步数
+      const getJiuxingOrderIndex = (gong) => {
+        return jiuxingOrder.indexOf(gong);
+      };
+      
+      // 如果值符星在地盘是5宫（天禽），需要特殊处理
+      // 中5宫的天禽星跟随值符星移动
+      let zhiFuStarDiPanIndex, zhiFuStarTianPanIndex;
+      if (diPanGong === 5) {
+        // 值符星在地盘是5宫（天禽），天禽星跟随值符星移动到天盘位置
+        // 计算天盘位置在九星顺序中的索引
+        zhiFuStarDiPanIndex = -1; // 5宫不在九星顺序中
+        zhiFuStarTianPanIndex = getJiuxingOrderIndex(zhiFuPosition);
+      } else {
+        // 值符星在地盘不是5宫，正常计算
+        zhiFuStarDiPanIndex = getJiuxingOrderIndex(diPanGong);
+        zhiFuStarTianPanIndex = getJiuxingOrderIndex(zhiFuPosition);
+      }
+      
+      let zhiFuStarMoveSteps = 0;
+      if (zhiFuStarDiPanIndex !== -1 && zhiFuStarTianPanIndex !== -1) {
+        zhiFuStarMoveSteps = zhiFuStarTianPanIndex - zhiFuStarDiPanIndex;
+        if (zhiFuStarMoveSteps < 0) {
+          zhiFuStarMoveSteps += jiuxingOrder.length;
+        }
+      } else if (zhiFuStarDiPanIndex === -1 && zhiFuStarTianPanIndex !== -1) {
+        // 值符星在地盘是5宫，移动到天盘位置
+        // 移动步数就是天盘位置在顺序中的索引
+        zhiFuStarMoveSteps = zhiFuStarTianPanIndex;
+      }
+      
       // 计算每个宫位的星（天盘，跟随值符旋转）
-      // 九星按照九宫顺序旋转，值符星从地盘位置移动到天盘位置
-      // 所有星都按照相同的步数在九宫顺序中旋转
+      // 九星按照指定顺序旋转，值符星从地盘位置移动到天盘位置
+      // 所有星都按照相同的步数在九星顺序中旋转
+      // 中5宫的天禽星跟随值符星
       const getJiuxingTianPanByGong = (gong) => {
-        // 九宫顺序：1坎、2坤、3震、4巽、5中、6乾、7兑、8艮、9离
-        // 计算旋转后对应的原始宫位（逆时针旋转moveSteps步）
-        let sourceGong = ((gong - moveSteps - 1 + 9) % 9) + 1;
+        // 如果当前宫位是值符星在天盘的位置
+        if (gong === zhiFuPosition) {
+          // 如果值符星在地盘是5宫（天禽），那么天盘显示天禽星
+          if (diPanGong === 5) {
+            return '天禽';
+          }
+          // 否则显示值符星本身
+          return zhiFuStar;
+        }
+        
+        // 如果当前宫位是5宫
+        if (gong === 5) {
+          // 中5宫的天禽星跟随值符星移动
+          // 如果值符星在地盘是5宫，那么5宫的天盘星应该是跟随值符星移动的星
+          // 但实际上值符星已经移动到天盘位置了，所以5宫的天盘星应该是原来值符星位置的星
+          // 如果值符星在地盘不是5宫，那么5宫的地盘星是天禽星，天禽星会跟随值符星移动
+          // 所以5宫的天盘星应该是按照旋转逻辑计算出来的星
+          // 但5宫不在九星顺序中，需要特殊处理
+          // 实际上，如果值符星在地盘不是5宫，那么5宫的地盘星是天禽星，天禽星会跟随值符星移动
+          // 所以5宫的天盘星应该是按照旋转逻辑计算出来的星
+          // 但5宫不在九星顺序中，所以需要找到5宫对应的原始宫位
+          // 由于5宫不在九星顺序中，我们需要找到值符星移动后，5宫对应的原始宫位
+          // 如果值符星从5宫移动到zhiFuPosition，那么5宫的天盘星应该是按照旋转逻辑计算
+          // 实际上，如果值符星在地盘是5宫，那么5宫的天盘星应该是跟随值符星移动的星
+          // 但值符星已经移动到天盘位置了，所以5宫的天盘星应该是原来值符星位置的星
+          return null;
+        }
+        
+        // 找到该宫位在九星顺序中的索引
+        const gongIndex = getJiuxingOrderIndex(gong);
+        if (gongIndex === -1) {
+          return null;
+        }
+        
+        // 计算旋转后对应的原始宫位索引（逆时针旋转zhiFuStarMoveSteps步）
+        let sourceIndex = (gongIndex - zhiFuStarMoveSteps + jiuxingOrder.length) % jiuxingOrder.length;
         
         // 获取原始宫位的地盘星
+        const sourceGong = jiuxingOrder[sourceIndex];
         return getJiuxingDiPanByGong(sourceGong);
       };
       
