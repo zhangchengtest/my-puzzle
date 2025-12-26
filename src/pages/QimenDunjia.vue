@@ -78,6 +78,26 @@
               </table>
             </div>
           </div>
+          <div class="info-item" v-if="panData.zhiFuStar">
+            <span class="label">值符星：</span>
+            <span>{{ panData.zhiFuStar }}星</span>
+          </div>
+          <div class="info-item" v-if="panData.zhiFuPosition">
+            <span class="label">值符落宫：</span>
+            <span>{{ panData.zhiFuPosition }}宫</span>
+          </div>
+          <div class="info-item" v-if="panData.juNumber !== undefined">
+            <span class="label">局数：</span>
+            <span>{{ panData.juNumber }}</span>
+          </div>
+          <div class="info-item" v-if="panData.timeGanXuShu !== undefined">
+            <span class="label">时干在三奇六仪中序数：</span>
+            <span>{{ panData.timeGanXuShu }}</span>
+          </div>
+          <div class="info-item" v-if="panData.juNumber !== undefined && panData.timeGanXuShu !== undefined">
+            <span class="label">值符落宫计算：</span>
+            <span>{{ panData.juNumber }} + {{ panData.timeGanXuShu }} - 1 = {{ panData.zhiFuPosition }}</span>
+          </div>
           <div class="info-item" v-if="panData.zhiShiMen">
             <span class="label">值使门：</span>
             <span>{{ panData.zhiShiMen }}门</span>
@@ -538,8 +558,11 @@ export default {
         solarTerm: solarTerm,
         currentYuan: currentYuan,
         dayGanZhi: dayGanZhi,
-        juNumber: juNumber,
+        juNumber: gridResult.juNumber,
         dunType: dunType,
+        zhiFuStar: gridResult.zhiFuStar,
+        zhiFuPosition: gridResult.zhiFuPosition,
+        timeGanXuShu: gridResult.timeGanXuShu,
         zhiShiMen: zhiShiMen,
         zhiShiMenXuShu: gridResult.zhiShiMenXuShu,
         timeGanXuShuInTianGan: gridResult.timeGanXuShuInTianGan,
@@ -1409,6 +1432,10 @@ export default {
       
       return {
         grid: grid,
+        zhiFuStar: zhiFuStar,
+        zhiFuPosition: zhiFuPosition,
+        juNumber: juNumber,
+        timeGanXuShu: timeGanXuShu,
         zhiShiMenXuShu: zhiShiMenXuShu,
         timeGanXuShuInTianGan: timeGanXuShuInTianGan,
         zhiShiMenPosition: zhiShiMenPosition,
