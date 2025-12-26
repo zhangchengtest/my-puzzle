@@ -22,6 +22,87 @@
       </div>
 
       <div class="pan-section" v-if="panData">
+        <div class="pan-content">
+          <div class="jiugong-grid">
+              <div 
+                v-for="(cell, index) in panData.grid" 
+                :key="index"
+                class="grid-cell"
+                :class="getCellClass(cell)"
+              >
+                <div class="cell-content">
+                  <div class="cell-position">
+                    <span>{{ getPositionName(index) }}</span>
+                    <span class="position-number">{{ cell.position }}</span>
+                    <span class="position-label">八卦</span>
+                  </div>
+                  <div class="cell-bashen" v-if="cell.bashen">
+                    <span>{{ cell.bashen }}</span>
+                    <span class="info-label">神</span>
+                  </div>
+                  
+                  <!-- 空行分隔 -->
+                  <div class="section-divider"></div>
+                  
+                  <!-- 天盘部分 -->
+                  <div class="tianpan-section">
+                    <div class="cell-tiangan-tianpan">
+                      <span>{{ cell.tianganTianPan }}</span>
+                      <span class="info-label">天盘天干</span>
+                    </div>
+                    <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
+                      <span>{{ cell.bamenTianPan }}</span>
+                      <span class="info-label">天盘门</span>
+                      <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
+                    </div>
+                    <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
+                      <span>{{ cell.jiuxingTianPan }}</span>
+                      <span class="info-label">天盘星</span>
+                    </div>
+                  </div>
+                  
+                  <!-- 空行分隔 -->
+                  <div class="section-divider"></div>
+                  
+                  <!-- 地盘部分 -->
+                  <div class="dipan-section">
+                    <div class="cell-tiangan">
+                      <span>{{ cell.tianganDiPan }}</span>
+                      <span class="info-label">地盘天干</span>
+                    </div>
+                    <div class="cell-bamen" v-if="cell.bamenDiPan">
+                      <span>{{ cell.bamenDiPan }}</span>
+                      <span class="info-label">地盘门</span>
+                    </div>
+                    <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
+                      <span>{{ cell.jiuxingDiPan }}</span>
+                      <span class="info-label">地盘星</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="analysis-result" v-if="analysisResult">
+              <h3>分析结果</h3>
+              <div class="result-content">
+                <div class="result-question">
+                  <strong>求测事项：</strong>{{ question }}
+                </div>
+                <div class="result-analysis">
+                  <div v-for="(item, index) in analysisResult.items" :key="index" class="result-item">
+                    <h4>{{ item.title }}</h4>
+                    <p>{{ item.content }}</p>
+                  </div>
+                </div>
+                <div class="result-summary">
+                  <h4>综合建议</h4>
+                  <p>{{ analysisResult.summary }}</p>
+                </div>
+              </div>
+            </div>
+        </div>
+
         <div class="pan-info">
           <div class="info-item">
             <span class="label">公历：</span>
@@ -136,87 +217,6 @@
             <span class="label">节气日期时间：</span>
             <span>{{ panData.termDate }}</span>
           </div>
-        </div>
-
-        <div class="pan-content">
-          <div class="jiugong-grid">
-              <div 
-                v-for="(cell, index) in panData.grid" 
-                :key="index"
-                class="grid-cell"
-                :class="getCellClass(cell)"
-              >
-                <div class="cell-content">
-                  <div class="cell-position">
-                    <span>{{ getPositionName(index) }}</span>
-                    <span class="position-number">{{ cell.position }}</span>
-                    <span class="position-label">八卦</span>
-                  </div>
-                  <div class="cell-bashen" v-if="cell.bashen">
-                    <span>{{ cell.bashen }}</span>
-                    <span class="info-label">神</span>
-                  </div>
-                  
-                  <!-- 空行分隔 -->
-                  <div class="section-divider"></div>
-                  
-                  <!-- 天盘部分 -->
-                  <div class="tianpan-section">
-                    <div class="cell-tiangan-tianpan">
-                      <span>{{ cell.tianganTianPan }}</span>
-                      <span class="info-label">天盘天干</span>
-                    </div>
-                    <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
-                      <span>{{ cell.bamenTianPan }}</span>
-                      <span class="info-label">天盘门</span>
-                      <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
-                    </div>
-                    <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
-                      <span>{{ cell.jiuxingTianPan }}</span>
-                      <span class="info-label">天盘星</span>
-                    </div>
-                  </div>
-                  
-                  <!-- 空行分隔 -->
-                  <div class="section-divider"></div>
-                  
-                  <!-- 地盘部分 -->
-                  <div class="dipan-section">
-                    <div class="cell-tiangan">
-                      <span>{{ cell.tianganDiPan }}</span>
-                      <span class="info-label">地盘天干</span>
-                    </div>
-                    <div class="cell-bamen" v-if="cell.bamenDiPan">
-                      <span>{{ cell.bamenDiPan }}</span>
-                      <span class="info-label">地盘门</span>
-                    </div>
-                    <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
-                      <span>{{ cell.jiuxingDiPan }}</span>
-                      <span class="info-label">地盘星</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="analysis-result" v-if="analysisResult">
-              <h3>分析结果</h3>
-              <div class="result-content">
-                <div class="result-question">
-                  <strong>求测事项：</strong>{{ question }}
-                </div>
-                <div class="result-analysis">
-                  <div v-for="(item, index) in analysisResult.items" :key="index" class="result-item">
-                    <h4>{{ item.title }}</h4>
-                    <p>{{ item.content }}</p>
-                  </div>
-                </div>
-                <div class="result-summary">
-                  <h4>综合建议</h4>
-                  <p>{{ analysisResult.summary }}</p>
-                </div>
-              </div>
-            </div>
         </div>
 
         <!-- 排盘规则 -->
@@ -1728,19 +1728,23 @@ export default {
 
 .jiugong-grid {
   display: grid;
-  grid-template-columns: repeat(3, 180px);
-  grid-template-rows: repeat(3, 180px);
+  grid-template-columns: repeat(3, 240px);
+  grid-template-rows: repeat(3, 240px);
   gap: 0;
   margin: 0 auto;
   justify-content: center;
+  width: 100%;
+  max-width: 720px;
 }
 
 .grid-cell {
-  width: 180px;
-  height: 180px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
   border: 2px solid #333;
   border-radius: 0;
-  padding: 5px;
+  padding: 8px;
   background-color: #fff;
   position: relative;
   display: flex;
@@ -1766,8 +1770,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 .cell-position {
@@ -2030,7 +2033,21 @@ export default {
   .pan-content {
     flex-direction: column;
   }
+}
+
+@media (max-width: 768px) {
+  .pan-content {
+    gap: 20px;
+  }
   
+  .pan-info {
+    padding: 10px;
+    gap: 15px;
+  }
+  
+  .container {
+    padding: 15px;
+  }
 }
 
 .sanqi-liuyi-wrapper {
@@ -2099,31 +2116,105 @@ export default {
 
 @media (max-width: 768px) {
   .jiugong-grid {
-    gap: 5px;
+    grid-template-columns: repeat(3, calc(33.333vw - 2px));
+    grid-template-rows: repeat(3, calc(33.333vw - 2px));
+    gap: 0;
+    max-width: 100vw;
   }
   
   .grid-cell {
-    padding: 5px;
+    padding: 4px;
   }
   
   .cell-position {
-    font-size: 14px;
+    font-size: 11px;
+    margin-bottom: 2px;
   }
   
-  .cell-tiangan {
-    font-size: 16px;
+  .position-number {
+    font-size: 13px;
   }
   
-  .cell-dizhi,
+  .position-label {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+  
+  .cell-tiangan,
+  .cell-tiangan-tianpan {
+    font-size: 13px;
+  }
+  
   .cell-bamen,
-  .cell-jiuxing {
-    font-size: 12px;
+  .cell-bamen-tianpan,
+  .cell-jiuxing,
+  .cell-jiuxing-dipan,
+  .cell-jiuxing-tianpan {
+    font-size: 10px;
+  }
+  
+  .cell-bashen {
+    font-size: 10px;
+    margin-top: 2px;
+    padding-top: 2px;
+  }
+  
+  .info-label {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+  
+  .zhi-shi-label {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
+  .section-divider {
+    height: 3px;
+    margin: 1px 0;
   }
   
   .sanqi-table th,
   .sanqi-table td {
     padding: 8px;
     font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .jiugong-grid {
+    grid-template-columns: repeat(3, calc(33.333vw - 1px));
+    grid-template-rows: repeat(3, calc(33.333vw - 1px));
+  }
+  
+  .grid-cell {
+    padding: 3px;
+    border-width: 1px;
+  }
+  
+  .cell-position {
+    font-size: 10px;
+  }
+  
+  .position-number {
+    font-size: 12px;
+  }
+  
+  .cell-tiangan,
+  .cell-tiangan-tianpan {
+    font-size: 12px;
+  }
+  
+  .cell-bamen,
+  .cell-bamen-tianpan,
+  .cell-jiuxing,
+  .cell-jiuxing-dipan,
+  .cell-jiuxing-tianpan {
+    font-size: 9px;
+  }
+  
+  .info-label {
+    font-size: 7px;
   }
 }
 </style>
