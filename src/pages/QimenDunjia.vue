@@ -59,6 +59,25 @@
             <span class="label">局数：</span>
             <span>{{ panData.dunType }}{{ panData.juNumber }}局</span>
           </div>
+          <div class="info-item sanqi-liuyi-wrapper" v-if="panData.sanQiLiuYiMap">
+            <div class="sanqi-liuyi-table">
+              <h4>三奇六仪对应宫位</h4>
+              <table class="sanqi-table">
+                <thead>
+                  <tr>
+                    <th>天干</th>
+                    <th>宫位</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(gong, tiangan) in panData.sanQiLiuYiMap" :key="tiangan">
+                    <td>{{ tiangan }}</td>
+                    <td>{{ gong }}宫</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
           <div class="info-item" v-if="panData.zhiShiMen">
             <span class="label">值使门：</span>
             <span>{{ panData.zhiShiMen }}门</span>
@@ -507,6 +526,9 @@ export default {
         return `${y}-${m}-${d} ${h}:${min}:${s}`;
       };
 
+      // 计算三奇六仪对应宫位
+      const sanQiLiuYiMap = this.calculateSanQiLiuYiMap(juNumber, dunType);
+
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时`,
         lunarDate: lunarDate,
@@ -524,7 +546,8 @@ export default {
         zhiShiMenPosition: gridResult.zhiShiMenPosition,
         currentDate: formatDateTime(currentDate),
         termDate: formatDateTime(termDate),
-        grid: grid
+        grid: grid,
+        sanQiLiuYiMap: sanQiLiuYiMap
       };
     },
     getLunarDate(year, month, day) {
@@ -1565,6 +1588,39 @@ export default {
       summary += '建议关注值符所在宫位，这是当前最重要的方位。同时注意避开凶门所在方位，选择吉门方位行动。';
       
       return summary;
+    },
+    // 计算三奇六仪对应宫位
+    calculateSanQiLiuYiMap(juNumber, dunType) {
+      // 三奇六仪顺序：戊、己、庚、辛、壬、癸、丁、丙、乙
+      const liuYiSanQiOrder = ['戊', '己', '庚', '辛', '壬', '癸', '丁', '丙', '乙'];
+      const map = {};
+      const isYangDun = dunType === '阳遁';
+      
+      // 根据局数和阴阳遁计算每个天干对应的宫位
+      for (let i = 0; i < liuYiSanQiOrder.length; i++) {
+        const tiangan = liuYiSanQiOrder[i];
+        let gong;
+        
+        if (isYangDun) {
+          // 阳遁：从局数对应的宫位开始，六仪三奇按照1->2->3->4->5->6->7->8->9->1的顺序顺行排布
+          // 例如：阳遁1局，戊在1宫，己在2宫，...，乙在9宫
+          //      阳遁2局，戊在2宫，己在3宫，...，乙在1宫
+          //      阳遁3局，戊在3宫，己在4宫，...，乙在2宫
+          gong = ((juNumber - 1 + i) % 9) + 1;
+          if (gong === 0) gong = 9;
+        } else {
+          // 阴遁：从局数对应的宫位开始，六仪三奇按照1->9->8->7->6->5->4->3->2->1的顺序逆行排布
+          // 例如：阴遁1局，戊在1宫，己在9宫，庚在8宫，...，乙在2宫
+          //      阴遁2局，戊在2宫，己在1宫，庚在9宫，...，乙在3宫
+          //      阴遁3局，戊在3宫，己在2宫，庚在1宫，...，乙在4宫
+          gong = ((juNumber - 1 - i + 9) % 9) + 1;
+          if (gong === 0) gong = 9;
+        }
+        
+        map[tiangan] = gong;
+      }
+      
+      return map;
     }
   }
 };
@@ -2059,6 +2115,70 @@ export default {
   }
 }
 
+.sanqi-liuyi-wrapper {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.sanqi-liuyi-table {
+  margin-top: 10px;
+}
+
+.sanqi-liuyi-table h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.sanqi-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sanqi-table thead {
+  background-color: #409eff;
+  color: white;
+}
+
+.sanqi-table th {
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.sanqi-table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+.sanqi-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.sanqi-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.sanqi-table tbody tr:hover {
+  background-color: #f0f9ff;
+}
+
+.sanqi-table td {
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
+}
+
+.sanqi-table td:first-child {
+  font-weight: bold;
+  color: #409eff;
+}
+
 @media (max-width: 768px) {
   .jiugong-grid {
     gap: 5px;
@@ -2079,6 +2199,12 @@ export default {
   .cell-dizhi,
   .cell-bamen,
   .cell-jiuxing {
+    font-size: 12px;
+  }
+  
+  .sanqi-table th,
+  .sanqi-table td {
+    padding: 8px;
     font-size: 12px;
   }
 }
