@@ -93,7 +93,7 @@
                   <div class="cell-position">
                     <span>{{ getPositionName(index) }}</span>
                     <span class="position-number">{{ cell.position }}</span>
-                    <span class="position-label">八卦</span>
+                    <span class="position-label" v-if="getGongWuxing(cell.position)">{{ getGongWuxing(cell.position) }}</span>
                   </div>
                 </div>
               </div>
@@ -1530,6 +1530,21 @@ export default {
     getPositionName(index) {
       const names = ['巽', '离', '坤', '震', '中', '兑', '艮', '坎', '乾'];
       return names[index];
+    },
+    // 根据宫位获取五行属性
+    getGongWuxing(position) {
+      const wuxingMap = {
+        1: '水', // 坎宫
+        2: '土', // 坤宫
+        3: '木', // 震宫
+        4: '木', // 巽宫
+        5: '土', // 中宫
+        6: '金', // 乾宫
+        7: '金', // 兑宫
+        8: '土', // 艮宫
+        9: '火'  // 离宫
+      };
+      return wuxingMap[position] || '';
     },
     getCellClass(cell) {
       const classes = [];
