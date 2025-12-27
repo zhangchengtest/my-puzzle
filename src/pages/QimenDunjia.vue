@@ -69,6 +69,13 @@
                       <span>{{ cell.jiuxingDiPan }}</span>
                       <span class="info-label">地盘星</span>
                     </div>
+                    <div class="cell-dizhi-dipan" v-if="cell.dizhiDiPan && cell.dizhiDiPan.length > 0">
+                      <span v-for="(dz, idx) in cell.dizhiDiPan" :key="idx">
+                        <span>{{ dz }}</span>
+                        <span v-if="idx < cell.dizhiDiPan.length - 1">、</span>
+                      </span>
+                      <span class="info-label">地支</span>
+                    </div>
                   </div>
                   
                   <!-- 值符信息放在右上角 -->
@@ -932,6 +939,25 @@ export default {
       // 九宫格位置（洛书顺序）
       const positions = [4, 9, 2, 3, 5, 7, 8, 1, 6]; // 巽4、离9、坤2、震3、中5、兑7、艮8、坎1、乾6
       
+      // 计算每个宫位对应的地支（包括寄宫）
+      // 四正地支：子(坎1)、午(离9)、卯(震3)、酉(兑7)
+      // 四隅地支：寅(艮8)、申(坤2)、巳(巽4)、亥(乾6)
+      // 四库地支（寄宫）：辰寄巽4、戌寄乾6、丑寄艮8、未寄坤2
+      const getDizhiByGong = (gong) => {
+        const dizhiMap = {
+          1: ['子'],      // 坎宫：子
+          2: ['申', '未'], // 坤宫：申、未（未寄坤）
+          3: ['卯'],      // 震宫：卯
+          4: ['巳', '辰'], // 巽宫：巳、辰（辰寄巽）
+          5: [],          // 中5宫：无地支
+          6: ['亥', '戌'], // 乾宫：亥、戌（戌寄乾）
+          7: ['酉'],      // 兑宫：酉
+          8: ['寅', '丑'], // 艮宫：寅、丑（丑寄艮）
+          9: ['午']       // 离宫：午
+        };
+        return dizhiMap[gong] || [];
+      };
+      
       // 1. 确定旬首
       const xunShou = this.getXunShou(timeGanZhi);
       
@@ -1345,6 +1371,9 @@ export default {
         // 计算该宫位的星（天盘，值符移动后的位置）
         const jiuxingTianPan = getJiuxingTianPanByGong(pos);
         
+        // 计算该宫位的地支（地盘，根据宫位分配）
+        const dizhiDiPan = getDizhiByGong(pos);
+        
         // 确定值符是否在此宫位
         let bashen = null;
         if (pos === zhiFuPosition) {
@@ -1368,7 +1397,8 @@ export default {
           position: pos,
           tianganDiPan: tianganDiPan,
           tianganTianPan: tianganTianPan,
-          dizhi: diZhi[dizhiOffset % 12],
+          dizhi: diZhi[dizhiOffset % 12], // 保留原有字段以兼容
+          dizhiDiPan: dizhiDiPan, // 地盘地支（根据宫位分配）
           bamenDiPan: bamenDiPan,
           bamenTianPan: bamenTianPan,
           jiuxingDiPan: jiuxingDiPan,
@@ -1864,6 +1894,17 @@ export default {
   color: #67c23a;
 }
 
+.cell-dizhi-dipan {
+  font-size: 12px;
+  color: #67c23a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin: 1px 0;
+  flex-wrap: wrap;
+}
+
 .cell-bamen {
   font-size: 12px;
   color: #e6a23c;
@@ -2188,6 +2229,12 @@ export default {
     font-size: 10px;
   }
   
+  .cell-dizhi-dipan {
+    font-size: 9px;
+    gap: 1px;
+    margin: 1px 0;
+  }
+  
   .cell-bashen {
     font-size: 10px;
     top: 2px;
@@ -2253,6 +2300,12 @@ export default {
   .cell-jiuxing-dipan,
   .cell-jiuxing-tianpan {
     font-size: 9px;
+  }
+  
+  .cell-dizhi-dipan {
+    font-size: 8px;
+    gap: 1px;
+    margin: 1px 0;
   }
   
   .cell-bashen {
