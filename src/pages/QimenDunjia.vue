@@ -63,6 +63,7 @@
                     <div class="cell-bamen" v-if="cell.bamenDiPan">
                       <span>{{ cell.bamenDiPan }}</span>
                       <span class="info-label">地盘门</span>
+                      <span v-if="cell.isZhiShiMenDiPan" class="zhi-shi-label">值使</span>
                     </div>
                     <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
                       <span>{{ cell.jiuxingDiPan }}</span>
