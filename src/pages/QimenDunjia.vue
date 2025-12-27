@@ -38,6 +38,7 @@
                   <div class="tianpan-section">
                     <div class="cell-tiangan-tianpan">
                       <span>{{ cell.tianganTianPan }}</span>
+                      <span v-if="cell.tianganTianPan && getChangShengDizhi(cell.tianganTianPan)" class="changsheng-dizhi">{{ getChangShengDizhi(cell.tianganTianPan) }}</span>
                       <span class="info-label">天盘天干</span>
                     </div>
                     <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
@@ -1441,6 +1442,22 @@ export default {
       }
       return classes.join(' ');
     },
+    // 根据天干获取对应的长生地支
+    getChangShengDizhi(tiangan) {
+      const changShengMap = {
+        '甲': '亥',
+        '乙': '午',
+        '丙': '寅',
+        '丁': '酉',
+        '戊': '寅',
+        '己': '酉',
+        '庚': '巳',
+        '辛': '子',
+        '壬': '申',
+        '癸': '卯'
+      };
+      return changShengMap[tiangan] || '';
+    },
     analyzePan() {
       if (!this.panData || !this.question) return;
       
@@ -1889,6 +1906,13 @@ export default {
   flex-wrap: wrap;
 }
 
+.changsheng-dizhi {
+  font-size: 12px;
+  color: #67c23a;
+  font-weight: normal;
+  margin-left: 2px;
+}
+
 .cell-dizhi {
   font-size: 14px;
   color: #67c23a;
@@ -2221,6 +2245,11 @@ export default {
     font-size: 13px;
   }
   
+  .changsheng-dizhi {
+    font-size: 10px;
+    margin-left: 1px;
+  }
+  
   .cell-bamen,
   .cell-bamen-tianpan,
   .cell-jiuxing,
@@ -2292,6 +2321,11 @@ export default {
   .cell-tiangan,
   .cell-tiangan-tianpan {
     font-size: 12px;
+  }
+  
+  .changsheng-dizhi {
+    font-size: 9px;
+    margin-left: 1px;
   }
   
   .cell-bamen,
