@@ -39,15 +39,18 @@
                     <div class="cell-tiangan-tianpan">
                       <span>{{ cell.tianganTianPan }}</span>
                       <span v-if="cell.tianganTianPan && getChangShengDizhi(cell.tianganTianPan)" class="changsheng-dizhi">{{ getChangShengDizhi(cell.tianganTianPan) }}</span>
+                      <span v-if="cell.tianganTianPan && getTianganWuxing(cell.tianganTianPan)" class="wuxing-label">{{ getTianganWuxing(cell.tianganTianPan) }}</span>
                       <span class="info-label">天盘天干</span>
                     </div>
                     <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
                       <span>{{ cell.bamenTianPan }}</span>
+                      <span v-if="getBamenWuxing(cell.bamenTianPan)" class="wuxing-label">{{ getBamenWuxing(cell.bamenTianPan) }}</span>
                       <span class="info-label">天盘门</span>
                       <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
                     </div>
                     <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
                       <span>{{ cell.jiuxingTianPan }}</span>
+                      <span v-if="getJiuxingWuxing(cell.jiuxingTianPan)" class="wuxing-label">{{ getJiuxingWuxing(cell.jiuxingTianPan) }}</span>
                       <span class="info-label">天盘星</span>
                     </div>
                   </div>
@@ -1490,6 +1493,51 @@ export default {
       };
       return changShengMap[tiangan] || '';
     },
+    // 根据天干获取五行属性
+    getTianganWuxing(tiangan) {
+      const wuxingMap = {
+        '甲': '木',
+        '乙': '木',
+        '丙': '火',
+        '丁': '火',
+        '戊': '土',
+        '己': '土',
+        '庚': '金',
+        '辛': '金',
+        '壬': '水',
+        '癸': '水'
+      };
+      return wuxingMap[tiangan] || '';
+    },
+    // 根据八门获取五行属性
+    getBamenWuxing(bamen) {
+      const wuxingMap = {
+        '休': '水',
+        '生': '土',
+        '伤': '木',
+        '杜': '木',
+        '景': '火',
+        '死': '土',
+        '惊': '金',
+        '开': '金'
+      };
+      return wuxingMap[bamen] || '';
+    },
+    // 根据九星获取五行属性
+    getJiuxingWuxing(jiuxing) {
+      const wuxingMap = {
+        '天蓬': '水',
+        '天芮': '土',
+        '天冲': '木',
+        '天辅': '木',
+        '天禽': '土',
+        '天心': '金',
+        '天柱': '金',
+        '天任': '土',
+        '天英': '火'
+      };
+      return wuxingMap[jiuxing] || '';
+    },
     analyzePan() {
       if (!this.panData || !this.question) return;
       
@@ -1945,6 +1993,16 @@ export default {
   margin-left: 2px;
 }
 
+.wuxing-label {
+  font-size: 11px;
+  color: #e6a23c;
+  font-weight: bold;
+  margin-left: 2px;
+  background-color: #fdf6ec;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
 .cell-dizhi {
   font-size: 14px;
   color: #67c23a;
@@ -2318,6 +2376,12 @@ export default {
     margin-left: 1px;
   }
   
+  .wuxing-label {
+    font-size: 9px;
+    margin-left: 1px;
+    padding: 1px 3px;
+  }
+  
   .cell-bamen,
   .cell-bamen-tianpan,
   .cell-jiuxing,
@@ -2404,6 +2468,12 @@ export default {
   .changsheng-dizhi {
     font-size: 9px;
     margin-left: 1px;
+  }
+  
+  .wuxing-label {
+    font-size: 8px;
+    margin-left: 1px;
+    padding: 1px 2px;
   }
   
   .cell-bamen,
