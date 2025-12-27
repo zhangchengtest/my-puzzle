@@ -1188,19 +1188,32 @@ export default {
       };
       
       const zhiShiMenDiPanIndex = getBamenOrderIndex(zhiShiMenDiPanGong);
-      const zhiShiMenTianPanIndex = getBamenOrderIndex(zhiShiMenPosition);
-      let zhiShiMenMoveSteps = zhiShiMenTianPanIndex - zhiShiMenDiPanIndex;
-      if (zhiShiMenMoveSteps < 0) {
-        zhiShiMenMoveSteps += bamenOrder.length;
+      let zhiShiMenMoveSteps = 0;
+      
+      // 当值使门落在中5宫时，天盘八门不动
+      if (zhiShiMenPosition === 5) {
+        zhiShiMenMoveSteps = 0;
+      } else {
+        const zhiShiMenTianPanIndex = getBamenOrderIndex(zhiShiMenPosition);
+        zhiShiMenMoveSteps = zhiShiMenTianPanIndex - zhiShiMenDiPanIndex;
+        if (zhiShiMenMoveSteps < 0) {
+          zhiShiMenMoveSteps += bamenOrder.length;
+        }
       }
       
       // 计算每个宫位的门（天盘）
       // 八门按照指定顺序旋转，值使门从地盘位置移动到天盘位置
       // 所有门都按照相同的步数在八门顺序中旋转
+      // 当值使门落在中5宫时，天盘八门不动
       const getBamenTianPanByGong = (gong) => {
         // 中5宫始终没有门
         if (gong === 5) {
           return null;
+        }
+        
+        // 当值使门落在中5宫时，天盘八门不动，直接返回地盘门
+        if (zhiShiMenMoveSteps === 0) {
+          return getBamenDiPanByGong(gong);
         }
         
         // 找到该宫位在八门顺序中的索引
