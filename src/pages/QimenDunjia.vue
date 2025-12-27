@@ -75,10 +75,11 @@
                     </div>
                     <div class="cell-dizhi-dipan" v-if="cell.dizhiDiPan && cell.dizhiDiPan.length > 0">
                       <span v-for="(dz, idx) in cell.dizhiDiPan" :key="idx">
-                        <span>{{ dz }}</span>
+                        <span :class="{ 'kongwang-dizhi': cell.hasKongWang }">{{ dz }}</span>
                         <span v-if="idx < cell.dizhiDiPan.length - 1">、</span>
                       </span>
                       <span class="info-label">地支</span>
+                      <span v-if="cell.hasKongWang" class="kongwang-label">空亡</span>
                     </div>
                   </div>
                   
@@ -998,6 +999,18 @@ export default {
         liuYi: liuYiMap[xunShou] || '戊'
       };
     },
+    // 根据旬首获取空亡地支
+    getKongWangDizhi(xunShouGanZhi) {
+      const kongWangMap = {
+        '甲子': ['戌', '亥'],
+        '甲戌': ['申', '酉'],
+        '甲申': ['午', '未'],
+        '甲午': ['辰', '巳'],
+        '甲辰': ['寅', '卯'],
+        '甲寅': ['子', '丑']
+      };
+      return kongWangMap[xunShouGanZhi] || [];
+    },
     generateGrid(juNumber, hour, timeGanZhi, dunType) {
       // 天干
       const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -1040,6 +1053,9 @@ export default {
       
       // 1. 确定旬首
       const xunShou = this.getXunShou(timeGanZhi);
+      
+      // 获取空亡地支
+      const kongWangDizhi = this.getKongWangDizhi(xunShou.ganZhi);
       
       // 2. 定位旬首所遁六仪在地盘的位置
       const isYangDun = dunType === '阳遁';
@@ -1454,6 +1470,9 @@ export default {
         // 计算该宫位的地支（地盘，根据宫位分配）
         const dizhiDiPan = getDizhiByGong(pos);
         
+        // 检查该宫位的地支是否为空亡
+        const hasKongWang = dizhiDiPan.some(dz => kongWangDizhi.includes(dz));
+        
         // 确定值符是否在此宫位
         let bashen = null;
         if (pos === zhiFuPosition) {
@@ -1487,7 +1506,8 @@ export default {
           bashen: bashen,
           isZhiShiMen: isZhiShiMen, // 天盘位置
           isZhiShiMenDiPan: isZhiShiMenDiPan, // 地盘位置
-          zhiShiMen: zhiShiMen
+          zhiShiMen: zhiShiMen,
+          hasKongWang: hasKongWang // 是否为空亡
         });
       }
       
@@ -2063,6 +2083,22 @@ export default {
   flex-wrap: wrap;
 }
 
+.kongwang-dizhi {
+  color: #f56c6c;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.kongwang-label {
+  font-size: 10px;
+  color: #f56c6c;
+  background-color: #fef0f0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: bold;
+  margin-left: 3px;
+}
+
 .cell-bamen {
   font-size: 12px;
   color: #e6a23c;
@@ -2512,6 +2548,12 @@ export default {
     margin: 1px 0;
   }
   
+  .kongwang-label {
+    font-size: 8px;
+    padding: 1px 3px;
+    margin-left: 2px;
+  }
+  
   .cell-bashen {
     font-size: 10px;
     top: 2px;
@@ -2636,6 +2678,12 @@ export default {
     font-size: 8px;
     gap: 1px;
     margin: 1px 0;
+  }
+  
+  .kongwang-label {
+    font-size: 7px;
+    padding: 1px 2px;
+    margin-left: 1px;
   }
   
   .cell-bashen {
