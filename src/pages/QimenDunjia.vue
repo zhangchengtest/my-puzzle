@@ -1351,7 +1351,15 @@ export default {
         }
         
         // 确定值使门是否在此宫位（天盘位置）
-        let isZhiShiMen = (pos === zhiShiMenPosition);
+        // 当值使门落在中5宫时，值使门标记在地盘的原始位置（因为中5宫没有门）
+        let isZhiShiMen;
+        if (zhiShiMenPosition === 5) {
+          // 值使门落在中5宫，标记在地盘的原始位置
+          isZhiShiMen = (pos === zhiShiMenDiPanGong);
+        } else {
+          // 值使门落在其他宫位，标记在天盘位置
+          isZhiShiMen = (pos === zhiShiMenPosition);
+        }
         // 确定值使门是否在此宫位（地盘位置）
         let isZhiShiMenDiPan = (pos === zhiShiMenDiPanGong);
         
