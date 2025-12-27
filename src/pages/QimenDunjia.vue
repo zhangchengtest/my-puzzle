@@ -180,6 +180,32 @@
               </div>
             </div>
           </div>
+          <div class="info-item wuxing-relation-wrapper">
+            <div class="wuxing-relation-content">
+              <div class="wuxing-section">
+                <h4>五行相生</h4>
+                <div class="wuxing-relation-list">
+                  <span v-for="(item, index) in wuxingXiangSheng" :key="index" class="wuxing-relation-item">
+                    <span class="wuxing-from">{{ item.from }}</span>
+                    <span class="wuxing-arrow">生</span>
+                    <span class="wuxing-to">{{ item.to }}</span>
+                    <span v-if="index < wuxingXiangSheng.length - 1" class="wuxing-separator">→</span>
+                  </span>
+                </div>
+              </div>
+              <div class="wuxing-section">
+                <h4>五行相克</h4>
+                <div class="wuxing-relation-list">
+                  <span v-for="(item, index) in wuxingXiangKe" :key="index" class="wuxing-relation-item">
+                    <span class="wuxing-from">{{ item.from }}</span>
+                    <span class="wuxing-arrow ke">克</span>
+                    <span class="wuxing-to">{{ item.to }}</span>
+                    <span v-if="index < wuxingXiangKe.length - 1" class="wuxing-separator">→</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="info-item" v-if="panData.zhiFuStar">
             <span class="label">值符星：</span>
             <span>{{ panData.zhiFuStar }}星</span>
@@ -290,6 +316,24 @@ export default {
     },
     shierChangSheng() {
       return ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'];
+    },
+    wuxingXiangSheng() {
+      return [
+        { from: '木', to: '火' },
+        { from: '火', to: '土' },
+        { from: '土', to: '金' },
+        { from: '金', to: '水' },
+        { from: '水', to: '木' }
+      ];
+    },
+    wuxingXiangKe() {
+      return [
+        { from: '木', to: '土' },
+        { from: '土', to: '水' },
+        { from: '水', to: '火' },
+        { from: '火', to: '金' },
+        { from: '金', to: '木' }
+      ];
     }
   },
   mounted() {
@@ -2339,6 +2383,78 @@ export default {
   font-weight: 500;
 }
 
+.wuxing-relation-wrapper {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.wuxing-relation-content {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.wuxing-section {
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wuxing-section h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.wuxing-relation-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.wuxing-relation-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wuxing-from,
+.wuxing-to {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.wuxing-from {
+  background-color: #e1f3d8;
+  color: #67c23a;
+}
+
+.wuxing-to {
+  background-color: #f0f9ff;
+  color: #409eff;
+}
+
+.wuxing-arrow {
+  font-size: 14px;
+  font-weight: bold;
+  color: #67c23a;
+}
+
+.wuxing-arrow.ke {
+  color: #f56c6c;
+}
+
+.wuxing-separator {
+  font-size: 16px;
+  color: #909399;
+  margin: 0 3px;
+}
+
 @media (max-width: 768px) {
   .jiugong-grid {
     grid-template-columns: repeat(3, calc(33.333vw - 2px));
@@ -2431,6 +2547,38 @@ export default {
   .changsheng-item {
     padding: 5px 10px;
     font-size: 12px;
+  }
+  
+  .wuxing-relation-content {
+    gap: 12px;
+  }
+  
+  .wuxing-section {
+    padding: 12px;
+  }
+  
+  .wuxing-section h4 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .wuxing-relation-list {
+    gap: 4px;
+  }
+  
+  .wuxing-from,
+  .wuxing-to {
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+  
+  .wuxing-arrow {
+    font-size: 12px;
+  }
+  
+  .wuxing-separator {
+    font-size: 14px;
+    margin: 0 2px;
   }
 }
 
