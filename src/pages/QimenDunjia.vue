@@ -169,6 +169,14 @@
               </table>
             </div>
           </div>
+          <div class="info-item shier-changsheng-wrapper">
+            <div class="shier-changsheng-table">
+              <h4>十二长生</h4>
+              <div class="changsheng-list">
+                <span v-for="name in shierChangSheng" :key="name" class="changsheng-item">{{ name }}</span>
+              </div>
+            </div>
+          </div>
           <div class="info-item" v-if="panData.zhiFuStar">
             <span class="label">值符星：</span>
             <span>{{ panData.zhiFuStar }}星</span>
@@ -254,8 +262,32 @@ export default {
       selectedDateTime: '',
       panData: null,
       question: '',
-      analysisResult: null
+      analysisResult: null,
+      changShengMap: {
+        '甲': '亥',
+        '乙': '午',
+        '丙': '寅',
+        '丁': '酉',
+        '戊': '寅',
+        '己': '酉',
+        '庚': '巳',
+        '辛': '子',
+        '壬': '申',
+        '癸': '卯'
+      }
     };
+  },
+  computed: {
+    changShengList() {
+      const tianGanOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+      return tianGanOrder.map(tiangan => ({
+        tiangan: tiangan,
+        dizhi: this.changShengMap[tiangan]
+      }));
+    },
+    shierChangSheng() {
+      return ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'];
+    }
   },
   mounted() {
     this.useCurrentTime();
@@ -2213,6 +2245,42 @@ export default {
   color: #409eff;
 }
 
+.shier-changsheng-wrapper {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.shier-changsheng-table {
+  margin-top: 10px;
+}
+
+.shier-changsheng-table h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.changsheng-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.changsheng-item {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #f0f9ff;
+  color: #409eff;
+  border: 1px solid #b3d8ff;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .jiugong-grid {
     grid-template-columns: repeat(3, calc(33.333vw - 2px));
@@ -2288,6 +2356,16 @@ export default {
   .sanqi-table th,
   .sanqi-table td {
     padding: 8px;
+    font-size: 12px;
+  }
+  
+  .changsheng-list {
+    padding: 8px;
+    gap: 6px;
+  }
+  
+  .changsheng-item {
+    padding: 5px 10px;
     font-size: 12px;
   }
 }
