@@ -368,7 +368,7 @@ export default {
       const timeBranch = this.getTimeBranch(hour);
       
       // 计算日干支（用于茅山法确定局数）
-      const dayGanZhi = this.getDayGanZhi(year, month, day);
+      const dayGanZhi = this.getDayGanZhi(year, month, day, hour, minute);
       
       // 计算节气（显示上一个和上上一个节气）
       const solarTerm = this.getRecentSolarTerms(year, month, day);
@@ -573,24 +573,51 @@ export default {
       return branches[index] + '时';
     },
     // 计算日干支
-    getDayGanZhi(year, month, day) {
-      // 使用已知的准确日期作为基准：2025年12月24日是丁卯日
-      // 丁卯：天干索引3，地支索引3
-      const baseDate = new Date(2025, 11, 24); // 2025年12月24日，丁卯日
-      const baseGanIndex = 3; // 丁
-      const baseZhiIndex = 3; // 卯
+    /**
+     * 公历 + 时分 → 日干支（子初换日：23:00）
+     */
+    getDayGanZhi(year, month, day, hour = 0, minute = 0) {
+      // 子初换日：23点以后算第二天
+      let adjustedYear = year;
+      let adjustedMonth = month;
+      let adjustedDay = day;
       
-      const targetDate = new Date(year, month - 1, day);
-      const daysDiff = Math.floor((targetDate - baseDate) / 86400000);
+      if (hour >= 23) {
+        const date = new Date(year, month - 1, day);
+        date.setDate(date.getDate() + 1);
+        adjustedYear = date.getFullYear();
+        adjustedMonth = date.getMonth() + 1;
+        adjustedDay = date.getDate();
+      }
+      
+      // 计算儒略日数
+      const jdn = this.toJulianDayNumber(adjustedYear, adjustedMonth, adjustedDay);
       
       const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       
-      // 计算目标日期的干支索引
-      const ganIndex = ((baseGanIndex + daysDiff) % 10 + 10) % 10;
-      const zhiIndex = ((baseZhiIndex + daysDiff) % 12 + 12) % 12;
+      // 计算干支索引
+      const ganIndex = ((jdn + 9) % 10 + 10) % 10;
+      const zhiIndex = ((jdn + 1) % 12 + 12) % 12;
       
       return gan[ganIndex] + zhi[zhiIndex];
+    },
+    
+    /**
+     * Gregorian → Julian Day Number
+     */
+    toJulianDayNumber(year, month, day) {
+      const a = Math.floor((14 - month) / 12);
+      const y = year + 4800 - a;
+      const m = month + 12 * a - 3;
+      
+      return day
+        + Math.floor((153 * m + 2) / 5)
+        + 365 * y
+        + Math.floor(y / 4)
+        - Math.floor(y / 100)
+        + Math.floor(y / 400)
+        - 32045;
     },
     // 茅山法确定局数
     calculateJuNumberByMaoshan(year, month, day, dayGanZhi, hour = 0, minute = 0) {
@@ -924,8 +951,8 @@ export default {
     },
     // 计算时干支
     getTimeGanZhi(year, month, day, hour) {
-      // 计算日干支
-      const dayGanZhi = this.getDayGanZhi(year, month, day);
+      // 计算日干支（子初换日：23点以后算第二天）
+      const dayGanZhi = this.getDayGanZhi(year, month, day, hour, 0);
       const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       
