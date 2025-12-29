@@ -1027,7 +1027,7 @@ export default {
       // 九星（按宫位顺序：坎1、坤2、震3、巽4、中5、乾6、兑7、艮8、离9）
       const jiuXing = ['天蓬', '天芮', '天冲', '天辅', '天禽', '天心', '天柱', '天任', '天英'];
       // 八神
-      const baShen = ['值符', '腾蛇', '太阴', '六合', '白虎', '玄武', '九地', '九天'];
+      const baShen = ['值符', '腾蛇', '太阴', '六合', '白虎（勾陈）', '玄武（朱雀）', '九地', '九天'];
       
       // 九宫格位置（洛书顺序）
       const positions = [4, 9, 2, 3, 5, 7, 8, 1, 6]; // 巽4、离9、坤2、震3、中5、兑7、艮8、坎1、乾6
@@ -1443,6 +1443,47 @@ export default {
         return getJiuxingDiPanByGong(sourceGong);
       };
       
+      // 八神旋转顺序：与八门顺序一致：[6, 1, 8, 3, 4, 9, 2, 7]（不包括中5宫）
+      const bashenOrder = [6, 1, 8, 3, 4, 9, 2, 7]; // 八神宫位顺序（不包括中5宫）
+      // 八神顺序：值符、腾蛇、太阴、六合、白虎（勾陈）、玄武（朱雀）、九地、九天
+      const bashenNames = ['值符', '腾蛇', '太阴', '六合', '白虎（勾陈）', '玄武（朱雀）', '九地', '九天'];
+      
+      // 计算值符在八神顺序中的位置
+      // 值符在值符星的位置（zhiFuPosition）
+      const getBashenOrderIndex = (gong) => {
+        return bashenOrder.indexOf(gong);
+      };
+      
+      // 计算每个宫位的八神（天盘）
+      // 八神按照指定顺序旋转，值符从地盘位置移动到天盘位置
+      // 其他神按照固定顺序（腾蛇、太阴、六合、白虎（勾陈）、玄武（朱雀）、九地、九天）依次排列
+      const getBashenByGong = (gong) => {
+        // 中5宫没有八神
+        if (gong === 5) {
+          return null;
+        }
+        
+        // 找到值符在天盘的位置在八神顺序中的索引
+        const zhiFuBashenIndex = getBashenOrderIndex(zhiFuPosition);
+        if (zhiFuBashenIndex === -1) {
+          // 值符在5宫，不显示八神
+          return null;
+        }
+        
+        // 找到当前宫位在八神顺序中的索引
+        const gongIndex = getBashenOrderIndex(gong);
+        if (gongIndex === -1) {
+          return null;
+        }
+        
+        // 计算当前宫位相对于值符位置的偏移
+        // 值符在索引0的位置（值符），其他神依次排列
+        let offset = (gongIndex - zhiFuBashenIndex + bashenOrder.length) % bashenOrder.length;
+        
+        // 返回对应的八神名称
+        return bashenNames[offset];
+      };
+      
       const grid = [];
       
       for (let i = 0; i < 9; i++) {
@@ -1473,11 +1514,8 @@ export default {
         // 检查该宫位的地支是否为空亡
         const hasKongWang = dizhiDiPan.some(dz => kongWangDizhi.includes(dz));
         
-        // 确定值符是否在此宫位
-        let bashen = null;
-        if (pos === zhiFuPosition) {
-          bashen = '值符';
-        }
+        // 计算该宫位的八神（天盘，按照固定顺序排列）
+        const bashen = getBashenByGong(pos);
         
         // 确定值使门是否在此宫位（天盘位置）
         // 当值使门落在中5宫时，值使门标记在地盘的原始位置（因为中5宫没有门）
