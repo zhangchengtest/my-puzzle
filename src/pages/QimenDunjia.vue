@@ -1757,6 +1757,17 @@ export default {
       }
       lines.push('');
       
+      // 地支信息
+      if (cell.dizhiDiPan && cell.dizhiDiPan.length > 0) {
+        lines.push(`【地支信息】`);
+        let dizhiInfo = `地支：${cell.dizhiDiPan.join('、')}`;
+        if (cell.hasKongWang) {
+          dizhiInfo += ` [空亡]`;
+        }
+        lines.push(dizhiInfo);
+        lines.push('');
+      }
+      
       // 八神信息
       if (cell.bashen) {
         lines.push(`【八神信息】`);
