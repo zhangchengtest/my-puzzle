@@ -1757,30 +1757,6 @@ export default {
       }
       lines.push('');
       
-      // 地盘信息
-      lines.push(`【地盘信息】`);
-      if (cell.tianganDiPan) {
-        lines.push(`天干：${cell.tianganDiPan}`);
-      }
-      if (cell.bamenDiPan) {
-        let bamenInfo = `八门：${cell.bamenDiPan}`;
-        if (cell.isZhiShiMenDiPan) {
-          bamenInfo += ` [值使]`;
-        }
-        lines.push(bamenInfo);
-      }
-      if (cell.jiuxingDiPan) {
-        lines.push(`九星：${cell.jiuxingDiPan}`);
-      }
-      if (cell.dizhiDiPan && cell.dizhiDiPan.length > 0) {
-        let dizhiInfo = `地支：${cell.dizhiDiPan.join('、')}`;
-        if (cell.hasKongWang) {
-          dizhiInfo += ` [空亡]`;
-        }
-        lines.push(dizhiInfo);
-      }
-      lines.push('');
-      
       // 八神信息
       if (cell.bashen) {
         lines.push(`【八神信息】`);
@@ -1807,32 +1783,6 @@ export default {
           lines.push(`空亡地支：${cell.dizhiDiPan.join('、')}`);
         }
         lines.push('');
-      }
-      
-      // 五行信息汇总
-      lines.push(`【五行信息】`);
-      const wuxingList = [];
-      if (cell.tianganTianPan) {
-        const wuxing = this.getTianganWuxing(cell.tianganTianPan);
-        if (wuxing) wuxingList.push(`天干：${wuxing}`);
-      }
-      if (cell.bamenTianPan) {
-        const wuxing = this.getBamenWuxing(cell.bamenTianPan);
-        if (wuxing) wuxingList.push(`八门：${wuxing}`);
-      }
-      if (cell.jiuxingTianPan) {
-        const wuxing = this.getJiuxingWuxing(cell.jiuxingTianPan);
-        if (wuxing) wuxingList.push(`九星：${wuxing}`);
-      }
-      if (cell.bashen) {
-        const wuxing = this.getBashenWuxing(cell.bashen);
-        if (wuxing) wuxingList.push(`八神：${wuxing}`);
-      }
-      if (gongWuxing) {
-        wuxingList.push(`宫位：${gongWuxing}`);
-      }
-      if (wuxingList.length > 0) {
-        lines.push(wuxingList.join(' | '));
       }
       
       const text = lines.join('\n');
