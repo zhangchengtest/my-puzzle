@@ -86,6 +86,7 @@
                   <!-- 值符信息放在右上角 -->
                   <div class="cell-bashen" v-if="cell.bashen">
                     <span>{{ cell.bashen }}</span>
+                    <span v-if="getBashenWuxing(cell.bashen)" class="wuxing-label">{{ getBashenWuxing(cell.bashen) }}</span>
                     <span class="info-label">神</span>
                   </div>
                   
@@ -1681,6 +1682,20 @@ export default {
         '天英': '火'
       };
       return wuxingMap[jiuxing] || '';
+    },
+    // 根据八神获取五行属性
+    getBashenWuxing(bashen) {
+      const wuxingMap = {
+        '值符': '土',
+        '腾蛇': '火',
+        '太阴': '金',
+        '六合': '木',
+        '白虎（勾陈）': '金',
+        '玄武（朱雀）': '水',
+        '九地': '土',
+        '九天': '金'
+      };
+      return wuxingMap[bashen] || '';
     },
     analyzePan() {
       if (!this.panData || !this.question) return;
