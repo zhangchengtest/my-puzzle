@@ -41,6 +41,7 @@
                     <div class="cell-tiangan-tianpan">
                       <span>{{ cell.tianganTianPan }}</span>
                       <span v-if="cell.tianganTianPan && getChangShengDizhi(cell.tianganTianPan)" class="changsheng-dizhi">{{ getChangShengDizhi(cell.tianganTianPan) }}</span>
+                      <span v-if="cell.tianganTianPan && cell.dizhiDiPan && cell.dizhiDiPan.length > 0 && getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0])" class="changsheng-state">{{ getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0]) }}</span>
                       <span v-if="cell.tianganTianPan && getTianganWuxing(cell.tianganTianPan)" class="wuxing-label">{{ getTianganWuxing(cell.tianganTianPan) }}</span>
                       <span class="info-label">天盘天干</span>
                     </div>
@@ -1649,6 +1650,42 @@ export default {
       };
       return changShengMap[tiangan] || '';
     },
+    // 根据天干和地支获取十二长生状态
+    getChangShengState(tiangan, dizhi) {
+      if (!tiangan || !dizhi) return '';
+      
+      // 十二长生状态顺序
+      const changShengStates = ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'];
+      
+      // 地支顺序
+      const dizhiOrder = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      
+      // 获取天干的长生地支
+      const changShengDizhi = this.getChangShengDizhi(tiangan);
+      if (!changShengDizhi) return '';
+      
+      // 判断是阳干还是阴干
+      const yangGan = ['甲', '丙', '戊', '庚', '壬'];
+      const isYangGan = yangGan.includes(tiangan);
+      
+      // 获取长生地支在地支顺序中的索引
+      const changShengIndex = dizhiOrder.indexOf(changShengDizhi);
+      // 获取当前地支在地支顺序中的索引
+      const dizhiIndex = dizhiOrder.indexOf(dizhi);
+      
+      if (changShengIndex === -1 || dizhiIndex === -1) return '';
+      
+      let offset;
+      if (isYangGan) {
+        // 阳干：从长生地支开始顺行
+        offset = (dizhiIndex - changShengIndex + 12) % 12;
+      } else {
+        // 阴干：从长生地支开始逆行
+        offset = (changShengIndex - dizhiIndex + 12) % 12;
+      }
+      
+      return changShengStates[offset] || '';
+    },
     // 根据天干获取五行属性
     getTianganWuxing(tiangan) {
       const wuxingMap = {
@@ -1727,12 +1764,18 @@ export default {
       if (cell.tianganTianPan) {
         const tianganWuxing = this.getTianganWuxing(cell.tianganTianPan);
         const changsheng = this.getChangShengDizhi(cell.tianganTianPan);
+        const changshengState = cell.dizhiDiPan && cell.dizhiDiPan.length > 0 
+          ? this.getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0]) 
+          : '';
         let tianganInfo = `天干：${cell.tianganTianPan}`;
         if (tianganWuxing) {
           tianganInfo += `（${tianganWuxing}）`;
         }
         if (changsheng) {
           tianganInfo += ` 长生：${changsheng}`;
+        }
+        if (changshengState) {
+          tianganInfo += ` ${changshengState}`;
         }
         lines.push(tianganInfo);
       }
@@ -2299,6 +2342,16 @@ export default {
   margin-left: 2px;
 }
 
+.changsheng-state {
+  font-size: 11px;
+  color: #409eff;
+  font-weight: bold;
+  margin-left: 2px;
+  background-color: #ecf5ff;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
 .wuxing-label {
   font-size: 11px;
   color: #e6a23c;
@@ -2770,6 +2823,12 @@ export default {
     margin-left: 1px;
   }
   
+  .changsheng-state {
+    font-size: 9px;
+    margin-left: 1px;
+    padding: 1px 3px;
+  }
+  
   .wuxing-label {
     font-size: 9px;
     margin-left: 1px;
@@ -2900,6 +2959,12 @@ export default {
   .changsheng-dizhi {
     font-size: 9px;
     margin-left: 1px;
+  }
+  
+  .changsheng-state {
+    font-size: 8px;
+    margin-left: 1px;
+    padding: 1px 2px;
   }
   
   .wuxing-label {
