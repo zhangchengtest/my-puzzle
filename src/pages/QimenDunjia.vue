@@ -29,6 +29,8 @@
                 :key="index"
                 class="grid-cell"
                 :class="getCellClass(cell)"
+                @click="copyCellInfo(cell, index)"
+                title="点击复制宫位信息"
               >
                 <div class="cell-content">
                   <!-- 空行分隔 -->
@@ -276,6 +278,13 @@
         </div>
       </div>
     </div>
+    
+    <!-- 复制提示 -->
+    <transition name="fade">
+      <div v-if="copyMessage" class="copy-message">
+        {{ copyMessage }}
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -294,6 +303,8 @@ export default {
       panData: null,
       question: '',
       analysisResult: null,
+      copyMessage: '',
+      copyMessageTimer: null,
       changShengMap: {
         '甲': '亥',
         '乙': '午',
@@ -1697,6 +1708,165 @@ export default {
       };
       return wuxingMap[bashen] || '';
     },
+    // 复制宫位信息
+    async copyCellInfo(cell, index) {
+      const lines = [];
+      
+      // 八卦信息
+      const positionName = this.getPositionName(index);
+      const gongWuxing = this.getGongWuxing(cell.position);
+      lines.push(`【八卦信息】`);
+      lines.push(`${positionName}宫 ${cell.position}宫`);
+      if (gongWuxing) {
+        lines.push(`宫位五行：${gongWuxing}`);
+      }
+      lines.push('');
+      
+      // 天盘信息
+      lines.push(`【天盘信息】`);
+      if (cell.tianganTianPan) {
+        const tianganWuxing = this.getTianganWuxing(cell.tianganTianPan);
+        const changsheng = this.getChangShengDizhi(cell.tianganTianPan);
+        let tianganInfo = `天干：${cell.tianganTianPan}`;
+        if (tianganWuxing) {
+          tianganInfo += `（${tianganWuxing}）`;
+        }
+        if (changsheng) {
+          tianganInfo += ` 长生：${changsheng}`;
+        }
+        lines.push(tianganInfo);
+      }
+      if (cell.bamenTianPan) {
+        const bamenWuxing = this.getBamenWuxing(cell.bamenTianPan);
+        let bamenInfo = `八门：${cell.bamenTianPan}`;
+        if (bamenWuxing) {
+          bamenInfo += `（${bamenWuxing}）`;
+        }
+        if (cell.isZhiShiMen) {
+          bamenInfo += ` [值使]`;
+        }
+        lines.push(bamenInfo);
+      }
+      if (cell.jiuxingTianPan) {
+        const jiuxingWuxing = this.getJiuxingWuxing(cell.jiuxingTianPan);
+        let jiuxingInfo = `九星：${cell.jiuxingTianPan}`;
+        if (jiuxingWuxing) {
+          jiuxingInfo += `（${jiuxingWuxing}）`;
+        }
+        lines.push(jiuxingInfo);
+      }
+      lines.push('');
+      
+      // 地盘信息
+      lines.push(`【地盘信息】`);
+      if (cell.tianganDiPan) {
+        lines.push(`天干：${cell.tianganDiPan}`);
+      }
+      if (cell.bamenDiPan) {
+        let bamenInfo = `八门：${cell.bamenDiPan}`;
+        if (cell.isZhiShiMenDiPan) {
+          bamenInfo += ` [值使]`;
+        }
+        lines.push(bamenInfo);
+      }
+      if (cell.jiuxingDiPan) {
+        lines.push(`九星：${cell.jiuxingDiPan}`);
+      }
+      if (cell.dizhiDiPan && cell.dizhiDiPan.length > 0) {
+        let dizhiInfo = `地支：${cell.dizhiDiPan.join('、')}`;
+        if (cell.hasKongWang) {
+          dizhiInfo += ` [空亡]`;
+        }
+        lines.push(dizhiInfo);
+      }
+      lines.push('');
+      
+      // 八神信息
+      if (cell.bashen) {
+        lines.push(`【八神信息】`);
+        const bashenWuxing = this.getBashenWuxing(cell.bashen);
+        let bashenInfo = `八神：${cell.bashen}`;
+        if (bashenWuxing) {
+          bashenInfo += `（${bashenWuxing}）`;
+        }
+        lines.push(bashenInfo);
+        lines.push('');
+      }
+      
+      // 空亡信息
+      if (cell.hasKongWang && cell.dizhiDiPan && cell.dizhiDiPan.length > 0) {
+        lines.push(`【空亡信息】`);
+        if (this.panData && this.panData.timeGanZhi) {
+          const xunShou = this.getXunShou(this.panData.timeGanZhi);
+          const kongWangDizhi = this.getKongWangDizhi(xunShou.ganZhi);
+          const kongWangInCell = cell.dizhiDiPan.filter(dz => kongWangDizhi.includes(dz));
+          if (kongWangInCell.length > 0) {
+            lines.push(`空亡地支：${kongWangInCell.join('、')}`);
+          }
+        } else {
+          lines.push(`空亡地支：${cell.dizhiDiPan.join('、')}`);
+        }
+        lines.push('');
+      }
+      
+      // 五行信息汇总
+      lines.push(`【五行信息】`);
+      const wuxingList = [];
+      if (cell.tianganTianPan) {
+        const wuxing = this.getTianganWuxing(cell.tianganTianPan);
+        if (wuxing) wuxingList.push(`天干：${wuxing}`);
+      }
+      if (cell.bamenTianPan) {
+        const wuxing = this.getBamenWuxing(cell.bamenTianPan);
+        if (wuxing) wuxingList.push(`八门：${wuxing}`);
+      }
+      if (cell.jiuxingTianPan) {
+        const wuxing = this.getJiuxingWuxing(cell.jiuxingTianPan);
+        if (wuxing) wuxingList.push(`九星：${wuxing}`);
+      }
+      if (cell.bashen) {
+        const wuxing = this.getBashenWuxing(cell.bashen);
+        if (wuxing) wuxingList.push(`八神：${wuxing}`);
+      }
+      if (gongWuxing) {
+        wuxingList.push(`宫位：${gongWuxing}`);
+      }
+      if (wuxingList.length > 0) {
+        lines.push(wuxingList.join(' | '));
+      }
+      
+      const text = lines.join('\n');
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        this.showCopyMessage('复制成功！');
+      } catch (err) {
+        // 降级方案：使用传统方法
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          this.showCopyMessage('复制成功！');
+        } catch (e) {
+          this.showCopyMessage('复制失败，请手动复制');
+        }
+        document.body.removeChild(textArea);
+      }
+    },
+    // 显示复制提示消息
+    showCopyMessage(message) {
+      this.copyMessage = message;
+      if (this.copyMessageTimer) {
+        clearTimeout(this.copyMessageTimer);
+      }
+      this.copyMessageTimer = setTimeout(() => {
+        this.copyMessage = '';
+      }, 2000);
+    },
     analyzePan() {
       if (!this.panData || !this.question) return;
       
@@ -2062,6 +2232,22 @@ export default {
   align-items: flex-start;
   justify-content: center;
   box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.grid-cell:hover {
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.grid-cell.zhi-fu:hover {
+  background-color: #fee;
+  box-shadow: 0 2px 8px rgba(245, 108, 108, 0.3);
+}
+
+.grid-cell.center:hover {
+  background-color: #fff8e0;
 }
 
 .grid-cell.center {
@@ -2790,6 +2976,40 @@ export default {
   .info-label {
     font-size: 7px;
   }
+}
+
+/* 复制提示样式 */
+.copy-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-size: 16px;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* 过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -60%);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+  transform: translate(-50%, -50%);
 }
 </style>
 
