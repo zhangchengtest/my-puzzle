@@ -1234,6 +1234,15 @@ export default {
         zhiShiMenPosition = 9;
       }
       
+      // 当值使落中五宫时，阳遁局转到艮8宫，阴遁局转到坤2宫
+      if (zhiShiMenPosition === 5) {
+        if (isYangDun) {
+          zhiShiMenPosition = 8; // 阳遁转到艮8宫
+        } else {
+          zhiShiMenPosition = 2; // 阴遁转到坤2宫
+        }
+      }
+      
       // 调试信息
       console.log('值符计算详情:', {
         timeGanZhi,
@@ -1364,30 +1373,25 @@ export default {
       };
       
       const zhiShiMenDiPanIndex = getBamenOrderIndex(zhiShiMenDiPanGong);
-      let zhiShiMenMoveSteps = 0;
-      
-      // 当值使门落在中5宫时，天盘八门不动
-      if (zhiShiMenPosition === 5) {
-        zhiShiMenMoveSteps = 0;
-      } else {
-        const zhiShiMenTianPanIndex = getBamenOrderIndex(zhiShiMenPosition);
-        zhiShiMenMoveSteps = zhiShiMenTianPanIndex - zhiShiMenDiPanIndex;
-        if (zhiShiMenMoveSteps < 0) {
-          zhiShiMenMoveSteps += bamenOrder.length;
-        }
+      // 计算值使门移动的步数（从地盘到天盘）
+      // 注意：当值使落中五宫时，已转换为艮8宫（阳遁）或坤2宫（阴遁），所以这里不会出现5宫的情况
+      const zhiShiMenTianPanIndex = getBamenOrderIndex(zhiShiMenPosition);
+      let zhiShiMenMoveSteps = zhiShiMenTianPanIndex - zhiShiMenDiPanIndex;
+      if (zhiShiMenMoveSteps < 0) {
+        zhiShiMenMoveSteps += bamenOrder.length;
       }
       
       // 计算每个宫位的门（天盘）
       // 八门按照指定顺序旋转，值使门从地盘位置移动到天盘位置
       // 所有门都按照相同的步数在八门顺序中旋转
-      // 当值使门落在中5宫时，天盘八门不动
+      // 注意：当值使落中五宫时，已转换为艮8宫（阳遁）或坤2宫（阴遁），所以值使门会正常移动
       const getBamenTianPanByGong = (gong) => {
         // 中5宫始终没有门
         if (gong === 5) {
           return null;
         }
         
-        // 当值使门落在中5宫时，天盘八门不动，直接返回地盘门
+        // 如果值使门移动步数为0，直接返回地盘门
         if (zhiShiMenMoveSteps === 0) {
           return getBamenDiPanByGong(gong);
         }
@@ -1571,15 +1575,8 @@ export default {
         const bashen = getBashenByGong(pos);
         
         // 确定值使门是否在此宫位（天盘位置）
-        // 当值使门落在中5宫时，值使门标记在地盘的原始位置（因为中5宫没有门）
-        let isZhiShiMen;
-        if (zhiShiMenPosition === 5) {
-          // 值使门落在中5宫，标记在地盘的原始位置
-          isZhiShiMen = (pos === zhiShiMenDiPanGong);
-        } else {
-          // 值使门落在其他宫位，标记在天盘位置
-          isZhiShiMen = (pos === zhiShiMenPosition);
-        }
+        // 注意：当值使落中五宫时，已转换为艮8宫（阳遁）或坤2宫（阴遁），所以值使门标记在转换后的位置
+        let isZhiShiMen = (pos === zhiShiMenPosition);
         // 确定值使门是否在此宫位（地盘位置）
         let isZhiShiMenDiPan = (pos === zhiShiMenDiPanGong);
         
