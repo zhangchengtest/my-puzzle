@@ -45,16 +45,16 @@
                       <span v-if="cell.tianganTianPan && getTianganWuxing(cell.tianganTianPan)" class="wuxing-label">{{ getTianganWuxing(cell.tianganTianPan) }}</span>
                       <span class="info-label">天盘天干</span>
                     </div>
+                    <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
+                      <span>{{ cell.jiuxingTianPan }}</span>
+                      <span v-if="getJiuxingWuxing(cell.jiuxingTianPan)" class="wuxing-label">{{ getJiuxingWuxing(cell.jiuxingTianPan) }}</span>
+                      <span class="info-label">天盘星</span>
+                    </div>
                     <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
                       <span>{{ cell.bamenTianPan }}</span>
                       <span v-if="getBamenWuxing(cell.bamenTianPan)" class="wuxing-label">{{ getBamenWuxing(cell.bamenTianPan) }}</span>
                       <span class="info-label">天盘门</span>
                       <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
-                    </div>
-                    <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
-                      <span>{{ cell.jiuxingTianPan }}</span>
-                      <span v-if="getJiuxingWuxing(cell.jiuxingTianPan)" class="wuxing-label">{{ getJiuxingWuxing(cell.jiuxingTianPan) }}</span>
-                      <span class="info-label">天盘星</span>
                     </div>
                   </div>
                   
@@ -80,14 +80,14 @@
                       <span>{{ cell.tianganDiPan }}</span>
                       <span class="info-label">地盘天干</span>
                     </div>
+                    <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
+                      <span>{{ cell.jiuxingDiPan }}</span>
+                      <span class="info-label">地盘星</span>
+                    </div>
                     <div class="cell-bamen" v-if="cell.bamenDiPan">
                       <span>{{ cell.bamenDiPan }}</span>
                       <span class="info-label">地盘门</span>
                       <span v-if="cell.isZhiShiMenDiPan" class="zhi-shi-label">值使</span>
-                    </div>
-                    <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
-                      <span>{{ cell.jiuxingDiPan }}</span>
-                      <span class="info-label">地盘星</span>
                     </div>
                     <div class="cell-dizhi-dipan" v-if="cell.dizhiDiPan && cell.dizhiDiPan.length > 0">
                       <span v-for="(dz, idx) in cell.dizhiDiPan" :key="idx">
