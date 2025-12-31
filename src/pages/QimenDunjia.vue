@@ -43,17 +43,14 @@
                       <span v-if="cell.tianganTianPan && getChangShengDizhi(cell.tianganTianPan)" class="changsheng-dizhi">{{ getChangShengDizhi(cell.tianganTianPan) }}</span>
                       <span v-if="cell.tianganTianPan && cell.dizhiDiPan && cell.dizhiDiPan.length > 0 && getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0])" class="changsheng-state">{{ getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0]) }}</span>
                       <span v-if="cell.tianganTianPan && getTianganWuxing(cell.tianganTianPan)" class="wuxing-label">{{ getTianganWuxing(cell.tianganTianPan) }}</span>
-                      <span class="info-label">天盘天干</span>
                     </div>
                     <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
                       <span>{{ cell.jiuxingTianPan }}</span>
                       <span v-if="getJiuxingWuxing(cell.jiuxingTianPan)" class="wuxing-label">{{ getJiuxingWuxing(cell.jiuxingTianPan) }}</span>
-                      <span class="info-label">天盘星</span>
                     </div>
                     <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
                       <span>{{ cell.bamenTianPan }}</span>
                       <span v-if="getBamenWuxing(cell.bamenTianPan)" class="wuxing-label">{{ getBamenWuxing(cell.bamenTianPan) }}</span>
-                      <span class="info-label">天盘门</span>
                       <span v-if="cell.isZhiShiMen" class="zhi-shi-label">值使</span>
                     </div>
                   </div>
@@ -78,15 +75,12 @@
                   <div class="dipan-section">
                     <div class="cell-tiangan">
                       <span>{{ cell.tianganDiPan }}</span>
-                      <span class="info-label">地盘天干</span>
                     </div>
                     <div class="cell-jiuxing-dipan" v-if="cell.jiuxingDiPan">
                       <span>{{ cell.jiuxingDiPan }}</span>
-                      <span class="info-label">地盘星</span>
                     </div>
                     <div class="cell-bamen" v-if="cell.bamenDiPan">
                       <span>{{ cell.bamenDiPan }}</span>
-                      <span class="info-label">地盘门</span>
                       <span v-if="cell.isZhiShiMenDiPan" class="zhi-shi-label">值使</span>
                     </div>
                     <div class="cell-dizhi-dipan" v-if="cell.dizhiDiPan && cell.dizhiDiPan.length > 0">
@@ -94,7 +88,6 @@
                         <span :class="{ 'kongwang-dizhi': cell.hasKongWang }">{{ dz }}</span>
                         <span v-if="idx < cell.dizhiDiPan.length - 1">、</span>
                       </span>
-                      <span class="info-label">地支</span>
                       <span v-if="cell.hasKongWang" class="kongwang-label">空亡</span>
                     </div>
                   </div>
@@ -1079,7 +1072,7 @@ export default {
       // 九星（按宫位顺序：坎1、坤2、震3、巽4、中5、乾6、兑7、艮8、离9）
       const jiuXing = ['天蓬', '天芮', '天冲', '天辅', '天禽', '天心', '天柱', '天任', '天英'];
       // 八神
-      const baShen = ['值符', '腾蛇', '太阴', '六合', '白虎（勾陈）', '玄武（朱雀）', '九地', '九天'];
+      const baShen = ['值符', '腾蛇', '太阴', '六合', '勾陈', '朱雀', '九地', '九天'];
       
       // 九宫格位置（洛书顺序）
       const positions = [4, 9, 2, 3, 5, 7, 8, 1, 6]; // 巽4、离9、坤2、震3、中5、兑7、艮8、坎1、乾6
@@ -1501,8 +1494,8 @@ export default {
       
       // 八神旋转顺序：与八门顺序一致：[6, 1, 8, 3, 4, 9, 2, 7]（不包括中5宫）
       const bashenOrder = [6, 1, 8, 3, 4, 9, 2, 7]; // 八神宫位顺序（不包括中5宫）
-      // 八神顺序：值符、腾蛇、太阴、六合、白虎（勾陈）、玄武（朱雀）、九地、九天
-      const bashenNames = ['值符', '腾蛇', '太阴', '六合', '白虎（勾陈）', '玄武（朱雀）', '九地', '九天'];
+      // 八神顺序：值符、腾蛇、太阴、六合、勾陈、朱雀、九地、九天
+      const bashenNames = ['值符', '腾蛇', '太阴', '六合', '勾陈', '朱雀', '九地', '九天'];
       
       // 计算值符在八神顺序中的位置
       // 值符在值符星的位置（zhiFuPosition）
@@ -1512,7 +1505,7 @@ export default {
       
       // 计算每个宫位的八神（天盘）
       // 八神按照指定顺序旋转，值符从地盘位置移动到天盘位置
-      // 其他神按照固定顺序（腾蛇、太阴、六合、白虎（勾陈）、玄武（朱雀）、九地、九天）依次排列
+      // 其他神按照固定顺序（腾蛇、太阴、六合、勾陈、朱雀、九地、九天）依次排列
       const getBashenByGong = (gong) => {
         // 中5宫没有八神
         if (gong === 5) {
@@ -1838,8 +1831,8 @@ export default {
         '腾蛇': '火',
         '太阴': '金',
         '六合': '木',
-        '白虎（勾陈）': '金',
-        '玄武（朱雀）': '水',
+        '勾陈': '金',
+        '朱雀': '水',
         '九地': '土',
         '九天': '金'
       };
