@@ -102,6 +102,7 @@
           <tr><td>癸</td><td>庚</td><td>太白入网</td><td class="bad">凶</td><td>凡事无成，吉事易空，暴力争讼，自身获罪</td></tr>
           <tr><td>癸</td><td>辛</td><td>网盖天牢</td><td class="bad">凶</td><td>官司败诉，死罪难逃，占病为凶</td></tr>
           <tr><td>癸</td><td>壬</td><td>复见腾蛇</td><td class="bad">凶</td><td>婚姻重婚，婚后无子，不保年华。事物变化，或另找主人，另寻合作伙伴</td></tr>
+          <tr><td>癸</td><td>癸</td><td>天网四张</td><td class="bad">凶</td><td>伏吟格，行人失伴，病讼皆伤</td></tr>
         </tbody>
       </table>
     </div>
