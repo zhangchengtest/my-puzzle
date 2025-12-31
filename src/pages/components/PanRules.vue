@@ -117,8 +117,39 @@
     <div class="section-wrapper">
       <div class="section-content">
         <h4>十二长生</h4>
-        <div class="changsheng-list">
-          <span v-for="name in shierChangSheng" :key="name" class="changsheng-item">{{ name }}</span>
+        <div class="changsheng-table-container">
+          <table class="changsheng-table">
+            <thead>
+              <tr>
+                <th>运程阶段</th>
+                <th>甲木</th>
+                <th>丙火</th>
+                <th>戊土</th>
+                <th>庚金</th>
+                <th>壬水</th>
+                <th>乙木</th>
+                <th>丁火</th>
+                <th>己土</th>
+                <th>辛金</th>
+                <th>癸水</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(stage, index) in changShengStages" :key="index">
+                <td class="stage-name">{{ stage.name }}</td>
+                <td>{{ stage['甲木'] }}</td>
+                <td>{{ stage['丙火'] }}</td>
+                <td>{{ stage['戊土'] }}</td>
+                <td>{{ stage['庚金'] }}</td>
+                <td>{{ stage['壬水'] }}</td>
+                <td>{{ stage['乙木'] }}</td>
+                <td>{{ stage['丁火'] }}</td>
+                <td>{{ stage['己土'] }}</td>
+                <td>{{ stage['辛金'] }}</td>
+                <td>{{ stage['癸水'] }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -157,8 +188,21 @@
 export default {
   name: 'PanRules',
   computed: {
-    shierChangSheng() {
-      return ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'];
+    changShengStages() {
+      return [
+        { name: '长生', '甲木': '亥', '丙火': '寅', '戊土': '寅', '庚金': '巳', '壬水': '申', '乙木': '午', '丁火': '酉', '己土': '酉', '辛金': '子', '癸水': '卯' },
+        { name: '沐浴', '甲木': '子', '丙火': '卯', '戊土': '卯', '庚金': '午', '壬水': '酉', '乙木': '巳', '丁火': '申', '己土': '申', '辛金': '亥', '癸水': '寅' },
+        { name: '冠带', '甲木': '丑', '丙火': '辰', '戊土': '辰', '庚金': '未', '壬水': '戌', '乙木': '辰', '丁火': '未', '己土': '未', '辛金': '戌', '癸水': '丑' },
+        { name: '临官', '甲木': '寅', '丙火': '巳', '戊土': '巳', '庚金': '申', '壬水': '亥', '乙木': '卯', '丁火': '午', '己土': '午', '辛金': '酉', '癸水': '子' },
+        { name: '帝旺', '甲木': '卯', '丙火': '午', '戊土': '午', '庚金': '酉', '壬水': '子', '乙木': '寅', '丁火': '巳', '己土': '巳', '辛金': '申', '癸水': '亥' },
+        { name: '衰', '甲木': '辰', '丙火': '未', '戊土': '未', '庚金': '戌', '壬水': '丑', '乙木': '丑', '丁火': '辰', '己土': '辰', '辛金': '未', '癸水': '戌' },
+        { name: '病', '甲木': '巳', '丙火': '申', '戊土': '申', '庚金': '亥', '壬水': '寅', '乙木': '子', '丁火': '卯', '己土': '卯', '辛金': '午', '癸水': '酉' },
+        { name: '死', '甲木': '午', '丙火': '酉', '戊土': '酉', '庚金': '子', '壬水': '卯', '乙木': '亥', '丁火': '寅', '己土': '寅', '辛金': '巳', '癸水': '申' },
+        { name: '墓', '甲木': '未', '丙火': '戌', '戊土': '戌', '庚金': '丑', '壬水': '辰', '乙木': '戌', '丁火': '丑', '己土': '丑', '辛金': '辰', '癸水': '未' },
+        { name: '绝', '甲木': '申', '丙火': '亥', '戊土': '亥', '庚金': '寅', '壬水': '巳', '乙木': '酉', '丁火': '子', '己土': '子', '辛金': '卯', '癸水': '午' },
+        { name: '胎', '甲木': '酉', '丙火': '子', '戊土': '子', '庚金': '卯', '壬水': '午', '乙木': '申', '丁火': '亥', '己土': '亥', '辛金': '寅', '癸水': '巳' },
+        { name: '养', '甲木': '戌', '丙火': '丑', '戊土': '丑', '庚金': '辰', '壬水': '未', '乙木': '未', '丁火': '戌', '己土': '戌', '辛金': '丑', '癸水': '辰' }
+      ];
     },
     wuxingXiangSheng() {
       return [
@@ -311,24 +355,63 @@ export default {
   font-size: 16px;
 }
 
-.changsheng-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
+.changsheng-table-container {
+  overflow-x: auto;
+  margin-top: 15px;
 }
 
-.changsheng-item {
-  display: inline-block;
-  padding: 6px 12px;
+.changsheng-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+}
+
+.changsheng-table thead {
+  background-color: #409eff;
+  color: #fff;
+}
+
+.changsheng-table th {
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.changsheng-table th:last-child {
+  border-right: none;
+}
+
+.changsheng-table td {
+  padding: 8px;
+  text-align: center;
+  border-bottom: 1px solid #e4e7ed;
+  border-right: 1px solid #e4e7ed;
+  color: #333;
+}
+
+.changsheng-table td:last-child {
+  border-right: none;
+}
+
+.changsheng-table tbody tr:hover {
+  background-color: #f5f7fa;
+}
+
+.changsheng-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.changsheng-table .stage-name {
   background-color: #f0f9ff;
   color: #409eff;
-  border: 1px solid #b3d8ff;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .wuxing-relation-content {
