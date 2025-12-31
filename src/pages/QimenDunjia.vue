@@ -182,57 +182,66 @@
               </table>
             </div>
           </div>
-          <div class="info-item" v-if="panData.zhiFuStar">
-            <span class="label">值符星：</span>
-            <span>{{ panData.zhiFuStar }}星</span>
+          <!-- 值符信息 -->
+          <div class="zhi-fu-section" v-if="panData.zhiFuStar || panData.zhiFuPosition">
+            <h4 class="section-title">值符</h4>
+            <div class="info-item" v-if="panData.zhiFuStar">
+              <span class="label">值符星：</span>
+              <span>{{ panData.zhiFuStar }}星</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiFuPosition">
+              <span class="label">值符落宫：</span>
+              <span>{{ panData.zhiFuPosition }}宫</span>
+            </div>
+            <div class="info-item" v-if="panData.juNumber !== undefined">
+              <span class="label">局数：</span>
+              <span>{{ panData.juNumber }}</span>
+            </div>
+            <div class="info-item" v-if="panData.timeGanXuShu !== undefined">
+              <span class="label">时干在三奇六仪中序数：</span>
+              <span>{{ panData.timeGanXuShu }}</span>
+            </div>
+            <div class="info-item" v-if="panData.juNumber !== undefined && panData.timeGanXuShu !== undefined">
+              <span class="label">值符落宫计算：</span>
+              <span>{{ panData.juNumber }} + {{ panData.timeGanXuShu }} - 1 = {{ panData.zhiFuPosition }}</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiFuTianganMoveSteps !== undefined">
+              <span class="label">值符天干移动步数：</span>
+              <span>{{ panData.zhiFuTianganMoveSteps }}步</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiFuStarMoveSteps !== undefined">
+              <span class="label">值符星移动步数：</span>
+              <span>{{ panData.zhiFuStarMoveSteps }}步</span>
+            </div>
           </div>
-          <div class="info-item" v-if="panData.zhiFuPosition">
-            <span class="label">值符落宫：</span>
-            <span>{{ panData.zhiFuPosition }}宫</span>
-          </div>
-          <div class="info-item" v-if="panData.juNumber !== undefined">
-            <span class="label">局数：</span>
-            <span>{{ panData.juNumber }}</span>
-          </div>
-          <div class="info-item" v-if="panData.timeGanXuShu !== undefined">
-            <span class="label">时干在三奇六仪中序数：</span>
-            <span>{{ panData.timeGanXuShu }}</span>
-          </div>
-          <div class="info-item" v-if="panData.juNumber !== undefined && panData.timeGanXuShu !== undefined">
-            <span class="label">值符落宫计算：</span>
-            <span>{{ panData.juNumber }} + {{ panData.timeGanXuShu }} - 1 = {{ panData.zhiFuPosition }}</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiShiMen">
-            <span class="label">值使门：</span>
-            <span>{{ panData.zhiShiMen }}门</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiShiMenPosition">
-            <span class="label">值使落宫：</span>
-            <span>{{ panData.zhiShiMenPosition }}宫</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiShiMenXuShu !== undefined">
-            <span class="label">值使序数：</span>
-            <span>{{ panData.zhiShiMenXuShu }}</span>
-          </div>
-          <div class="info-item" v-if="panData.timeGanXuShuInTianGan !== undefined">
-            <span class="label">时干在十天干中序数：</span>
-            <span>{{ panData.timeGanXuShuInTianGan }}</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiShiMenXuShu !== undefined && panData.timeGanXuShuInTianGan !== undefined">
-            <span class="label">值使落宫计算：</span>
-            <span>{{ panData.zhiShiMenXuShu }} + {{ panData.timeGanXuShuInTianGan }} - 1 = {{ panData.zhiShiMenPosition }}</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiShiMenMoveSteps !== undefined">
-            <span class="label">值使门移动步数：</span>
-            <span>{{ panData.zhiShiMenMoveSteps }}步</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiFuTianganMoveSteps !== undefined">
-            <span class="label">值符天干移动步数：</span>
-            <span>{{ panData.zhiFuTianganMoveSteps }}步</span>
-          </div>
-          <div class="info-item" v-if="panData.zhiFuStarMoveSteps !== undefined">
-            <span class="label">值符星移动步数：</span>
-            <span>{{ panData.zhiFuStarMoveSteps }}步</span>
+
+          <!-- 值使信息 -->
+          <div class="zhi-shi-section" v-if="panData.zhiShiMen || panData.zhiShiMenPosition">
+            <h4 class="section-title">值使</h4>
+            <div class="info-item" v-if="panData.zhiShiMen">
+              <span class="label">值使门：</span>
+              <span>{{ panData.zhiShiMen }}门</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiShiMenPosition">
+              <span class="label">值使落宫：</span>
+              <span>{{ panData.zhiShiMenPosition }}宫</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiShiMenXuShu !== undefined">
+              <span class="label">值使序数：</span>
+              <span>{{ panData.zhiShiMenXuShu }}</span>
+            </div>
+            <div class="info-item" v-if="panData.timeGanXuShuInTianGan !== undefined">
+              <span class="label">时干在十天干中序数：</span>
+              <span>{{ panData.timeGanXuShuInTianGan }}</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiShiMenXuShu !== undefined && panData.timeGanXuShuInTianGan !== undefined">
+              <span class="label">值使落宫计算：</span>
+              <span>{{ panData.zhiShiMenXuShu }} + {{ panData.timeGanXuShuInTianGan }} - 1 = {{ panData.zhiShiMenPosition }}</span>
+            </div>
+            <div class="info-item" v-if="panData.zhiShiMenMoveSteps !== undefined">
+              <span class="label">值使门移动步数：</span>
+              <span>{{ panData.zhiShiMenMoveSteps }}步</span>
+            </div>
           </div>
           <div class="info-item" v-if="panData.currentDate">
             <span class="label">当前日期时间：</span>
@@ -2258,6 +2267,21 @@ export default {
   font-weight: bold;
   color: #666;
   margin-right: 8px;
+}
+
+.zhi-fu-section,
+.zhi-shi-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.zhi-fu-section .section-title,
+.zhi-shi-section .section-title {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .jiugong-grid {
