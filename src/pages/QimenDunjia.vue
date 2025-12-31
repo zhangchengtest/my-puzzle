@@ -61,6 +61,19 @@
                   <!-- 空行分隔 -->
                   <div class="section-divider"></div>
                   
+                  <!-- 吉凶格信息 -->
+                  <div class="jixiong-ge-section" v-if="cell.tianganTianPan && cell.tianganDiPan && getJixiongGe(cell.tianganTianPan, cell.tianganDiPan)">
+                    <div class="jixiong-ge-info">
+                      <span class="jixiong-ge-name">{{ getJixiongGe(cell.tianganTianPan, cell.tianganDiPan).name }}</span>
+                      <span :class="['jixiong-label', 'jixiong-' + getJixiongGe(cell.tianganTianPan, cell.tianganDiPan).jixiong]">
+                        {{ getJixiongGe(cell.tianganTianPan, cell.tianganDiPan).jixiong }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- 空行分隔 -->
+                  <div class="section-divider"></div>
+                  
                   <!-- 地盘部分 -->
                   <div class="dipan-section">
                     <div class="cell-tiangan">
@@ -1686,6 +1699,97 @@ export default {
       
       return changShengStates[offset] || '';
     },
+    // 根据天盘天干和地盘天干获取吉凶格信息
+    getJixiongGe(tianganTianPan, tianganDiPan) {
+      if (!tianganTianPan || !tianganDiPan) return null;
+      
+      const jixiongGeMap = {
+        '戊戊': { name: '伏吟', jixiong: '凶', meaning: '本地、内部、推迟，以守为主' },
+        '戊乙': { name: '青龙和会', jixiong: '中', meaning: '门吉事吉，门凶事凶' },
+        '乙戊': { name: '阴害阳门', jixiong: '中', meaning: '利于阴人阴事，不利阳人阳事，吉凶看门' },
+        '戊丙': { name: '龙回首', jixiong: '吉', meaning: '第一吉格，大吉大利，凶事遇门迫、入墓、击刑则不利' },
+        '丙戊': { name: '鸟跌穴', jixiong: '吉', meaning: '第二吉格，大吉大利，凶事遇门迫、入墓、击刑则不利' },
+        '戊丁': { name: '青龙腾明', jixiong: '吉', meaning: '第三吉格，利于见贵人、求取功名，遇门迫、入墓不利' },
+        '丁戊': { name: '青龙转光', jixiong: '吉', meaning: '第四吉格，好事更加顺利，遇门迫、入墓不利' },
+        '戊己': { name: '贵人入狱', jixiong: '凶', meaning: '于公私均不利，冲墓之时有转机' },
+        '己戊': { name: '犬遇青龙', jixiong: '中', meaning: '门吉则事吉，门凶则事不成' },
+        '戊庚': { name: '值符飞宫', jixiong: '凶', meaning: '好事不成，凶事更凶，值符飞离此宫，主换人、换地方' },
+        '庚戊': { name: '值符伏宫', jixiong: '凶', meaning: '大凶，主换人、换地方，但庚为用神另当别论' },
+        '戊辛': { name: '青龙折足', jixiong: '中', meaning: '吉门生助可谋事，凶门主招灾失财、足疾、折伤' },
+        '辛戊': { name: '困龙被伤', jixiong: '凶', meaning: '妄动财失伤灾，辛为用神反为吉，但子午冲，有失财的风险。' },
+        '戊壬': { name: '青龙入天牢', jixiong: '凶', meaning: '公私皆不利' },
+        '壬戊': { name: '小蛇化龙', jixiong: '吉', meaning: '男主事业发达，女主产婴童' },
+        '戊癸': { name: '青龙华盖', jixiong: '中', meaning: '门吉则事吉，门凶则事凶' },
+        '癸戊': { name: '天乙会合', jixiong: '中', meaning: '门吉则事吉，门凶则事凶' },
+        '乙乙': { name: '日奇伏吟', jixiong: '凶', meaning: '宜静不宜动，宜守不宜攻' },
+        '乙丙': { name: '奇仪顺遂', jixiong: '吉', meaning: '乙奇临吉凶，本质好，升职顺遂；临凶星，与第三方男子苟合，婚变' },
+        '丙乙': { name: '日月并行', jixiong: '吉', meaning: '公私皆有利' },
+        '乙丁': { name: '奇仪相佐', jixiong: '吉', meaning: '利文书、考试，百事可为' },
+        '丁乙': { name: '玉女奇生', jixiong: '吉', meaning: '贵人加官晋爵，常人婚姻财帛有喜' },
+        '乙己': { name: '日奇入墓', jixiong: '中', meaning: '门吉有救，门凶事凶。遇开门为地遁吉格' },
+        '己乙': { name: '地户逢星', jixiong: '凶', meaning: '宜遁迹隐形，宜退不宜进' },
+        '乙庚': { name: '日奇被刑', jixiong: '凶', meaning: '夫妻不和，争讼财产' },
+        '庚乙': { name: '太白逢星', jixiong: '凶', meaning: '宜退不宜进，对客有利，对主不利' },
+        '乙辛': { name: '龙逃走', jixiong: '凶', meaning: '家破人亡，财散人走。婚姻主女方提离婚，离开男方' },
+        '辛乙': { name: '虎猖狂', jixiong: '凶', meaning: '家破人亡，远行有灾。婚姻主男方提离婚，拆散家庭' },
+        '乙壬': { name: '日奇入天罗', jixiong: '凶', meaning: '尊卑悖乱，官讼是非，有人谋害' },
+        '壬乙': { name: '小蛇得势', jixiong: '吉', meaning: '男人发达，有工作俸禄地位；女人柔顺，怀孕可得儿子' },
+        '乙癸': { name: '日奇入地罗', jixiong: '凶', meaning: '宜退不宜进，躲灾避难为吉' },
+        '癸乙': { name: '华盖逢星', jixiong: '中', meaning: '吉门主贵人禄位、常人平安；凶门则凶上加凶；癸为用神则为吉' },
+        '丙丙': { name: '月奇悖师', jixiong: '凶', meaning: '文书逼迫，破耗遗失' },
+        '丙丁': { name: '星奇朱雀', jixiong: '吉', meaning: '贵人文书吉利，常人平安喜乐，遇开生休吉门为天遁吉格' },
+        '丁丙': { name: '星随月转', jixiong: '中', meaning: '贵人越级高开，发展顺遂；常人阴阳颠倒，乐极生悲，造成不幸' },
+        '丙己': { name: '火悖入刑', jixiong: '凶', meaning: '门吉得吉，门凶得凶。主囚人刑仗，文书不行' },
+        '己丙': { name: '火悖地户', jixiong: '凶', meaning: '男人冤冤相害，女人遭人奸污' },
+        '丙庚': { name: '萤入太白', jixiong: '凶', meaning: '谋求好事大凶，主门户破败，盗贼横行，事业难成。"贼退格"，测贼退为吉' },
+        '庚丙': { name: '白入萤', jixiong: '凶', meaning: '"贼来格"，占贼必来，以固守为好。若日干为庚或年命为庚为吉，主动出击，先发制人，就会利于自己' },
+        '丙辛': { name: '月奇相合', jixiong: '吉', meaning: '测事可成，测病亦不为凶' },
+        '辛丙': { name: '干合悖师', jixiong: '中', meaning: '门吉事吉，门凶事凶。合作求财，会因财致讼' },
+        '丙壬': { name: '火入天罗', jixiong: '凶', meaning: '为客不利，是非颇多' },
+        '壬丙': { name: '水蛇入火', jixiong: '凶', meaning: '官灾刑禁，络绎不绝，两败俱伤' },
+        '丙癸': { name: '月奇地网', jixiong: '凶', meaning: '暗昧不明，容易有小人、阴人害事，招灾祸' },
+        '癸丙': { name: '华盖悖师', jixiong: '凶', meaning: '诸事不利。只有修为高超、能屈能生、因势利导的人才能变不利为有利' },
+        '丁丁': { name: '星奇伏吟', jixiong: '吉', meaning: '文书、证件即至，喜事从心' },
+        '丁己': { name: '火入勾陈', jixiong: '凶', meaning: '主阴私之事，谋事不利，奸私仇冤，或事因女人' },
+        '己丁': { name: '地户朱雀', jixiong: '吉', meaning: '文书词讼，先曲后直，先凶后吉' },
+        '丁庚': { name: '星奇受阻', jixiong: '凶', meaning: '文书阻隔，消息不同，测外出之人则归' },
+        '庚丁': { name: '金屋藏娇', jixiong: '中', meaning: '男女关系所引起的官讼是非。门吉则事吉，门凶则事凶' },
+        '丁辛': { name: '朱雀入狱', jixiong: '中', meaning: '地盘为罪人释放，天盘为官人失位' },
+        '辛丁': { name: '狱神得奇', jixiong: '吉', meaning: '经商求财利润丰厚，做事有意外收获。赦免处分等' },
+        '丁壬': { name: '奇仪相合', jixiong: '吉', meaning: '凡事有成，贵人辅助，讼狱公平。婚姻主苟合关系' },
+        '壬丁': { name: '干合蛇刑', jixiong: '中', meaning: '文书牵连，贵人匆匆，男吉女凶。天盘，壬为男，遇丁奇为吉；地盘，丁为女，上有天罗为凶' },
+        '丁癸': { name: '雀投江', jixiong: '凶', meaning: '文书口舌是非，词讼不利，音信全无' },
+        '癸丁': { name: '蛇夭矫', jixiong: '凶', meaning: '官司诉讼，火焚也逃不掉' },
+        '己己': { name: '地户逢鬼', jixiong: '凶', meaning: '疾病、发凶或必死，好事不成，谋为则凶' },
+        '己庚': { name: '刑格反名', jixiong: '凶', meaning: '不宜谋事，词讼先动者不利，阴星则有谋害的可能' },
+        '庚己': { name: '官府刑格', jixiong: '凶', meaning: '官司是非，判刑，牢狱之灾等' },
+        '己辛': { name: '游魂入墓', jixiong: '凶', meaning: '鬼魅作祟，小心谨慎' },
+        '辛己': { name: '入狱自刑', jixiong: '凶', meaning: '错误由自身造成，女仆背主，诉讼难伸' },
+        '己壬': { name: '地网高张', jixiong: '凶', meaning: '谋为不利，凡事不吉，容易出狡童佚女，奸情伤杀之事' },
+        '壬己': { name: '反吟蛇刑', jixiong: '凶', meaning: '官司败诉，大祸将至，顺守可吉，妄动必凶' },
+        '己癸': { name: '地刑玄武', jixiong: '凶', meaning: '男女疾病垂危，囚狱词讼之灾' },
+        '癸己': { name: '华盖地户', jixiong: '凶', meaning: '男女音信皆阻，躲灾避难为吉' },
+        '庚庚': { name: '太白同宫、战格', jixiong: '凶', meaning: '不利谋事，不和，招来官灾横祸' },
+        '庚辛': { name: '白虎干格、太白刑格', jixiong: '凶', meaning: '远行不利，诸事有灾' },
+        '辛庚': { name: '白虎出力、天狱自刑', jixiong: '凶', meaning: '主客相残，不可强进' },
+        '庚壬': { name: '小格、上格', jixiong: '凶', meaning: '远行迷失，音信全无。若庚为用神，主变动、变化，为"移荡格"' },
+        '壬庚': { name: '太白擒蛇', jixiong: '中', meaning: '事情难以进展，如测词讼，主刑狱公平，立判邪正' },
+        '庚癸': { name: '大格', jixiong: '凶', meaning: '主车祸，行人不至，官讼不息，母子俱伤' },
+        '癸庚': { name: '太白入网', jixiong: '凶', meaning: '凡事无成，吉事易空，暴力争讼，自身获罪' },
+        '壬壬': { name: '天狱自刑、蛇入地罗', jixiong: '凶', meaning: '谋事无成，内事索索，外入缠绕，诸事破败，灾祸起于内部。吉门吉星，尚可缓解' },
+        '壬癸': { name: '天罗逢地网、幼女奸淫', jixiong: '凶', meaning: '诸事不利。阴阳交合，暧昧不明，家丑外扬。门吉为风流男女，门凶为本质坏，男女之事招灾' },
+        '癸壬': { name: '复见腾蛇', jixiong: '凶', meaning: '婚姻重婚，婚后无子，不保年华。事物变化，或另找主人，另寻合作伙伴' },
+        '辛辛': { name: '伏吟天庭', jixiong: '凶', meaning: '为事自破，进退不果，讼狱，公废私就' },
+        '辛壬': { name: '凶蛇入狱', jixiong: '凶', meaning: '争讼不息，先动失理' },
+        '壬辛': { name: '腾蛇相缠', jixiong: '凶', meaning: '吉门也不得安宁，谋望被人欺骗' },
+        '辛癸': { name: '天牢华盖、虎投地网', jixiong: '凶', meaning: '日月失明，误入地网，动止乖张' },
+        '癸辛': { name: '网盖天牢', jixiong: '凶', meaning: '官司败诉，死罪难逃，占病为凶' },
+        '癸癸': { name: '天网四张', jixiong: '凶', meaning: '行人失伴，病讼皆伤' }
+      };
+      
+      const key = tianganTianPan + tianganDiPan;
+      return jixiongGeMap[key] || null;
+    },
     // 根据天干获取五行属性
     getTianganWuxing(tiangan) {
       const wuxingMap = {
@@ -1799,6 +1903,17 @@ export default {
         lines.push(jiuxingInfo);
       }
       lines.push('');
+      
+      // 吉凶格信息
+      if (cell.tianganTianPan && cell.tianganDiPan) {
+        const jixiongGe = this.getJixiongGe(cell.tianganTianPan, cell.tianganDiPan);
+        if (jixiongGe) {
+          lines.push(`【吉凶格信息】`);
+          lines.push(`吉凶格：${jixiongGe.name}（${jixiongGe.jixiong}）`);
+          lines.push(`含义：${jixiongGe.meaning}`);
+          lines.push('');
+        }
+      }
       
       // 地支信息
       if (cell.dizhiDiPan && cell.dizhiDiPan.length > 0) {
@@ -2352,6 +2467,47 @@ export default {
   border-radius: 2px;
 }
 
+.jixiong-ge-section {
+  margin: 3px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jixiong-ge-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.jixiong-ge-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+}
+
+.jixiong-label {
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #fff;
+}
+
+.jixiong-吉 {
+  background-color: #67c23a;
+}
+
+.jixiong-凶 {
+  background-color: #f56c6c;
+}
+
+.jixiong-中 {
+  background-color: #e6a23c;
+}
+
 .wuxing-label {
   font-size: 11px;
   color: #e6a23c;
@@ -2829,6 +2985,19 @@ export default {
     padding: 1px 3px;
   }
   
+  .jixiong-ge-section {
+    margin: 2px 0;
+  }
+  
+  .jixiong-ge-name {
+    font-size: 10px;
+  }
+  
+  .jixiong-label {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
   .wuxing-label {
     font-size: 9px;
     margin-left: 1px;
@@ -2965,6 +3134,19 @@ export default {
     font-size: 8px;
     margin-left: 1px;
     padding: 1px 2px;
+  }
+  
+  .jixiong-ge-section {
+    margin: 1px 0;
+  }
+  
+  .jixiong-ge-name {
+    font-size: 9px;
+  }
+  
+  .jixiong-label {
+    font-size: 7px;
+    padding: 1px 3px;
   }
   
   .wuxing-label {
