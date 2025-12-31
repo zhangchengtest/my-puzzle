@@ -1,244 +1,100 @@
 <template>
   <div class="rules">
-    <h3>排盘规则</h3>
-    <div class="rule-section">
-      <h4>排盘方法</h4>
-      <div class="rule-content">
-        <p><strong>时家奇门：</strong>以时辰为主进行排盘，每个时辰一个盘。</p>
-        <p><strong>茅山法：</strong>根据日干支和节气确定局数的方法。</p>
-      </div>
-    </div>
-    <div class="rule-section">
-      <h4>一、九宫格布局（洛书顺序）</h4>
-      <div class="rule-content">
-        <p>九宫格按洛书数字排列：</p>
-        <div class="rule-grid">
-          <div>4 巽</div>
-          <div>9 离</div>
-          <div>2 坤</div>
-          <div>3 震</div>
-          <div>5 中</div>
-          <div>7 兑</div>
-          <div>8 艮</div>
-          <div>1 坎</div>
-          <div>6 乾</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>二、茅山法确定局数</h4>
-      <div class="rule-content">
-        <p><strong>1. 确定阴阳遁：</strong></p>
-        <ul>
-          <li>冬至后到夏至前为<strong>阳遁</strong></li>
-          <li>夏至后到冬至前为<strong>阴遁</strong></li>
-        </ul>
-        
-        <p><strong>2. 根据日干支确定上中下元：</strong></p>
-        <ul>
-          <li><strong>上元：</strong>甲子、己卯、甲午、己酉</li>
-          <li><strong>中元：</strong>甲戌、己丑、甲辰、己未</li>
-          <li><strong>下元：</strong>甲申、己亥、甲寅、己巳</li>
-        </ul>
-        
-        <p><strong>3. 确定局数：</strong></p>
-        <ul>
-          <li><strong>阳遁：</strong>上元1局、中元4局、下元7局</li>
-          <li><strong>阴遁：</strong>上元9局、中元6局、下元3局</li>
-        </ul>
-        
-        <p><strong>4. 非甲己日的推算：</strong></p>
-        <p>如果不是甲己日，需要根据节气推算所属的元，每5天一个循环，每15天一个元。</p>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>三、阴阳遁局数和九宫顺序的关系</h4>
-      <div class="rule-content">
-        <p><strong>1. 九宫顺序：</strong></p>
-        <p>九宫按照洛书顺序排列：坎1宫 → 坤2宫 → 震3宫 → 巽4宫 → 中5宫 → 乾6宫 → 兑7宫 → 艮8宫 → 离9宫</p>
-        
-        <p><strong>2. 阳遁局数和九宫的关系：</strong></p>
-        <ul>
-          <li><strong>阳遁1局：</strong>戊在坎1宫，己在坤2宫，庚在震3宫，辛在巽4宫，壬在中5宫，癸在乾6宫，丁在兑7宫，丙在艮8宫，乙在离9宫</li>
-          <li><strong>阳遁2局：</strong>戊在坤2宫，己在震3宫，庚在巽4宫，辛在中5宫，壬在乾6宫，癸在兑7宫，丁在艮8宫，丙在离9宫，乙在坎1宫</li>
-          <li><strong>阳遁3局：</strong>戊在震3宫，己在巽4宫，庚在中5宫，辛在乾6宫，壬在兑7宫，癸在艮8宫，丁在离9宫，丙在坎1宫，乙在坤2宫</li>
-          <li><strong>规律：</strong>阳遁从局数对应的宫位开始，六仪三奇按照九宫顺序<strong>顺行</strong>排布</li>
-          <li>例如：阳遁1局，戊在1宫（坎），然后顺行到2宫（坤）、3宫（震）...</li>
-          <li>阳遁2局，戊在2宫（坤），然后顺行到3宫（震）、4宫（巽）...</li>
-        </ul>
-        
-        <p><strong>3. 阴遁局数和九宫的关系：</strong></p>
-        <ul>
-          <li><strong>阴遁1局：</strong>戊在坎1宫，己在离9宫，庚在艮8宫，辛在兑7宫，壬在乾6宫，癸在中5宫，丁在巽4宫，丙在震3宫，乙在坤2宫</li>
-          <li><strong>阴遁2局：</strong>戊在坤2宫，己在坎1宫，庚在离9宫，辛在艮8宫，壬在兑7宫，癸在乾6宫，丁在中5宫，丙在巽4宫，乙在震3宫</li>
-          <li><strong>阴遁3局：</strong>戊在震3宫，己在坤2宫，庚在坎1宫，辛在离9宫，壬在艮8宫，癸在兑7宫，丁在乾6宫，丙在中5宫，乙在巽4宫</li>
-          <li><strong>规律：</strong>阴遁从局数对应的宫位开始，六仪三奇按照九宫顺序<strong>逆行</strong>排布</li>
-          <li>例如：阴遁1局，戊在1宫（坎），然后逆行到9宫（离）、8宫（艮）...</li>
-          <li>阴遁2局，戊在2宫（坤），然后逆行到1宫（坎）、9宫（离）...</li>
-        </ul>
-        
-        <p><strong>4. 六仪三奇的排布顺序：</strong></p>
-        <ul>
-          <li><strong>六仪顺序：</strong>戊、己、庚、辛、壬、癸（甲隐藏于其中）</li>
-          <li><strong>三奇顺序：</strong>乙、丙、丁</li>
-          <li><strong>完整顺序：</strong>戊、己、庚、辛、壬、癸、丁、丙、乙</li>
-          <li>这个顺序在阳遁和阴遁中都相同，只是排布方向不同</li>
-        </ul>
-        
-        <p><strong>5. 中5宫的处理：</strong></p>
-        <ul>
-          <li>中5宫（中宫）在排布中特殊处理</li>
-          <li>阳遁：中5宫在顺行序列中正常排布</li>
-          <li>阴遁：中5宫在逆行序列中正常排布</li>
-          <li>中5宫的本位星是天禽星</li>
-        </ul>
-        
-        <p><strong>6. 局数和起始宫位的对应关系：</strong></p>
-        <ul>
-          <li><strong>阳遁：</strong>局数1-9对应起始宫位1-9</li>
-          <li><strong>阴遁：</strong>局数1-9对应起始宫位1-9</li>
-          <li>例如：阳遁1局，戊从坎1宫开始；阳遁5局，戊从中5宫开始</li>
-          <li>例如：阴遁1局，戊从坎1宫开始；阴遁5局，戊从中5宫开始</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>四、天干地支排布规则</h4>
-      <div class="rule-content">
-        <p><strong>天干：</strong>甲、乙、丙、丁、戊、己、庚、辛、壬、癸</p>
-        <p><strong>地支：</strong>子、丑、寅、卯、辰、巳、午、未、申、酉、戌、亥</p>
-        
-        <p><strong>1. 六仪三奇：</strong></p>
-        <ul>
-          <li><strong>六仪：</strong>戊、己、庚、辛、壬、癸（甲隐藏在其中）</li>
-          <li><strong>三奇：</strong>乙（日奇）、丙（月奇）、丁（星奇）</li>
-          <li>甲为值符，隐藏于六仪之中，不单独出现</li>
-        </ul>
-
-        <p><strong>2. 阳遁排法（冬至后到夏至前）：</strong></p>
-        <ul>
-          <li>阳遁1局：戊在坎1宫，己在坤2宫，庚在震3宫，辛在巽4宫，壬在中5宫，癸在乾6宫</li>
-          <li>阳遁2局：戊在坤2宫，己在震3宫，庚在巽4宫，辛在中5宫，壬在乾6宫，癸在兑7宫</li>
-          <li>以此类推，每局六仪顺行一位</li>
-          <li>三奇乙、丙、丁按照固定顺序排布</li>
-        </ul>
-
-        <p><strong>3. 阴遁排法（夏至后到冬至前）：</strong></p>
-        <ul>
-          <li>阴遁1局：戊在坎1宫，己在离9宫，庚在艮8宫，辛在兑7宫，壬在乾6宫，癸在中5宫</li>
-          <li>阴遁2局：戊在坤2宫，己在坎1宫，庚在离9宫，辛在艮8宫，壬在兑7宫，癸在乾6宫</li>
-          <li>以此类推，每局六仪逆行一位</li>
-          <li>三奇乙、丙、丁按照固定顺序排布</li>
-        </ul>
-
-        <p><strong>4. 地支排布：</strong></p>
-        <ul>
-          <li>地支按照时辰确定起始位置</li>
-          <li>子时从坎1宫开始，丑时从艮8宫开始，寅时从震3宫开始</li>
-          <li>卯时从巽4宫开始，辰时从中5宫开始，巳时从乾6宫开始</li>
-          <li>午时从兑7宫开始，未时从坤2宫开始，申时从离9宫开始</li>
-          <li>酉时从坎1宫开始，戌时从艮8宫开始，亥时从震3宫开始</li>
-          <li>然后按照九宫顺序顺行排布十二地支</li>
-        </ul>
-
-        <p><strong>5. 值符值使：</strong></p>
-        <p><strong>值符的确定过程（奇门遁甲排盘的关键步骤）：</strong></p>
-        <ol>
-          <li><strong>确定旬首：</strong>
-            <p>根据预测时辰的天干地支找出对应的旬首。六十甲子中，旬首固定为：</p>
-            <ul>
-              <li>甲子旬（对应六仪：戊）</li>
-              <li>甲戌旬（对应六仪：己）</li>
-              <li>甲申旬（对应六仪：庚）</li>
-              <li>甲午旬（对应六仪：辛）</li>
-              <li>甲辰旬（对应六仪：壬）</li>
-              <li>甲寅旬（对应六仪：癸）</li>
-            </ul>
-            <p>例如：时辰为甲午辛时，属于甲午辛旬，旬首即为甲午。</p>
-          </li>
-          <li><strong>定位旬首所遁六仪的落宫：</strong>
-            <p>根据旬首确定其在地盘九宫中的位置。需要先依据节气判断阴阳遁局数（如阳遁一局或阴遁九局），再按九宫顺序（坎一宫至兑九宫）顺数或逆数排列六仪。</p>
-            <p>例如：旬首甲午在阳遁一局中可能落于坎一宫。</p>
-          </li>
-          <li><strong>确定值符九星：</strong>
-            <p>值符即为旬首所遁六仪所在宫位对应的本位九星。各宫位的本位星：</p>
-            <ul>
-              <li>坎一宫：天蓬星</li>
-              <li>坤二宫：天芮星</li>
-              <li>震三宫：天冲星</li>
-              <li>巽四宫：天辅星</li>
-              <li>中五宫：天禽星</li>
-              <li>乾六宫：天心星</li>
-              <li>兑七宫：天柱星</li>
-              <li>艮八宫：天任星</li>
-              <li>离九宫：天英星</li>
-            </ul>
-            <p>例如：坎一宫的本位星为天蓬星，则值符为天蓬星；若落中五宫，则取天禽星为值符。</p>
-          </li>
-          <li><strong>值符随时干落宫：</strong>
-            <p>值符的最终落宫由时干决定，即值符跟随时干所在的宫位。</p>
-            <p>例如：时干辛落坎一宫，则值符（如天蓬星）及其携带的六仪（辛）进入坎一宫，形成天盘布局。</p>
-          </li>
-        </ol>
-        <p><strong>值使的确定过程：</strong></p>
-        <ol>
-          <li>值使是当值的八门</li>
-          <li>值使门根据时辰确定，与值符的确定方法相同</li>
-          <li>值使门跟随值符转动，在值符所在宫位</li>
-        </ol>
-        <p><strong>总结：</strong></p>
-        <ul>
-          <li>值符的确定是奇门遁甲排盘的关键步骤</li>
-          <li>值符确定后，值符星和值使门都跟随值符所在宫位</li>
-          <li>值符所在宫位是当前最重要的方位</li>
-        </ul>
-
-        <p><strong>6. 排盘步骤：</strong></p>
-        <ol>
-          <li>确定阳遁或阴遁（根据节气）</li>
-          <li>确定局数（根据日干支）</li>
-          <li>排布六仪三奇（根据局数和阴阳遁）</li>
-          <li>排布地支（根据时辰）</li>
-          <li>确定值符值使（根据时辰）</li>
-          <li>排布八门九星八神</li>
-        </ol>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>五、八门</h4>
-      <div class="rule-content">
-        <p>八门：休、生、伤、杜、景、死、惊、开</p>
-        <p>八门按照固定的顺序排布在九宫格中，值使门根据时辰确定。</p>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>六、九星</h4>
-      <div class="rule-content">
-        <p>九星：天蓬、天芮、天冲、天辅、天禽、天心、天柱、天任、天英</p>
-        <p>九星按照固定的顺序排布，值符星根据时辰确定。</p>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>七、八神</h4>
-      <div class="rule-content">
-        <p>八神：值符、腾蛇、太阴、六合、白虎、玄武、九地、九天</p>
-        <p>八神按照时辰和值符位置排布，值符在值符星所在宫位。</p>
-      </div>
-    </div>
-
-    <div class="rule-section">
-      <h4>八、时辰对应</h4>
-      <div class="rule-content">
-        <p>子时(23-1)、丑时(1-3)、寅时(3-5)、卯时(5-7)、</p>
-        <p>辰时(7-9)、巳时(9-11)、午时(11-13)、未时(13-15)、</p>
-        <p>申时(15-17)、酉时(17-19)、戌时(19-21)、亥时(21-23)</p>
-      </div>
+    <h3>十干克应吉凶格全图</h3>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>天盘</th>
+            <th>地盘</th>
+            <th>吉凶格</th>
+            <th>性质</th>
+            <th>代表含义</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>戊</td><td>戊</td><td>伏吟</td><td class="bad">凶</td><td>本地、内部、推迟，以守为主</td></tr>
+          <tr><td>戊</td><td>乙</td><td>青龙和会</td><td class="medium">中</td><td>门吉事吉，门凶事凶</td></tr>
+          <tr><td>乙</td><td>戊</td><td>阴害阳门</td><td class="medium">中</td><td>利于阴人阴事，不利阳人阳事，吉凶看门</td></tr>
+          <tr><td>戊</td><td>丙</td><td>龙回首</td><td class="good">吉</td><td>第一吉格，大吉大利，凶事遇门迫、入墓、击刑则不利</td></tr>
+          <tr><td>丙</td><td>戊</td><td>鸟跌穴</td><td class="good">吉</td><td>第二吉格，大吉大利，凶事遇门迫、入墓、击刑则不利</td></tr>
+          <tr><td>戊</td><td>丁</td><td>青龙腾明</td><td class="good">吉</td><td>第三吉格，利于见贵人、求取功名，遇门迫、入墓不利</td></tr>
+          <tr><td>丁</td><td>戊</td><td>青龙转光</td><td class="good">吉</td><td>第四吉格，好事更加顺利，遇门迫、入墓不利</td></tr>
+          <tr><td>戊</td><td>己</td><td>贵人入狱</td><td class="bad">凶</td><td>于公私均不利，冲墓之时有转机</td></tr>
+          <tr><td>己</td><td>戊</td><td>犬遇青龙</td><td class="medium">中</td><td>门吉则事吉，门凶则事不成</td></tr>
+          <tr><td>戊</td><td>庚</td><td>值符飞宫</td><td class="bad">凶</td><td>好事不成，凶事更凶，值符飞离此宫，主换人、换地方</td></tr>
+          <tr><td>庚</td><td>戊</td><td>值符伏宫</td><td class="bad">凶</td><td>大凶，主换人、换地方，但庚为用神另当别论</td></tr>
+          <tr><td>戊</td><td>辛</td><td>青龙折足</td><td class="medium">中</td><td>吉门生助可谋事，凶门主招灾失财、足疾、折伤</td></tr>
+          <tr><td>辛</td><td>戊</td><td>困龙被伤</td><td class="bad">凶</td><td>妄动财失伤灾，辛为用神反为吉，但子午冲，有失财的风险。</td></tr>
+          <tr><td>戊</td><td>壬</td><td>青龙入天牢</td><td class="bad">凶</td><td>公私皆不利</td></tr>
+          <tr><td>壬</td><td>戊</td><td>小蛇化龙</td><td class="good">吉</td><td>男主事业发达，女主产婴童</td></tr>
+          <tr><td>戊</td><td>癸</td><td>青龙华盖</td><td class="medium">中</td><td>门吉则事吉，门凶则事凶</td></tr>
+          <tr><td>癸</td><td>戊</td><td>天乙会合</td><td class="medium">中</td><td>门吉则事吉，门凶则事凶</td></tr>
+          <tr><td>乙</td><td>乙</td><td>日奇伏吟</td><td class="bad">凶</td><td>宜静不宜动，宜守不宜攻</td></tr>
+          <tr><td>乙</td><td>丙</td><td>奇仪顺遂</td><td class="good">吉</td><td>乙奇临吉凶，本质好，升职顺遂；临凶星，与第三方男子苟合，婚变</td></tr>
+          <tr><td>丙</td><td>乙</td><td>日月并行</td><td class="good">吉</td><td>公私皆有利</td></tr>
+          <tr><td>乙</td><td>丁</td><td>奇仪相佐</td><td class="good">吉</td><td>利文书、考试，百事可为</td></tr>
+          <tr><td>丁</td><td>乙</td><td>玉女奇生</td><td class="good">吉</td><td>贵人加官晋爵，常人婚姻财帛有喜</td></tr>
+          <tr><td>乙</td><td>己</td><td>日奇入墓</td><td class="medium">中</td><td>门吉有救，门凶事凶。遇开门为地遁吉格</td></tr>
+          <tr><td>己</td><td>乙</td><td>地户逢星</td><td class="bad">凶</td><td>宜遁迹隐形，宜退不宜进</td></tr>
+          <tr><td>乙</td><td>庚</td><td>日奇被刑</td><td class="bad">凶</td><td>夫妻不和，争讼财产</td></tr>
+          <tr><td>庚</td><td>乙</td><td>太白逢星</td><td class="bad">凶</td><td>宜退不宜进，对客有利，对主不利</td></tr>
+          <tr><td>乙</td><td>辛</td><td>龙逃走</td><td class="bad">凶</td><td>家破人亡，财散人走。婚姻主女方提离婚，离开男方</td></tr>
+          <tr><td>辛</td><td>乙</td><td>虎猖狂</td><td class="bad">凶</td><td>家破人亡，远行有灾。婚姻主男方提离婚，拆散家庭</td></tr>
+          <tr><td>乙</td><td>壬</td><td>日奇入天罗</td><td class="bad">凶</td><td>尊卑悖乱，官讼是非，有人谋害</td></tr>
+          <tr><td>壬</td><td>乙</td><td>小蛇得势</td><td class="good">吉</td><td>男人发达，有工作俸禄地位；女人柔顺，怀孕可得儿子</td></tr>
+          <tr><td>乙</td><td>癸</td><td>日奇入地罗</td><td class="bad">凶</td><td>宜退不宜进，躲灾避难为吉</td></tr>
+          <tr><td>癸</td><td>乙</td><td>华盖逢星</td><td class="medium">中</td><td>吉门主贵人禄位、常人平安；凶门则凶上加凶；癸为用神则为吉</td></tr>
+          <tr><td>丙</td><td>丙</td><td>月奇悖师</td><td class="bad">凶</td><td>文书逼迫，破耗遗失</td></tr>
+          <tr><td>丙</td><td>丁</td><td>星奇朱雀</td><td class="good">吉</td><td>贵人文书吉利，常人平安喜乐，遇开生休吉门为天遁吉格</td></tr>
+          <tr><td>丁</td><td>丙</td><td>星随月转</td><td class="medium">中</td><td>贵人越级高开，发展顺遂；常人阴阳颠倒，乐极生悲，造成不幸</td></tr>
+          <tr><td>丙</td><td>己</td><td>火悖入刑</td><td class="bad">凶</td><td>门吉得吉，门凶得凶。主囚人刑仗，文书不行</td></tr>
+          <tr><td>己</td><td>丙</td><td>火悖地户</td><td class="bad">凶</td><td>男人冤冤相害，女人遭人奸污</td></tr>
+          <tr><td>丙</td><td>庚</td><td>萤入太白</td><td class="bad">凶</td><td>谋求好事大凶，主门户破败，盗贼横行，事业难成。"贼退格"，测贼退为吉</td></tr>
+          <tr><td>庚</td><td>丙</td><td>白入萤</td><td class="bad">凶</td><td>"贼来格"，占贼必来，以固守为好。若日干为庚或年命为庚为吉，主动出击，先发制人，就会利于自己</td></tr>
+          <tr><td>丙</td><td>辛</td><td>月奇相合</td><td class="good">吉</td><td>测事可成，测病亦不为凶</td></tr>
+          <tr><td>辛</td><td>丙</td><td>干合悖师</td><td class="medium">中</td><td>门吉事吉，门凶事凶。合作求财，会因财致讼</td></tr>
+          <tr><td>丙</td><td>壬</td><td>火入天罗</td><td class="bad">凶</td><td>为客不利，是非颇多</td></tr>
+          <tr><td>壬</td><td>丙</td><td>水蛇入火</td><td class="bad">凶</td><td>官灾刑禁，络绎不绝，两败俱伤</td></tr>
+          <tr><td>丙</td><td>癸</td><td>月奇地网</td><td class="bad">凶</td><td>暗昧不明，容易有小人、阴人害事，招灾祸</td></tr>
+          <tr><td>癸</td><td>丙</td><td>华盖悖师</td><td class="bad">凶</td><td>诸事不利。只有修为高超、能屈能生、因势利导的人才能变不利为有利</td></tr>
+          <tr><td>丁</td><td>丁</td><td>星奇伏吟</td><td class="good">吉</td><td>文书、证件即至，喜事从心</td></tr>
+          <tr><td>丁</td><td>己</td><td>火入勾陈</td><td class="bad">凶</td><td>主阴私之事，谋事不利，奸私仇冤，或事因女人</td></tr>
+          <tr><td>己</td><td>丁</td><td>地户朱雀</td><td class="good">吉</td><td>文书词讼，先曲后直，先凶后吉</td></tr>
+          <tr><td>丁</td><td>庚</td><td>星奇受阻</td><td class="bad">凶</td><td>文书阻隔，消息不同，测外出之人则归</td></tr>
+          <tr><td>庚</td><td>丁</td><td>金屋藏娇</td><td class="medium">中</td><td>男女关系所引起的官讼是非。门吉则事吉，门凶则事凶</td></tr>
+          <tr><td>丁</td><td>辛</td><td>朱雀入狱</td><td class="medium">中</td><td>地盘为罪人释放，天盘为官人失位</td></tr>
+          <tr><td>辛</td><td>丁</td><td>狱神得奇</td><td class="good">吉</td><td>经商求财利润丰厚，做事有意外收获。赦免处分等</td></tr>
+          <tr><td>丁</td><td>壬</td><td>奇仪相合</td><td class="good">吉</td><td>凡事有成，贵人辅助，讼狱公平。婚姻主苟合关系</td></tr>
+          <tr><td>壬</td><td>丁</td><td>干合蛇刑</td><td class="medium">中</td><td>文书牵连，贵人匆匆，男吉女凶。天盘，壬为男，遇丁奇为吉；地盘，丁为女，上有天罗为凶</td></tr>
+          <tr><td>丁</td><td>癸</td><td>雀投江</td><td class="bad">凶</td><td>文书口舌是非，词讼不利，音信全无</td></tr>
+          <tr><td>癸</td><td>丁</td><td>蛇夭矫</td><td class="bad">凶</td><td>官司诉讼，火焚也逃不掉</td></tr>
+          <tr><td>己</td><td>己</td><td>地户逢鬼</td><td class="bad">凶</td><td>疾病、发凶或必死，好事不成，谋为则凶</td></tr>
+          <tr><td>己</td><td>庚</td><td>刑格反名</td><td class="bad">凶</td><td>不宜谋事，词讼先动者不利，阴星则有谋害的可能</td></tr>
+          <tr><td>庚</td><td>己</td><td>官府刑格</td><td class="bad">凶</td><td>官司是非，判刑，牢狱之灾等</td></tr>
+          <tr><td>己</td><td>辛</td><td>游魂入墓</td><td class="bad">凶</td><td>鬼魅作祟，小心谨慎</td></tr>
+          <tr><td>辛</td><td>己</td><td>入狱自刑</td><td class="bad">凶</td><td>错误由自身造成，女仆背主，诉讼难伸</td></tr>
+          <tr><td>己</td><td>壬</td><td>地网高张</td><td class="bad">凶</td><td>谋为不利，凡事不吉，容易出狡童佚女，奸情伤杀之事</td></tr>
+          <tr><td>壬</td><td>己</td><td>反吟蛇刑</td><td class="bad">凶</td><td>官司败诉，大祸将至，顺守可吉，妄动必凶</td></tr>
+          <tr><td>己</td><td>癸</td><td>地刑玄武</td><td class="bad">凶</td><td>男女疾病垂危，囚狱词讼之灾</td></tr>
+          <tr><td>癸</td><td>己</td><td>华盖地户</td><td class="bad">凶</td><td>男女音信皆阻，躲灾避难为吉</td></tr>
+          <tr><td>庚</td><td>庚</td><td>太白同宫、战格</td><td class="bad">凶</td><td>不利谋事，不和，招来官灾横祸</td></tr>
+          <tr><td>庚</td><td>辛</td><td>白虎干格、太白刑格</td><td class="bad">凶</td><td>远行不利，诸事有灾</td></tr>
+          <tr><td>辛</td><td>庚</td><td>白虎出力、天狱自刑</td><td class="bad">凶</td><td>主客相残，不可强进</td></tr>
+          <tr><td>庚</td><td>壬</td><td>小格、上格</td><td class="bad">凶</td><td>远行迷失，音信全无。若庚为用神，主变动、变化，为"移荡格"</td></tr>
+          <tr><td>壬</td><td>庚</td><td>太白擒蛇</td><td class="medium">中</td><td>事情难以进展，如测词讼，主刑狱公平，立判邪正</td></tr>
+          <tr><td>庚</td><td>癸</td><td>大格</td><td class="bad">凶</td><td>主车祸，行人不至，官讼不息，母子俱伤</td></tr>
+          <tr><td>癸</td><td>庚</td><td>太白入网</td><td class="bad">凶</td><td>凡事无成，吉事易空，暴力争讼，自身获罪</td></tr>
+          <tr><td>壬</td><td>壬</td><td>天狱自刑、蛇入地罗</td><td class="bad">凶</td><td>谋事无成，内事索索，外入缠绕，诸事破败，灾祸起于内部。吉门吉星，尚可缓解</td></tr>
+          <tr><td>壬</td><td>癸</td><td>天罗逢地网、幼女奸淫</td><td class="bad">凶</td><td>诸事不利。阴阳交合，暧昧不明，家丑外扬。门吉为风流男女，门凶为本质坏，男女之事招灾</td></tr>
+          <tr><td>癸</td><td>壬</td><td>复见腾蛇</td><td class="bad">凶</td><td>婚姻重婚，婚后无子，不保年华。事物变化，或另找主人，另寻合作伙伴</td></tr>
+          <tr><td>辛</td><td>辛</td><td>伏吟天庭</td><td class="bad">凶</td><td>为事自破，进退不果，讼狱，公废私就</td></tr>
+          <tr><td>辛</td><td>壬</td><td>凶蛇入狱</td><td class="bad">凶</td><td>争讼不息，先动失理</td></tr>
+          <tr><td>壬</td><td>辛</td><td>腾蛇相缠</td><td class="bad">凶</td><td>吉门也不得安宁，谋望被人欺骗</td></tr>
+          <tr><td>辛</td><td>癸</td><td>天牢华盖、虎投地网</td><td class="bad">凶</td><td>日月失明，误入地网，动止乖张</td></tr>
+          <tr><td>癸</td><td>辛</td><td>网盖天牢</td><td class="bad">凶</td><td>官司败诉，死罪难逃，占病为凶</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -265,50 +121,61 @@ export default {
   padding-bottom: 10px;
 }
 
-.rule-section {
-  margin-bottom: 20px;
+.table-container {
+  overflow-x: auto;
+  margin-top: 20px;
 }
 
-.rule-section h4 {
-  color: #409eff;
-  font-size: 16px;
-  margin-bottom: 10px;
-  margin-top: 0;
-}
-
-.rule-content {
-  color: #666;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.rule-content p {
-  margin: 8px 0;
-}
-
-.rule-content ul {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-
-.rule-content li {
-  margin: 5px 0;
-}
-
-.rule-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 10px 0;
-  text-align: center;
-}
-
-.rule-grid div {
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
   background-color: #fff;
-  padding: 8px;
   border-radius: 4px;
-  border: 1px solid #ddd;
-  font-weight: bold;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-table thead {
+  background-color: #409eff;
+  color: #fff;
+}
+
+.data-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e4e7ed;
+  font-size: 13px;
+  color: #333;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f5f7fa;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table .good {
+  color: #67c23a;
+  font-weight: 600;
+}
+
+.data-table .bad {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.data-table .medium {
+  color: #e6a23c;
+  font-weight: 600;
 }
 </style>
 
