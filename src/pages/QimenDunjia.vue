@@ -103,7 +103,6 @@
                   <div class="cell-bashen" v-if="cell.bashen">
                     <span>{{ cell.bashen }}</span>
                     <span v-if="getBashenWuxing(cell.bashen)" class="wuxing-label">{{ getBashenWuxing(cell.bashen) }}</span>
-                    <span class="info-label">神</span>
                   </div>
                   
                   <!-- 八卦信息放在右下角 -->
