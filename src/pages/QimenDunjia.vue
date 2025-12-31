@@ -1099,12 +1099,21 @@ export default {
       // 3.5. 确定值使门（根据旬首六仪在地盘的宫位）
       // 值使门是旬首对应的六仪在地盘所在宫位的本位门
       // diPanGong 就是旬首六仪在地盘的宫位
+      // 当值使序数是5的时候，值使门也要遵守规则：阳遁转到艮8宫，阴遁转到坤2宫
+      let adjustedDiPanGong = diPanGong;
+      if (diPanGong === 5) {
+        if (isYangDun) {
+          adjustedDiPanGong = 8; // 阳遁转到艮8宫
+        } else {
+          adjustedDiPanGong = 2; // 阴遁转到坤2宫
+        }
+      }
       // 根据宫位找到对应的本位门
       const gongToMen = {
         1: '休', 2: '死', 3: '伤', 4: '杜',
         6: '开', 7: '惊', 8: '生', 9: '景'
       };
-      const zhiShiMen = gongToMen[diPanGong] || '休';
+      const zhiShiMen = gongToMen[adjustedDiPanGong] || '休';
       // 4. 值符跟随时干落宫（天盘）
       // 公式：直符落宫数 = 局数 + 时干在三奇六仪中所对应的次序数 - 1
       // 三奇六仪次序数：
@@ -1155,8 +1164,8 @@ export default {
       
      
       // zhiShiMenXuShu 就是 zhiShiMen 的宫位数字
-      // 由于 zhiShiMen = gongToMen[diPanGong]，所以 zhiShiMenXuShu 就是 diPanGong
-      const zhiShiMenXuShu = diPanGong; // 值使门宫位数字
+      // 当值使序数是5的时候，已经调整到8（阳遁）或2（阴遁），所以使用调整后的宫位
+      const zhiShiMenXuShu = adjustedDiPanGong; // 值使门宫位数字
       
       // 计算时干在十天干中的序数
       const tianGanOrder = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
