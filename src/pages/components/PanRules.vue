@@ -1,6 +1,12 @@
 <template>
   <div class="rules">
     <h3>十干克应吉凶格全图</h3>
+    <div class="statistics">
+      <span class="stat-item stat-good">吉：16个</span>
+      <span class="stat-item stat-medium">中：14个</span>
+      <span class="stat-item stat-bad">凶：51个</span>
+      <span class="stat-item stat-total">总计：81个</span>
+    </div>
     <div class="table-container">
       <table class="data-table">
         <thead>
@@ -129,6 +135,45 @@ export default {
   font-size: 20px;
   border-bottom: 2px solid #409eff;
   padding-bottom: 10px;
+}
+
+.statistics {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.stat-good {
+  color: #67c23a;
+  background-color: #f0f9ff;
+}
+
+.stat-medium {
+  color: #e6a23c;
+  background-color: #fef0e6;
+}
+
+.stat-bad {
+  color: #f56c6c;
+  background-color: #fef0f0;
+}
+
+.stat-total {
+  color: #333;
+  background-color: #f5f7fa;
+  margin-left: auto;
 }
 
 .table-container {
