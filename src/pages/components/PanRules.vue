@@ -112,12 +112,73 @@
         </tbody>
       </table>
     </div>
+
+    <!-- 十二长生 -->
+    <div class="section-wrapper">
+      <div class="section-content">
+        <h4>十二长生</h4>
+        <div class="changsheng-list">
+          <span v-for="name in shierChangSheng" :key="name" class="changsheng-item">{{ name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 五行相生相克 -->
+    <div class="section-wrapper">
+      <div class="wuxing-relation-content">
+        <div class="wuxing-section">
+          <h4>五行相生</h4>
+          <div class="wuxing-relation-list">
+            <span v-for="(item, index) in wuxingXiangSheng" :key="index" class="wuxing-relation-item">
+              <span class="wuxing-from">{{ item.from }}</span>
+              <span class="wuxing-arrow">生</span>
+              <span class="wuxing-to">{{ item.to }}</span>
+              <span v-if="index < wuxingXiangSheng.length - 1" class="wuxing-separator">→</span>
+            </span>
+          </div>
+        </div>
+        <div class="wuxing-section">
+          <h4>五行相克</h4>
+          <div class="wuxing-relation-list">
+            <span v-for="(item, index) in wuxingXiangKe" :key="index" class="wuxing-relation-item">
+              <span class="wuxing-from">{{ item.from }}</span>
+              <span class="wuxing-arrow ke">克</span>
+              <span class="wuxing-to">{{ item.to }}</span>
+              <span v-if="index < wuxingXiangKe.length - 1" class="wuxing-separator">→</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'PanRules'
+  name: 'PanRules',
+  computed: {
+    shierChangSheng() {
+      return ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'];
+    },
+    wuxingXiangSheng() {
+      return [
+        { from: '木', to: '火' },
+        { from: '火', to: '土' },
+        { from: '土', to: '金' },
+        { from: '金', to: '水' },
+        { from: '水', to: '木' }
+      ];
+    },
+    wuxingXiangKe() {
+      return [
+        { from: '木', to: '土' },
+        { from: '土', to: '水' },
+        { from: '水', to: '火' },
+        { from: '火', to: '金' },
+        { from: '金', to: '木' }
+      ];
+    }
+  }
 }
 </script>
 
@@ -231,6 +292,109 @@ export default {
 .data-table .medium {
   color: #e6a23c;
   font-weight: 600;
+}
+
+.section-wrapper {
+  margin-top: 30px;
+}
+
+.section-content {
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section-content h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.changsheng-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+}
+
+.changsheng-item {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #f0f9ff;
+  color: #409eff;
+  border: 1px solid #b3d8ff;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.wuxing-relation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.wuxing-section {
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wuxing-section h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.wuxing-relation-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.wuxing-relation-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wuxing-from,
+.wuxing-to {
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.wuxing-from {
+  background-color: #e1f3d8;
+  color: #67c23a;
+}
+
+.wuxing-to {
+  background-color: #f0f9ff;
+  color: #409eff;
+}
+
+.wuxing-arrow {
+  font-size: 14px;
+  font-weight: bold;
+  color: #67c23a;
+}
+
+.wuxing-arrow.ke {
+  color: #f56c6c;
+}
+
+.wuxing-separator {
+  font-size: 16px;
+  color: #909399;
+  margin: 0 3px;
 }
 </style>
 
