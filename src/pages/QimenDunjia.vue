@@ -38,16 +38,7 @@
                   
                   <!-- 天盘部分 -->
                   <div class="tianpan-section">
-                    <div class="cell-tiangan-tianpan">
-                      <span>{{ cell.tianganTianPan }}</span>
-                      <span v-if="cell.tianganTianPan && getChangShengDizhi(cell.tianganTianPan)" class="changsheng-dizhi">{{ getChangShengDizhi(cell.tianganTianPan) }}</span>
-                      <span v-if="cell.tianganTianPan && cell.dizhiDiPan && cell.dizhiDiPan.length > 0 && getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0])" class="changsheng-state">{{ getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0]) }}</span>
-                      <span v-if="cell.tianganTianPan && getTianganWuxing(cell.tianganTianPan)" class="wuxing-label">{{ getTianganWuxing(cell.tianganTianPan) }}</span>
-                    </div>
-                    <div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan">
-                      <span>{{ cell.jiuxingTianPan }}</span>
-                      <span v-if="getJiuxingWuxing(cell.jiuxingTianPan)" class="wuxing-label">{{ getJiuxingWuxing(cell.jiuxingTianPan) }}</span>
-                    </div>
+                    <div class="cell-tiangan-tianpan"><span>{{ cell.tianganTianPan }}</span><span v-if="cell.tianganTianPan && getChangShengDizhi(cell.tianganTianPan)" class="changsheng-dizhi">{{ getChangShengDizhi(cell.tianganTianPan) }}</span><span v-if="cell.tianganTianPan && cell.dizhiDiPan && cell.dizhiDiPan.length > 0 && getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0])" class="changsheng-state">{{ getChangShengState(cell.tianganTianPan, cell.dizhiDiPan[0]) }}</span><span v-if="cell.tianganTianPan && getTianganWuxing(cell.tianganTianPan)" class="wuxing-label">{{ getTianganWuxing(cell.tianganTianPan) }}</span></div><div class="cell-jiuxing-tianpan" v-if="cell.jiuxingTianPan"><span>{{ cell.jiuxingTianPan }}</span><span v-if="getJiuxingWuxing(cell.jiuxingTianPan)" class="wuxing-label">{{ getJiuxingWuxing(cell.jiuxingTianPan) }}</span></div>
                     <div class="cell-bamen-tianpan" v-if="cell.bamenTianPan">
                       <span>{{ cell.bamenTianPan }}</span>
                       <span v-if="getBamenWuxing(cell.bamenTianPan)" class="wuxing-label">{{ getBamenWuxing(cell.bamenTianPan) }}</span>
