@@ -33,6 +33,9 @@
                     <span class="shenjiang" v-if="ke.shenjiangUp">
                       {{ ke.shenjiangUp.name || ke.shenjiangUp }}
                     </span>
+                    <span class="shengke" v-if="ke.shengke !== undefined">
+                      生克：{{ ke.shengke }}
+                    </span>
                   </template>
                   <template v-else>
                     <!-- 其他课：两个地支 + 神将 -->
@@ -46,6 +49,9 @@
                     </div>
                     <span class="shenjiang" v-if="ke.shenjiangUp">
                       {{ ke.shenjiangUp.name || ke.shenjiangUp }}
+                    </span>
+                    <span class="shengke" v-if="ke.shengke !== undefined">
+                      生克：{{ ke.shengke }}
                     </span>
                   </template>
                 </div>
@@ -695,34 +701,84 @@ export default {
         '戌': '土', '亥': '水'
       };
       
+      // 判断生克关系的函数
+      const getShengkeRelation = (upWuxing, downWuxing) => {
+        if (!upWuxing || !downWuxing) return '无';
+        
+        // 五行相克关系：木克土，土克水，水克火，火克金，金克木
+        const keMap = {
+          '木': '土',
+          '土': '水',
+          '水': '火',
+          '火': '金',
+          '金': '木'
+        };
+        
+        // 下克上（贼）：下神的五行克上神的五行
+        if (keMap[downWuxing] === upWuxing) {
+          return '贼';
+        }
+        // 上克下（克）：上神的五行克下神的五行
+        if (keMap[upWuxing] === downWuxing) {
+          return '克';
+        }
+        // 其他情况
+        return '无';
+      };
+      
+      // 计算各课的生克关系
+      const firstKeShengke = getShengkeRelation(
+        wuxingMap[firstKeDizhi] || '',
+        wuxingMap[firstKeTiangan] || ''
+      );
+      
+      const secondKeShengke = getShengkeRelation(
+        wuxingMap[secondKeDizhi] || '',
+        wuxingMap[firstKeDizhi] || ''
+      );
+      
+      const thirdKeShengke = getShengkeRelation(
+        wuxingMap[thirdKeDizhiUp] || '',
+        wuxingMap[thirdKeDizhiDown] || ''
+      );
+      
+      const fourthKeShengke = getShengkeRelation(
+        wuxingMap[fourthKeDizhiUp] || '',
+        wuxingMap[fourthKeDizhiDown] || ''
+      );
+      
       return [
         { 
           dizhiUp: firstKeDizhi, 
           dizhiUpWuxing: wuxingMap[firstKeDizhi] || '',
           tianganDown: firstKeTiangan, 
           tianganDownWuxing: wuxingMap[firstKeTiangan] || '',
-          shenjiangUp: firstKeShenjiangUp 
+          shenjiangUp: firstKeShenjiangUp,
+          shengke: firstKeShengke
         }, // 第一课：地支(up) + 天干(down) + 神将
         { 
           dizhiUp: secondKeDizhi, 
           dizhiUpWuxing: wuxingMap[secondKeDizhi] || '',
           dizhiDown: firstKeDizhi, 
           dizhiDownWuxing: wuxingMap[firstKeDizhi] || '',
-          shenjiangUp: secondKeDizhiUpShenjiang 
+          shenjiangUp: secondKeDizhiUpShenjiang,
+          shengke: secondKeShengke
         },   // 第二课：两个地支 + 神将
         { 
           dizhiUp: thirdKeDizhiUp, 
           dizhiUpWuxing: wuxingMap[thirdKeDizhiUp] || '',
           dizhiDown: thirdKeDizhiDown, 
           dizhiDownWuxing: wuxingMap[thirdKeDizhiDown] || '',
-          shenjiangUp: thirdKeDizhiUpShenjiang 
+          shenjiangUp: thirdKeDizhiUpShenjiang,
+          shengke: thirdKeShengke
         },  // 第三课：两个地支 + 神将
         { 
           dizhiUp: fourthKeDizhiUp, 
           dizhiUpWuxing: wuxingMap[fourthKeDizhiUp] || '',
           dizhiDown: fourthKeDizhiDown, 
           dizhiDownWuxing: wuxingMap[fourthKeDizhiDown] || '',
-          shenjiangUp: fourthKeDizhiUpShenjiang 
+          shenjiangUp: fourthKeDizhiUpShenjiang,
+          shengke: fourthKeShengke
         }    // 第四课：两个地支 + 神将
       ];
     },
@@ -1242,6 +1298,16 @@ export default {
   padding: 2px 6px;
   border-radius: 3px;
   margin-top: 4px;
+}
+
+.sike-content .shengke {
+  font-size: 12px;
+  color: #f56c6c;
+  background-color: #fef0f0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+  font-weight: bold;
 }
 
 .sanchuan-grid {
