@@ -169,6 +169,10 @@
             <span class="label">占时：</span>
             <span>{{ panData.timeBranch }}</span>
           </div>
+          <div class="info-item">
+            <span class="label">旬首：</span>
+            <span>{{ panData.xunshou }}</span>
+          </div>
         </div>
 
         <!-- 贵人对应关系表格 -->
@@ -369,6 +373,9 @@ export default {
       // 计算三传（传入isShun和tianpan）
       const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun, tianpan);
       
+      // 计算旬首
+      const xunshou = this.getXunshou(dayGanZhi);
+      
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
       const tianpanGrid = this.convertTo16Grid(tianpan);
@@ -399,6 +406,7 @@ export default {
         guirenDizhi: guirenDizhi,
         guirenDipanDizhi: guirenDipanDizhi,
         shenjiangDirection: shenjiangDirection,
+        xunshou: xunshou,
         sike: sike,
         sanchuan: sanchuan,
         dipan: dipan,
@@ -502,6 +510,25 @@ export default {
       const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       const index = Math.floor((hour + 1) / 2) % 12;
       return branches[index] + '时';
+    },
+    // 计算旬首
+    getXunshou(dayGanZhi) {
+      const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+      const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      
+      const dayGan = dayGanZhi[0];
+      const dayZhi = dayGanZhi[1];
+      
+      // 获取天干和地支的索引
+      const ganIndex = gan.indexOf(dayGan);
+      const zhiIndex = zhi.indexOf(dayZhi);
+      
+      // 计算旬首：找到日干支所在旬的第一个干支（天干为"甲"的那个）
+      // 每个旬有10个干支，旬首的天干是"甲"（索引0）
+      // 旬首的地支 = (zhiIndex - ganIndex + 12) % 12
+      const xunshouZhiIndex = (zhiIndex - ganIndex + 12) % 12;
+      
+      return gan[0] + zhi[xunshouZhiIndex]; // 甲 + 对应的地支
     },
     // 根据节气计算月将
     getYuejiangBySolarTerm(solarTermName) {
