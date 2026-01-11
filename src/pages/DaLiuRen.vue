@@ -107,37 +107,78 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- 信息显示 -->
-          <div class="pan-info">
-            <div class="info-item">
-              <span class="label">公历：</span>
-              <span>{{ panData.solarDate }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">农历：</span>
-              <span>{{ panData.lunarDate }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">日干支：</span>
-              <span>{{ panData.dayGanZhi }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">时干支：</span>
-              <span>{{ panData.timeGanZhi }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">节气：</span>
-              <span>{{ panData.solarTerm }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">月将：</span>
-              <span>{{ panData.yuejiang }}<span v-if="panData.yuejiangDizhi">（{{ panData.yuejiangDizhi }}时）</span></span>
-            </div>
-            <div class="info-item">
-              <span class="label">占时：</span>
-              <span>{{ panData.timeBranch }}</span>
-            </div>
+        <!-- 信息显示 -->
+        <div class="pan-info">
+          <div class="info-item">
+            <span class="label">公历：</span>
+            <span>{{ panData.solarDate }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">农历：</span>
+            <span>{{ panData.lunarDate }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">日干支：</span>
+            <span>{{ panData.dayGanZhi }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">时干支：</span>
+            <span>{{ panData.timeGanZhi }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">节气：</span>
+            <span>{{ panData.solarTerm }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">月将：</span>
+            <span>{{ panData.yuejiang }}<span v-if="panData.yuejiangDizhi">（{{ panData.yuejiangDizhi }}时）</span></span>
+          </div>
+          <div class="info-item">
+            <span class="label">占时：</span>
+            <span>{{ panData.timeBranch }}</span>
+          </div>
+        </div>
+
+        <!-- 贵人对应关系表格 -->
+        <div class="guiren-table-section">
+          <h3>贵人对应关系</h3>
+          <table class="guiren-table">
+            <thead>
+              <tr>
+                <th>用神天干</th>
+                <th>甲戊庚</th>
+                <th>乙己</th>
+                <th>丙丁</th>
+                <th>壬癸</th>
+                <th>辛</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="guiren-label">阳贵人</td>
+                <td>丑（丑时）</td>
+                <td>子（子时）</td>
+                <td>亥（亥时）</td>
+                <td>巳（巳时）</td>
+                <td>午（午时）</td>
+              </tr>
+              <tr>
+                <td class="guiren-label">阴贵人</td>
+                <td>未（未时）</td>
+                <td>申（申时）</td>
+                <td>酉（酉时）</td>
+                <td>卯（卯时）</td>
+                <td>寅（寅时）</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="guiren-note" v-if="panData">
+            <p>当前日干：<strong>{{ panData.dayGan }}</strong> | 
+            当前时辰：<strong>{{ panData.timeBranch }}</strong> | 
+            昼夜：<strong>{{ panData.isDay ? '白天（阳贵人）' : '黑夜（阴贵人）' }}</strong> | 
+            贵人位置：<strong>{{ panData.guirenDizhi }}</strong></p>
           </div>
         </div>
       </div>
@@ -206,10 +247,31 @@ export default {
       const sike = this.calculateSike(dayGanZhi);
       
       // 计算三传
-      const sanchuan = this.calculateSanchuan(sike, timeGanZhi);
+      const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi);
       
       // 计算地盘天盘
-      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi);
+      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi);
+      
+      // 计算贵人和昼夜信息
+      const dayGan = dayGanZhi[0];
+      const timeZhi = timeGanZhi[1];
+      const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      const timeZhiIndex = zhi.indexOf(timeZhi);
+      const isDay = timeZhiIndex >= 0 && timeZhiIndex < 6; // 子到巳为昼，午到亥为夜
+      
+      // 根据日干和昼夜确定贵人位置
+      let guirenDizhi;
+      if (dayGan === '甲' || dayGan === '戊' || dayGan === '庚') {
+        guirenDizhi = isDay ? '丑' : '未'; // 阳贵人丑，阴贵人未
+      } else if (dayGan === '乙' || dayGan === '己') {
+        guirenDizhi = isDay ? '子' : '申'; // 阳贵人子，阴贵人申
+      } else if (dayGan === '丙' || dayGan === '丁') {
+        guirenDizhi = isDay ? '亥' : '酉'; // 阳贵人亥，阴贵人酉
+      } else if (dayGan === '壬' || dayGan === '癸') {
+        guirenDizhi = isDay ? '巳' : '卯'; // 阳贵人巳，阴贵人卯
+      } else { // 辛
+        guirenDizhi = isDay ? '午' : '寅'; // 阳贵人午，阴贵人寅
+      }
       
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
@@ -231,11 +293,14 @@ export default {
         solarDate: `${year}年${month}月${day}日 ${hour}时${minute}分`,
         lunarDate: lunarDate,
         dayGanZhi: dayGanZhi,
+        dayGan: dayGan,
         timeGanZhi: timeGanZhi,
         timeBranch: timeBranch,
         solarTerm: solarTermName,
         yuejiang: yuejiang,
         yuejiangDizhi: yuejiangDizhi,
+        isDay: isDay,
+        guirenDizhi: guirenDizhi,
         sike: sike,
         sanchuan: sanchuan,
         dipan: dipan,
@@ -464,7 +529,7 @@ export default {
       ];
     },
     // 计算三传
-    calculateSanchuan(sike, timeGanZhi) {
+    calculateSanchuan(sike, timeGanZhi, dayGanZhi) {
       // 大六壬三传计算：根据四课的克应关系
       // 简化处理：使用贼克法（第一课克第二课，或第二课克第一课）
       
@@ -496,61 +561,61 @@ export default {
       const chuan = {
         tiangan: sike[0].tiangan,
         dizhi: chuanDizhi,
-        shenjiang: this.getShenjiang(chuanDizhi, timeGanZhi)
+        shenjiang: this.getShenjiang(chuanDizhi, timeGanZhi, dayGanZhi)
       };
       
       const zhong = {
         tiangan: sike[1].tiangan,
         dizhi: zhongDizhi,
-        shenjiang: this.getShenjiang(zhongDizhi, timeGanZhi)
+        shenjiang: this.getShenjiang(zhongDizhi, timeGanZhi, dayGanZhi)
       };
       
       const mo = {
         tiangan: sike[2].tiangan,
         dizhi: moDizhi,
-        shenjiang: this.getShenjiang(moDizhi, timeGanZhi)
+        shenjiang: this.getShenjiang(moDizhi, timeGanZhi, dayGanZhi)
       };
       
       return { chuan, zhong, mo };
     },
     // 计算十二神将
-    getShenjiang(dizhi, timeGanZhi) {
+    getShenjiang(dizhi, timeGanZhi, dayGanZhi) {
       // 十二神将顺序：贵人、螣蛇、朱雀、六合、勾陈、青龙、
       //               天空、白虎、太常、玄武、太阴、天后
       const shenjiangList = ['贵人', '螣蛇', '朱雀', '六合', '勾陈', '青龙', 
                               '天空', '白虎', '太常', '玄武', '太阴', '天后'];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       
-      // 贵人的确定：根据时干
-      // 甲戊庚日：丑未为贵人（昼贵在未，夜贵在丑）
-      // 乙己日：子申为贵人（昼贵在申，夜贵在子）
-      // 丙丁日：亥酉为贵人（昼贵在酉，夜贵在亥）
-      // 壬癸日：卯巳为贵人（昼贵在巳，夜贵在卯）
-      // 辛日：午寅为贵人（昼贵在寅，夜贵在午）
+      // 贵人的确定：根据日干和昼夜
+      // 甲戊庚：阳贵人丑，阴贵人未
+      // 乙己：阳贵人子，阴贵人申
+      // 丙丁：阳贵人亥，阴贵人酉
+      // 壬癸：阳贵人巳，阴贵人卯
+      // 辛：阳贵人午，阴贵人寅
       
-      const timeGan = timeGanZhi[0];
+      const dayGan = dayGanZhi[0];
       const timeZhi = timeGanZhi[1];
       
-      // 判断昼夜：子时至午时为昼，午时至子时为夜
+      // 判断昼夜：子时至巳时为昼，午时至亥时为夜
       const timeZhiIndex = zhi.indexOf(timeZhi);
-      const isDay = timeZhiIndex >= 0 && timeZhiIndex < 6; // 子到巳为昼
+      const isDay = timeZhiIndex >= 0 && timeZhiIndex < 6; // 子到巳为昼，午到亥为夜
       
       let guirenDizhi;
-      if (timeGan === '甲' || timeGan === '戊' || timeGan === '庚') {
-        guirenDizhi = isDay ? '未' : '丑';
-      } else if (timeGan === '乙' || timeGan === '己') {
-        guirenDizhi = isDay ? '申' : '子';
-      } else if (timeGan === '丙' || timeGan === '丁') {
-        guirenDizhi = isDay ? '酉' : '亥';
-      } else if (timeGan === '壬' || timeGan === '癸') {
-        guirenDizhi = isDay ? '巳' : '卯';
+      if (dayGan === '甲' || dayGan === '戊' || dayGan === '庚') {
+        guirenDizhi = isDay ? '丑' : '未'; // 白天用阳贵人丑，黑夜用阴贵人未
+      } else if (dayGan === '乙' || dayGan === '己') {
+        guirenDizhi = isDay ? '子' : '申'; // 白天用阳贵人子，黑夜用阴贵人申
+      } else if (dayGan === '丙' || dayGan === '丁') {
+        guirenDizhi = isDay ? '亥' : '酉'; // 白天用阳贵人亥，黑夜用阴贵人酉
+      } else if (dayGan === '壬' || dayGan === '癸') {
+        guirenDizhi = isDay ? '巳' : '卯'; // 白天用阳贵人巳，黑夜用阴贵人卯
       } else { // 辛
-        guirenDizhi = isDay ? '寅' : '午';
+        guirenDizhi = isDay ? '午' : '寅'; // 白天用阳贵人午，黑夜用阴贵人寅
       }
       
       // 确定贵人的顺逆：甲戊庚日顺行，乙己日逆行，丙丁日顺行，壬癸日逆行，辛日顺行
-      const isShun = (timeGan === '甲' || timeGan === '戊' || timeGan === '庚' || 
-                      timeGan === '丙' || timeGan === '丁' || timeGan === '辛');
+      const isShun = (dayGan === '甲' || dayGan === '戊' || dayGan === '庚' || 
+                      dayGan === '丙' || dayGan === '丁' || dayGan === '辛');
       
       // 计算当前地支相对于贵人的位置
       const guirenIndex = zhi.indexOf(guirenDizhi);
@@ -566,7 +631,7 @@ export default {
       return shenjiangList[offset];
     },
     // 计算地盘天盘
-    calculateDipanTianpan(yuejiang, timeGanZhi) {
+    calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi) {
       // 地盘固定顺序：子（北）、丑、寅、卯（东）、辰、巳、午（南）、未、申、酉（西）、戌、亥
       // 按顺时针排列，子位为正北方
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -594,7 +659,7 @@ export default {
       
       // 地盘：固定的十二地支位置，按方位顺序排列，每个位置有神将
       const dipan = zhi.map((dz) => {
-        const shenjiang = this.getShenjiang(dz, timeGanZhi);
+        const shenjiang = this.getShenjiang(dz, timeGanZhi, dayGanZhi);
         return {
           dizhi: dz,
           fangwei: fangweiMap[dz],
@@ -624,7 +689,7 @@ export default {
         }
         
         // 计算神将（天盘的神将位置与地盘相同）
-        const shenjiang = this.getShenjiang(dz, timeGanZhi);
+        const shenjiang = this.getShenjiang(dz, timeGanZhi, dayGanZhi);
         
         return {
           dizhi: dz, // 地盘的地支（固定位置）
@@ -744,10 +809,6 @@ export default {
   background-color: #66b1ff;
 }
 
-.pan-section {
-  margin-top: 30px;
-}
-
 .pan-content {
   display: flex;
   flex-direction: column;
@@ -756,20 +817,96 @@ export default {
 
 .sike-section,
 .sanchuan-section,
-.pan-section {
+.pan-section,
+.guiren-table-section {
   background-color: #f5f7fa;
   padding: 20px;
   border-radius: 8px;
+  margin: 0;
+  position: relative;
+  clear: both;
+}
+
+.pan-section {
+  margin-bottom: 30px;
+  overflow: visible;
 }
 
 .sike-section h3,
 .sanchuan-section h3,
-.pan-section h3 {
+.pan-section h3,
+.guiren-table-section h3 {
   margin-top: 0;
   margin-bottom: 20px;
   color: #333;
   font-size: 20px;
   text-align: center;
+}
+
+.guiren-table-section {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.guiren-table {
+  width: 100%;
+  max-width: 800px;
+  border-collapse: collapse;
+  background-color: white;
+  margin: 0 auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.guiren-table th {
+  background-color: #409eff;
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.guiren-table td {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #e4e7ed;
+  font-size: 14px;
+}
+
+.guiren-table tbody tr:nth-child(even) {
+  background-color: #f5f7fa;
+}
+
+.guiren-table tbody tr:hover {
+  background-color: #ecf5ff;
+}
+
+.guiren-label {
+  background-color: #67c23a !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+.guiren-note {
+  margin-top: 15px;
+  padding: 12px;
+  background-color: #ecf5ff;
+  border-left: 4px solid #409eff;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.guiren-note p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.guiren-note strong {
+  color: #409eff;
+  font-weight: bold;
 }
 
 .sike-grid {
@@ -864,6 +1001,8 @@ export default {
   justify-content: center;
   align-items: center;
   padding: 20px;
+  margin: 0 auto;
+  position: relative;
 }
 
 .pan-grid-16 {
@@ -910,7 +1049,6 @@ export default {
   align-items: center;
   justify-content: center;
   border: 1px solid #ddd;
-  z-index: 10;
 }
 
 .part-label {
@@ -1054,6 +1192,8 @@ export default {
   padding: 15px;
   background-color: #f5f7fa;
   border-radius: 4px;
+  margin-top: 350px;
+  position: relative;
 }
 
 .info-item {
