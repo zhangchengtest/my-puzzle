@@ -58,22 +58,66 @@
             </div>
           </div>
 
-          <!-- 地盘天盘显示 -->
-          <div class="dipan-tianpan-section">
-            <h3>地盘天盘（十二神将）</h3>
-            <div class="dipan-tianpan-grid">
-              <div 
-                v-for="(cell, index) in panData.dipanTianpan" 
-                :key="index"
-                class="dipan-tianpan-cell"
-                :class="{ 'guiren': cell.shenjiang === '贵人' }"
-              >
-                <div class="dizhi-label">{{ cell.dizhi }}</div>
-                <div class="yuejiang" v-if="cell.yuejiang">
-                  <span class="yuejiang-label">月将</span>
-                  <span class="yuejiang-name">{{ cell.yuejiang }}</span>
+          <!-- 天盘显示 -->
+          <div class="tianpan-section">
+            <h3>天盘</h3>
+            <div class="pan-grid-container">
+              <div class="pan-grid-16">
+                <div 
+                  v-for="(cell, index) in panData.tianpanGrid" 
+                  :key="index"
+                  class="pan-grid-cell"
+                  :class="{ 
+                    'tianpan-cell': cell !== null,
+                    'empty-cell': cell === null
+                  }"
+                >
+                  <div class="cell-number">{{ index + 1 }}</div>
+                  <template v-if="cell">
+                    <div class="cell-label">天盘</div>
+                    <div class="fangwei-label">{{ cell.fangwei }}</div>
+                    <div class="dizhi-label">{{ cell.dizhi }}</div>
+                    <div class="yuejiang-info" v-if="cell.yuejiang">
+                      <div class="info-label">月将</div>
+                      <div class="yuejiang-name">{{ cell.yuejiang }}</div>
+                    </div>
+                    <div class="shenjiang-info">
+                      <div class="info-label">神将</div>
+                      <div class="shenjiang-label" :class="{ 'guiren': cell.shenjiang === '贵人' }">{{ cell.shenjiang }}</div>
+                    </div>
+                  </template>
+                  <div v-else class="empty-label">天盘</div>
                 </div>
-                <div class="shenjiang-label" v-if="cell.shenjiang">{{ cell.shenjiang }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 地盘显示 -->
+          <div class="dipan-section">
+            <h3>地盘</h3>
+            <div class="pan-grid-container">
+              <div class="pan-grid-16">
+                <div 
+                  v-for="(cell, index) in panData.dipanGrid" 
+                  :key="index"
+                  class="pan-grid-cell"
+                  :class="{ 
+                    'dipan-cell': cell !== null,
+                    'empty-cell': cell === null
+                  }"
+                >
+                  <div class="cell-number">{{ index + 1 }}</div>
+                  <template v-if="cell">
+                    <div class="cell-label">地盘</div>
+                    <div class="fangwei-label">{{ cell.fangwei }}</div>
+                    <div class="dizhi-label">{{ cell.dizhi }}</div>
+                    <div class="shenjiang-info">
+                      <div class="info-label">神将</div>
+                      <div class="shenjiang-label" :class="{ 'guiren': cell.shenjiang === '贵人' }">{{ cell.shenjiang }}</div>
+                    </div>
+                  </template>
+                  <div v-else class="empty-label">地盘</div>
+                </div>
               </div>
             </div>
           </div>
@@ -166,7 +210,11 @@ export default {
       const sanchuan = this.calculateSanchuan(sike, timeGanZhi);
       
       // 计算地盘天盘
-      const dipanTianpan = this.calculateDipanTianpan(yuejiang, timeGanZhi);
+      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi);
+      
+      // 转换为16宫格布局（4x4，中间4个为空）
+      const dipanGrid = this.convertTo16Grid(dipan);
+      const tianpanGrid = this.convertTo16Grid(tianpan);
       
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时${minute}分`,
@@ -177,7 +225,10 @@ export default {
         yuejiang: yuejiang,
         sike: sike,
         sanchuan: sanchuan,
-        dipanTianpan: dipanTianpan
+        dipan: dipan,
+        tianpan: tianpan,
+        dipanGrid: dipanGrid,
+        tianpanGrid: tianpanGrid
       };
     },
     // 计算农历（简化版）
@@ -456,7 +507,16 @@ export default {
     },
     // 计算地盘天盘
     calculateDipanTianpan(yuejiang, timeGanZhi) {
+      // 地盘固定顺序：子（北）、丑、寅、卯（东）、辰、巳、午（南）、未、申、酉（西）、戌、亥
+      // 按顺时针排列，子位为正北方
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      
+      // 方位标签映射
+      const fangweiMap = {
+        '子': '北', '丑': '东北偏北', '寅': '东北偏东', '卯': '东',
+        '辰': '东南偏东', '巳': '东南偏南', '午': '南', '未': '西南偏南',
+        '申': '西南偏西', '酉': '西', '戌': '西北偏西', '亥': '西北偏北'
+      };
       
       // 月将名称到地支的映射
       const yuejiangToDizhi = {
@@ -472,8 +532,19 @@ export default {
       const timeZhiIndex = zhi.indexOf(timeZhi);
       const yuejiangIndex = zhi.indexOf(yuejiangDizhi);
       
-      // 计算每个地支位置的神将和月将
-      const dipanTianpan = zhi.map((dz, index) => {
+      // 地盘：固定的十二地支位置，按方位顺序排列，每个位置有神将
+      const dipan = zhi.map((dz) => {
+        const shenjiang = this.getShenjiang(dz, timeGanZhi);
+        return {
+          dizhi: dz,
+          fangwei: fangweiMap[dz],
+          shenjiang: shenjiang
+        };
+      });
+      
+      // 天盘：月将加在时支上，每个位置有月将和神将
+      // 天盘按照地盘相同的方位顺序排列
+      const tianpan = zhi.map((dz, index) => {
         // 计算天盘月将位置：月将加在时支上
         // 天盘位置 = (地盘位置 - 时支位置 + 月将位置 + 12) % 12
         const tianpanIndex = (index - timeZhiIndex + yuejiangIndex + 12) % 12;
@@ -485,17 +556,59 @@ export default {
           yuejiangName = yuejiang;
         }
         
-        // 计算神将
+        // 计算神将（天盘的神将位置与地盘相同）
         const shenjiang = this.getShenjiang(dz, timeGanZhi);
         
         return {
           dizhi: dz,
+          fangwei: fangweiMap[dz],
           yuejiang: yuejiangName,
           shenjiang: shenjiang
         };
       });
       
-      return dipanTianpan;
+      return { dipan, tianpan };
+    },
+    // 转换为16宫格布局（4x4，中间4个为空）
+    convertTo16Grid(cells) {
+      // 16宫格布局，中间4个（索引5,6,9,10）为空
+      // 布局顺序：子位在序数15（索引14），丑在序数14（索引13），寅在序数13（索引12），其它按顺时针顺延
+      // 序数：1   2   3   4   -> 巳 午 未 申（上方-南方）
+      //       5   空  空  8   -> 辰     酉
+      //       9   空  空  12  -> 卯     戌
+      //       13  14  15  16  -> 寅 丑 子 亥（下方-北方，子位在15）
+      // 索引：0   1   2   3
+      //       4   5   6   7
+      //       8   9   10  11
+      //       12  13  14  15
+      // 
+      // 顺时针顺序（从子位14开始）：子(14,序15) -> 丑(13,序14) -> 寅(12,序13) -> 卯(8,序9) -> 辰(4,序5) -> 巳(0,序1) -> 午(1,序2) -> 未(2,序3) -> 申(3,序4) -> 酉(7,序8) -> 戌(11,序12) -> 亥(15,序16)
+      
+      const grid = new Array(16).fill(null);
+      
+      // cells数组顺序：子(0)、丑(1)、寅(2)、卯(3)、辰(4)、巳(5)、午(6)、未(7)、申(8)、酉(9)、戌(10)、亥(11)
+      // 定义12个地支在16宫格中的位置索引（子位在序数15即索引14，丑在序数14即索引13，寅在序数13即索引12，其它顺时针顺延）
+      const positions = [
+        14,  // 子(0) - 第四行第三个（序数15，正下方-北方）
+        13,  // 丑(1) - 第四行第二个（序数14，子位左边）
+        12,  // 寅(2) - 第四行第一个（序数13，丑位左边）
+        8,   // 卯(3) - 第三行第一个（序数9，寅位上方）
+        4,   // 辰(4) - 第二行第一个（序数5，卯位上方）
+        0,   // 巳(5) - 第一行第一个（序数1，辰位上方，正上方-南方）
+        1,   // 午(6) - 第一行第二个（序数2，巳位右边）
+        2,   // 未(7) - 第一行第三个（序数3，午位右边）
+        3,   // 申(8) - 第一行第四个（序数4，未位右边）
+        7,   // 酉(9) - 第二行第四个（序数8，申位下方）
+        11,  // 戌(10) - 第三行第四个（序数12，酉位下方）
+        15   // 亥(11) - 第四行第四个（序数16，戌位下方）
+      ];
+      
+      // 将12个地支放入对应位置
+      cells.forEach((cell, index) => {
+        grid[positions[index]] = cell;
+      });
+      
+      return grid;
     }
   }
 };
@@ -574,7 +687,8 @@ export default {
 
 .sike-section,
 .sanchuan-section,
-.dipan-tianpan-section {
+.tianpan-section,
+.dipan-section {
   background-color: #f5f7fa;
   padding: 20px;
   border-radius: 8px;
@@ -582,7 +696,8 @@ export default {
 
 .sike-section h3,
 .sanchuan-section h3,
-.dipan-tianpan-section h3 {
+.tianpan-section h3,
+.dipan-section h3 {
   margin-top: 0;
   margin-bottom: 20px;
   color: #333;
@@ -677,65 +792,156 @@ export default {
   border-radius: 4px;
 }
 
-.dipan-tianpan-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+.pan-grid-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
-.dipan-tianpan-cell {
-  background: white;
-  padding: 15px;
+.pan-grid-16 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 10px;
+  width: 600px;
+  height: 600px;
+}
+
+.pan-grid-cell {
   border-radius: 4px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  min-height: 80px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  padding: 10px;
+  position: relative;
+  min-height: 140px;
 }
 
-.dipan-tianpan-cell.guiren {
-  background-color: #fef0f0;
-  border: 2px solid #f56c6c;
+.tianpan-cell {
+  border: 2px solid #409eff;
+  background-color: #ecf5ff;
+}
+
+.dipan-cell {
+  border: 2px solid #67c23a;
+  background-color: #f0f9ff;
+}
+
+.cell-number {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #666;
+  background-color: #f0f0f0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  z-index: 10;
+}
+
+.cell-label {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 11px;
+  color: #fff;
+  background-color: #909399;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.tianpan-cell .cell-label {
+  background-color: #409eff;
+}
+
+.dipan-cell .cell-label {
+  background-color: #67c23a;
+}
+
+.fangwei-label {
+  font-size: 11px;
+  color: #909399;
+  font-weight: bold;
+  margin-top: 8px;
+  padding: 2px 6px;
+  background-color: #f5f7fa;
+  border-radius: 3px;
 }
 
 .dizhi-label {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: bold;
   color: #333;
-}
-
-.yuejiang {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
   margin-top: 5px;
 }
 
-.yuejiang-label {
-  font-size: 10px;
+.yuejiang-info,
+.shenjiang-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.info-label {
+  font-size: 11px;
   color: #666;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 2px;
 }
 
 .yuejiang-name {
-  font-size: 12px;
+  font-size: 13px;
   color: #409eff;
   background-color: #ecf5ff;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 3px;
   font-weight: bold;
+  width: 100%;
 }
 
 .shenjiang-label {
-  font-size: 12px;
+  font-size: 13px;
   color: #e6a23c;
   background-color: #fdf6ec;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 3px;
+  width: 100%;
+}
+
+.shenjiang-label.guiren {
+  color: #fff;
+  background-color: #f56c6c;
+  font-weight: bold;
+}
+
+.empty-cell {
+  background-color: #f5f7fa;
+  border: 2px dashed #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #999;
 }
 
 .pan-info {
@@ -767,12 +973,65 @@ export default {
     grid-template-columns: 1fr;
   }
   
-  .dipan-tianpan-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .pan-grid-container {
+    padding: 15px;
+  }
+  
+  .pan-grid-16 {
+    width: 480px;
+    height: 480px;
+    gap: 8px;
+  }
+  
+  .pan-grid-cell {
+    min-height: 110px;
+    padding: 8px;
+  }
+  
+  .dizhi-label {
+    font-size: 20px;
   }
   
   .container {
     padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pan-grid-container {
+    padding: 10px;
+  }
+  
+  .pan-grid-16 {
+    width: 360px;
+    height: 360px;
+    gap: 6px;
+  }
+  
+  .pan-grid-cell {
+    min-height: 80px;
+    padding: 6px;
+  }
+  
+  .dizhi-label {
+    font-size: 18px;
+  }
+  
+  .fangwei-label {
+    font-size: 10px;
+  }
+  
+  .info-label {
+    font-size: 10px;
+  }
+  
+  .yuejiang-name,
+  .shenjiang-label {
+    font-size: 11px;
+  }
+  
+  .empty-label {
+    font-size: 14px;
   }
 }
 </style>
