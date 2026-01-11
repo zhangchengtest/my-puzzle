@@ -36,7 +36,7 @@
                 <div class="sanchuan-content">
                   <span class="tiangan">{{ panData.sanchuan.chuan.tiangan }}</span>
                   <span class="dizhi">{{ panData.sanchuan.chuan.dizhi }}</span>
-                  <span class="shenjiang" v-if="panData.sanchuan.chuan.shenjiang">{{ panData.sanchuan.chuan.shenjiang }}</span>
+                  <span class="shenjiang" v-if="panData.sanchuan.chuan.shenjiang">{{ panData.sanchuan.chuan.shenjiang.name || panData.sanchuan.chuan.shenjiang }}</span>
                 </div>
               </div>
               <div class="sanchuan-item">
@@ -44,7 +44,7 @@
                 <div class="sanchuan-content">
                   <span class="tiangan">{{ panData.sanchuan.zhong.tiangan }}</span>
                   <span class="dizhi">{{ panData.sanchuan.zhong.dizhi }}</span>
-                  <span class="shenjiang" v-if="panData.sanchuan.zhong.shenjiang">{{ panData.sanchuan.zhong.shenjiang }}</span>
+                  <span class="shenjiang" v-if="panData.sanchuan.zhong.shenjiang">{{ panData.sanchuan.zhong.shenjiang.name || panData.sanchuan.zhong.shenjiang }}</span>
                 </div>
               </div>
               <div class="sanchuan-item">
@@ -52,7 +52,7 @@
                 <div class="sanchuan-content">
                   <span class="tiangan">{{ panData.sanchuan.mo.tiangan }}</span>
                   <span class="dizhi">{{ panData.sanchuan.mo.dizhi }}</span>
-                  <span class="shenjiang" v-if="panData.sanchuan.mo.shenjiang">{{ panData.sanchuan.mo.shenjiang }}</span>
+                  <span class="shenjiang" v-if="panData.sanchuan.mo.shenjiang">{{ panData.sanchuan.mo.shenjiang.name || panData.sanchuan.mo.shenjiang }}</span>
                 </div>
               </div>
             </div>
@@ -86,7 +86,9 @@
                       </div>
                       <div class="shenjiang-info" v-if="cell.tianpan?.shenjiang">
                         <div class="info-label">神将</div>
-                        <div class="shenjiang-label" :class="{ 'guiren': cell.tianpan.shenjiang === '贵人' }">{{ cell.tianpan.shenjiang }}</div>
+                        <div class="shenjiang-label" :class="{ 'guiren': (cell.tianpan.shenjiang.name || cell.tianpan.shenjiang) === '贵人' }">
+                          {{ cell.tianpan.shenjiang.name || cell.tianpan.shenjiang }}
+                        </div>
                       </div>
                     </div>
                     
@@ -96,10 +98,6 @@
                     <!-- 地盘信息（下方） -->
                     <div class="dipan-part">
                       <div class="dizhi-label dipan-dizhi">{{ cell.dipan?.dizhi }}</div>
-                      <div class="shenjiang-info" v-if="cell.dipan?.shenjiang">
-                        <div class="info-label">神将</div>
-                        <div class="shenjiang-label" :class="{ 'guiren': cell.dipan.shenjiang === '贵人' }">{{ cell.dipan.shenjiang }}</div>
-                      </div>
                     </div>
                   </template>
                   <div v-else class="empty-label">空</div>
@@ -178,7 +176,9 @@
             <p>当前日干：<strong>{{ panData.dayGan }}</strong> | 
             当前时辰：<strong>{{ panData.timeBranch }}</strong> | 
             昼夜：<strong>{{ panData.isDay ? '白天（阳贵人）' : '黑夜（阴贵人）' }}</strong> | 
-            贵人位置：<strong>{{ panData.guirenDizhi }}</strong></p>
+            贵人天盘地支：<strong>{{ panData.guirenDizhi }}</strong> | 
+            贵人地盘地支：<strong v-if="panData.guirenDipanDizhi">{{ panData.guirenDipanDizhi }}</strong><strong v-else>未找到</strong> | 
+            神将排列：<strong>{{ panData.shenjiangDirection }}</strong></p>
           </div>
         </div>
       </div>
@@ -273,6 +273,12 @@ export default {
         guirenDizhi = isDay ? '午' : '寅'; // 阳贵人午，阴贵人寅
       }
       
+      // 计算神将的顺逆方向（根据地盘地支判断）
+      // 顺时针排：亥子丑寅卯辰
+      // 逆时针排：巳午未申酉戌
+      const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
+      const shenjiangDirection = shunDizhi.includes(timeZhi) ? '顺时针' : '逆时针';
+      
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
       const tianpanGrid = this.convertTo16Grid(tianpan);
@@ -289,6 +295,29 @@ export default {
         };
       });
       
+      // 查找贵人所在的地盘地支位置
+      // 贵人的地支是天盘地支，需要找到天盘中哪个位置的天盘地支等于guirenDizhi
+      let guirenDipanDizhi = null;
+      // 在tianpan数组中查找：找到天盘地支等于guirenDizhi的位置，获取对应的地盘地支
+      for (let i = 0; i < tianpan.length; i++) {
+        const tianpanItem = tianpan[i];
+        if (tianpanItem && tianpanItem.tianpanDizhi === guirenDizhi) {
+          guirenDipanDizhi = tianpanItem.dizhi; // 地盘的地支
+          break;
+        }
+      }
+      
+      // 如果还没找到，在合并后的数据中查找（备用方案）
+      if (!guirenDipanDizhi) {
+        for (let i = 0; i < combinedGrid.length; i++) {
+          const cell = combinedGrid[i];
+          if (cell && cell.tianpan && cell.tianpan.tianpanDizhi === guirenDizhi) {
+            guirenDipanDizhi = cell.dipan ? cell.dipan.dizhi : cell.tianpan.dizhi;
+            break;
+          }
+        }
+      }
+      
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时${minute}分`,
         lunarDate: lunarDate,
@@ -301,6 +330,8 @@ export default {
         yuejiangDizhi: yuejiangDizhi,
         isDay: isDay,
         guirenDizhi: guirenDizhi,
+        guirenDipanDizhi: guirenDipanDizhi,
+        shenjiangDirection: shenjiangDirection,
         sike: sike,
         sanchuan: sanchuan,
         dipan: dipan,
@@ -579,7 +610,7 @@ export default {
       return { chuan, zhong, mo };
     },
     // 计算十二神将
-    getShenjiang(dizhi, timeGanZhi, dayGanZhi) {
+    getShenjiang(dizhi, timeGanZhi, dayGanZhi, dipanDizhi = null) {
       // 十二神将顺序：贵人、螣蛇、朱雀、六合、勾陈、青龙、
       //               天空、白虎、太常、玄武、太阴、天后
       const shenjiangList = ['贵人', '螣蛇', '朱雀', '六合', '勾陈', '青龙', 
@@ -613,9 +644,18 @@ export default {
         guirenDizhi = isDay ? '午' : '寅'; // 白天用阳贵人午，黑夜用阴贵人寅
       }
       
-      // 确定贵人的顺逆：甲戊庚日顺行，乙己日逆行，丙丁日顺行，壬癸日逆行，辛日顺行
-      const isShun = (dayGan === '甲' || dayGan === '戊' || dayGan === '庚' || 
-                      dayGan === '丙' || dayGan === '丁' || dayGan === '辛');
+      // 确定贵人的顺逆：根据地盘地支判断
+      // 顺时针排：亥子丑寅卯辰
+      // 逆时针排：巳午未申酉戌
+      let isShun = true; // 默认顺时针
+      if (dipanDizhi) {
+        const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
+        isShun = shunDizhi.includes(dipanDizhi);
+      } else {
+        // 如果没有传入地盘地支，则根据日干判断（兼容旧逻辑）
+        isShun = (dayGan === '甲' || dayGan === '戊' || dayGan === '庚' || 
+                  dayGan === '丙' || dayGan === '丁' || dayGan === '辛');
+      }
       
       // 计算当前地支相对于贵人的位置
       const guirenIndex = zhi.indexOf(guirenDizhi);
@@ -628,7 +668,11 @@ export default {
         offset = (guirenIndex - dizhiIndex + 12) % 12;
       }
       
-      return shenjiangList[offset];
+      return {
+        name: shenjiangList[offset],
+        isShun: isShun,
+        direction: isShun ? '顺时针' : '逆时针'
+      };
     },
     // 计算地盘天盘
     calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi) {
@@ -688,8 +732,8 @@ export default {
           yuejiangDizhiName = yuejiangDizhi; // 月将对应的时辰（地支）
         }
         
-        // 计算神将（天盘的神将位置与地盘相同）
-        const shenjiang = this.getShenjiang(dz, timeGanZhi, dayGanZhi);
+        // 计算神将（根据天盘的地支位置，但顺逆根据地盘地支判断）
+        const shenjiang = this.getShenjiang(tianpanDizhi, timeGanZhi, dayGanZhi, dz);
         
         return {
           dizhi: dz, // 地盘的地支（固定位置）
