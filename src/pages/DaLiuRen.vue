@@ -21,9 +21,9 @@
                 <div class="sike-label">第{{ index + 1 }}课</div>
                 <div class="sike-content">
                   <template v-if="index === 0">
-                    <!-- 第一课：天干 + 地支 + 神将 -->
-                    <span class="dizhi">{{ ke.dizhi }}</span>
-                    <span class="tiangan">{{ ke.tiangan }}</span>
+                    <!-- 第一课：地支(up) + 天干(down) + 神将 -->
+                    <span class="dizhi">{{ ke.dizhiUp }}</span>
+                    <span class="tiangan">{{ ke.tianganDown }}</span>
                     <span class="shenjiang" v-if="ke.shenjiangUp">
                       {{ ke.shenjiangUp.name || ke.shenjiangUp }}
                     </span>
@@ -673,7 +673,7 @@ export default {
       const fourthKeDizhiUpShenjiang = this.getShenjiang(fourthKeDizhiUp, timeGanZhi, dayGanZhi, fourthKeDizhiUpDipanDizhi, isShun);
       
       return [
-        { tiangan: firstKeTiangan, dizhi: firstKeDizhi, shenjiangUp: firstKeShenjiangUp }, // 第一课：天干 + 地支 + 神将
+        { dizhiUp: firstKeDizhi, tianganDown: firstKeTiangan, shenjiangUp: firstKeShenjiangUp }, // 第一课：地支(up) + 天干(down) + 神将
         { dizhiUp: secondKeDizhi, dizhiDown: firstKeDizhi, shenjiangUp: secondKeDizhiUpShenjiang },   // 第二课：两个地支 + 神将
         { dizhiUp: thirdKeDizhiUp, dizhiDown: thirdKeDizhiDown, shenjiangUp: thirdKeDizhiUpShenjiang },  // 第三课：两个地支 + 神将
         { dizhiUp: fourthKeDizhiUp, dizhiDown: fourthKeDizhiDown, shenjiangUp: fourthKeDizhiUpShenjiang }    // 第四课：两个地支 + 神将
