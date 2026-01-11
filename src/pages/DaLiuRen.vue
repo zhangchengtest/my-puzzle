@@ -273,12 +273,6 @@ export default {
         guirenDizhi = isDay ? '午' : '寅'; // 阳贵人午，阴贵人寅
       }
       
-      // 计算神将的顺逆方向（根据地盘地支判断）
-      // 顺时针排：亥子丑寅卯辰
-      // 逆时针排：巳午未申酉戌
-      const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
-      const shenjiangDirection = shunDizhi.includes(timeZhi) ? '顺时针' : '逆时针';
-      
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
       const tianpanGrid = this.convertTo16Grid(tianpan);
@@ -317,6 +311,14 @@ export default {
           }
         }
       }
+      
+      // 计算神将的顺逆方向（根据贵人所落的地盘地支判断）
+      // 顺时针排：亥子丑寅卯辰
+      // 逆时针排：巳午未申酉戌
+      const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
+      const shenjiangDirection = guirenDipanDizhi ? 
+        (shunDizhi.includes(guirenDipanDizhi) ? '顺时针' : '逆时针') : 
+        '未知';
       
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时${minute}分`,
