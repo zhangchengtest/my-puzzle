@@ -21,14 +21,20 @@
                 <div class="sike-label">第{{ index + 1 }}课</div>
                 <div class="sike-content">
                   <template v-if="index === 0">
-                    <!-- 第一课：天干 + 地支 -->
+                    <!-- 第一课：天干 + 地支 + 神将 -->
                     <span class="dizhi">{{ ke.dizhi }}</span>
                     <span class="tiangan">{{ ke.tiangan }}</span>
+                    <span class="shenjiang" v-if="ke.shenjiangUp">
+                      {{ ke.shenjiangUp.name || ke.shenjiangUp }}
+                    </span>
                   </template>
                   <template v-else>
-                    <!-- 其他课：两个地支 -->
+                    <!-- 其他课：两个地支 + 神将 -->
                     <span class="dizhi">{{ ke.dizhiUp }}</span>
                     <span class="dizhi">{{ ke.dizhiDown }}</span>
+                    <span class="shenjiang" v-if="ke.shenjiangUp">
+                      {{ ke.shenjiangUp.name || ke.shenjiangUp }}
+                    </span>
                   </template>
                 </div>
               </div>
@@ -340,7 +346,7 @@ export default {
       const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi, isShun);
       
       // 计算四课（需要天盘数据）
-      const sike = this.calculateSike(dayGanZhi, tianpan);
+      const sike = this.calculateSike(dayGanZhi, tianpan, timeGanZhi, isShun);
       
       // 计算三传（传入isShun）
       const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun);
@@ -557,7 +563,7 @@ export default {
       return yuejiangToDizhi[yuejiang] || '';
     },
     // 计算四课
-    calculateSike(dayGanZhi, tianpan) {
+    calculateSike(dayGanZhi, tianpan, timeGanZhi, isShun = true) {
       const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       
@@ -645,11 +651,32 @@ export default {
         }
       }
       
+      // 计算各课的神将（只需要shenjiangUp）
+      // 第一课：为第一课的地支计算神将（需要找到该地支在地盘上的位置）
+      const firstKeDizhiIndex = zhi.indexOf(firstKeDizhi);
+      const firstKeDipanDizhi = firstKeDizhiIndex >= 0 ? zhi[firstKeDizhiIndex] : null;
+      const firstKeShenjiangUp = this.getShenjiang(firstKeDizhi, timeGanZhi, dayGanZhi, firstKeDipanDizhi, isShun);
+      
+      // 第二课：为dizhiUp计算神将
+      const secondKeDizhiIndex = zhi.indexOf(secondKeDizhi);
+      const secondKeDipanDizhi = secondKeDizhiIndex >= 0 ? zhi[secondKeDizhiIndex] : null;
+      const secondKeDizhiUpShenjiang = this.getShenjiang(secondKeDizhi, timeGanZhi, dayGanZhi, secondKeDipanDizhi, isShun);
+      
+      // 第三课：为dizhiUp计算神将
+      const thirdKeDizhiUpIndex = zhi.indexOf(thirdKeDizhiUp);
+      const thirdKeDizhiUpDipanDizhi = thirdKeDizhiUpIndex >= 0 ? zhi[thirdKeDizhiUpIndex] : null;
+      const thirdKeDizhiUpShenjiang = this.getShenjiang(thirdKeDizhiUp, timeGanZhi, dayGanZhi, thirdKeDizhiUpDipanDizhi, isShun);
+      
+      // 第四课：为dizhiUp计算神将
+      const fourthKeDizhiUpIndex = zhi.indexOf(fourthKeDizhiUp);
+      const fourthKeDizhiUpDipanDizhi = fourthKeDizhiUpIndex >= 0 ? zhi[fourthKeDizhiUpIndex] : null;
+      const fourthKeDizhiUpShenjiang = this.getShenjiang(fourthKeDizhiUp, timeGanZhi, dayGanZhi, fourthKeDizhiUpDipanDizhi, isShun);
+      
       return [
-        { tiangan: firstKeTiangan, dizhi: firstKeDizhi }, // 第一课：天干 + 地支
-        { dizhiUp: secondKeDizhi, dizhiDown: firstKeDizhi },   // 第二课：两个地支
-        { dizhiUp: thirdKeDizhiUp, dizhiDown: thirdKeDizhiDown },  // 第三课：两个地支
-        { dizhiUp: fourthKeDizhiUp, dizhiDown: fourthKeDizhiDown }    // 第四课：两个地支
+        { tiangan: firstKeTiangan, dizhi: firstKeDizhi, shenjiangUp: firstKeShenjiangUp }, // 第一课：天干 + 地支 + 神将
+        { dizhiUp: secondKeDizhi, dizhiDown: firstKeDizhi, shenjiangUp: secondKeDizhiUpShenjiang },   // 第二课：两个地支 + 神将
+        { dizhiUp: thirdKeDizhiUp, dizhiDown: thirdKeDizhiDown, shenjiangUp: thirdKeDizhiUpShenjiang },  // 第三课：两个地支 + 神将
+        { dizhiUp: fourthKeDizhiUp, dizhiDown: fourthKeDizhiDown, shenjiangUp: fourthKeDizhiUpShenjiang }    // 第四课：两个地支 + 神将
       ];
     },
     // 计算三传
@@ -1143,6 +1170,15 @@ export default {
   font-size: 18px;
   font-weight: bold;
   color: #67c23a;
+}
+
+.sike-content .shenjiang {
+  font-size: 12px;
+  color: #e6a23c;
+  background-color: #fdf6ec;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
 }
 
 .sanchuan-grid {
