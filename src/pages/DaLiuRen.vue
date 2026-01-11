@@ -20,8 +20,12 @@
               <div class="sike-item" v-for="(ke, index) in panData.sike" :key="index">
                 <div class="sike-label">第{{ index + 1 }}课</div>
                 <div class="sike-content">
-                  <span class="tiangan">{{ ke.tiangan }}</span>
-                  <span class="dizhi">{{ ke.dizhi }}</span>
+                  <span class="dizhi" v-if="index === 0">{{ ke.dizhi }}</span>
+                  <span class="tiangan" v-if="index === 0">{{ ke.tiangan }}</span>
+                  <template v-else>
+                    <span class="tiangan">{{ ke.tiangan }}</span>
+                    <span class="dizhi">{{ ke.dizhi }}</span>
+                  </template>
                 </div>
               </div>
             </div>
@@ -1083,6 +1087,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 15px;
+  direction: rtl;
 }
 
 .sike-item {
@@ -1091,6 +1096,7 @@ export default {
   border-radius: 4px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  direction: ltr;
 }
 
 .sike-label {
@@ -1101,6 +1107,7 @@ export default {
 
 .sike-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
