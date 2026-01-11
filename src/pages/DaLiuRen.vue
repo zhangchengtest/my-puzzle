@@ -109,6 +109,10 @@
                     <!-- 天盘信息（上方） -->
                     <div class="tianpan-part">
                       <div class="dizhi-label tianpan-dizhi">{{ cell.tianpan?.tianpanDizhi || cell.tianpan?.dizhi }}</div>
+                      <div class="tiangan-info" v-if="cell.tianpan?.tiangan">
+                        <div class="info-label">天干</div>
+                        <div class="tiangan-name">{{ cell.tianpan.tiangan }}</div>
+                      </div>
                       <div class="yuejiang-info" v-if="cell.tianpan?.yuejiang">
                         <div class="info-label">月将</div>
                         <div class="yuejiang-name">
@@ -1027,6 +1031,7 @@ export default {
       // 地盘固定顺序：子（北）、丑、寅、卯（东）、辰、巳、午（南）、未、申、酉（西）、戌、亥
       // 按顺时针排列，子位为正北方
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+      const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       
       // 方位标签映射
       const fangweiMap = {
@@ -1049,13 +1054,32 @@ export default {
       const timeZhiIndex = zhi.indexOf(timeZhi);
       const yuejiangIndex = zhi.indexOf(yuejiangDizhi);
       
-      // 地盘：固定的十二地支位置，按方位顺序排列，每个位置有神将
-      const dipan = zhi.map((dz) => {
+      // 计算旬首，用于确定天干排列的起始位置
+      const xunshou = this.getXunshou(dayGanZhi);
+      const xunshouZhi = xunshou[1]; // 旬首的地支
+      const xunshouZhiIndex = zhi.indexOf(xunshouZhi);
+      
+      // 地盘：固定的十二地支位置，按方位顺序排列，每个位置有神将和天干
+      const dipan = zhi.map((dz, index) => {
         const shenjiang = this.getShenjiang(dz, timeGanZhi, dayGanZhi, null, isShun);
+        
+        // 计算天干：从旬首地支开始，按顺时针方向排列
+        // 天干从旬首位置开始，顺时针分配（甲、乙、丙...）
+        let tiangan = null;
+        if (xunshouZhiIndex >= 0) {
+          // 计算当前位置相对于旬首的偏移（顺时针）
+          const offset = (index - xunshouZhiIndex + 12) % 12;
+          // 如果偏移在0-9之间，分配对应的天干；10和11为空亡（无天干）
+          if (offset < 10) {
+            tiangan = gan[offset];
+          }
+        }
+        
         return {
           dizhi: dz,
           fangwei: fangweiMap[dz],
-          shenjiang: shenjiang
+          shenjiang: shenjiang,
+          tiangan: tiangan
         };
       });
       
@@ -1083,13 +1107,23 @@ export default {
         // 计算神将（根据天盘的地支位置，使用统一的isShun参数）
         const shenjiang = this.getShenjiang(tianpanDizhi, timeGanZhi, dayGanZhi, dz, isShun);
         
+        // 天干：天盘的天干和地盘的天干相同（天干固定在地盘上）
+        let tiangan = null;
+        if (xunshouZhiIndex >= 0) {
+          const ganOffset = (index - xunshouZhiIndex + 12) % 12;
+          if (ganOffset < 10) {
+            tiangan = gan[ganOffset];
+          }
+        }
+        
         return {
           dizhi: dz, // 地盘的地支（固定位置）
           tianpanDizhi: tianpanDizhi, // 天盘显示的地支（月将加时顺行）
           fangwei: fangweiMap[dz],
           yuejiang: yuejiangName,
           yuejiangDizhi: yuejiangDizhiName, // 月将对应的时辰
-          shenjiang: shenjiang
+          shenjiang: shenjiang,
+          tiangan: tiangan // 天干
         };
       });
       
@@ -1623,7 +1657,8 @@ export default {
 }
 
 .yuejiang-info,
-.shenjiang-info {
+.shenjiang-info,
+.tiangan-info {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1643,6 +1678,16 @@ export default {
   font-size: 13px;
   color: #409eff;
   background-color: #ecf5ff;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: bold;
+  width: 100%;
+}
+
+.tiangan-name {
+  font-size: 13px;
+  color: #f56c6c;
+  background-color: #fef0f0;
   padding: 4px 8px;
   border-radius: 3px;
   font-weight: bold;
