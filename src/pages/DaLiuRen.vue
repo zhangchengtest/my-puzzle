@@ -76,7 +76,7 @@
                   <template v-if="cell">
                     <div class="cell-label">天盘</div>
                     <div class="fangwei-label">{{ cell.fangwei }}</div>
-                    <div class="dizhi-label">{{ cell.dizhi }}</div>
+                    <div class="dizhi-label">{{ cell.tianpanDizhi || cell.dizhi }}</div>
                     <div class="yuejiang-info" v-if="cell.yuejiang">
                       <div class="info-label">月将</div>
                       <div class="yuejiang-name">
@@ -606,15 +606,20 @@ export default {
         };
       });
       
-      // 天盘：月将加在时支上，每个位置有月将和神将
-      // 天盘按照地盘相同的方位顺序排列
+      // 天盘：月将加在时支上，顺行十二辰
+      // 规则：月将加在时支位置，然后按顺时针顺序排列
+      // 例如：月将亥加于子时，则天盘子位为亥，丑位为子，寅位为丑，依此类推
       const tianpan = zhi.map((dz, index) => {
-        // 计算天盘月将位置：月将加在时支上
-        // 天盘位置 = (地盘位置 - 时支位置 + 月将位置 + 12) % 12
-        const tianpanIndex = (index - timeZhiIndex + yuejiangIndex + 12) % 12;
-        const tianpanDizhi = zhi[tianpanIndex];
+        // 计算天盘在该位置应该显示的地支
+        // 时支在地盘的位置是 timeZhiIndex
+        // 月将的地支索引是 yuejiangIndex
+        // 天盘在时支位置显示月将，然后顺时针顺延
+        // 天盘[i] = 月将地支 + (地盘位置i - 时支位置) mod 12
+        const offset = (index - timeZhiIndex + 12) % 12;
+        const tianpanDizhiIndex = (yuejiangIndex + offset) % 12;
+        const tianpanDizhi = zhi[tianpanDizhiIndex];
         
-        // 判断该位置是否有月将
+        // 判断该位置是否有月将（天盘显示的地支等于月将的地支）
         let yuejiangName = null;
         let yuejiangDizhiName = null;
         if (tianpanDizhi === yuejiangDizhi) {
@@ -626,7 +631,8 @@ export default {
         const shenjiang = this.getShenjiang(dz, timeGanZhi);
         
         return {
-          dizhi: dz,
+          dizhi: dz, // 地盘的地支（固定位置）
+          tianpanDizhi: tianpanDizhi, // 天盘显示的地支（月将加时顺行）
           fangwei: fangweiMap[dz],
           yuejiang: yuejiangName,
           yuejiangDizhi: yuejiangDizhiName, // 月将对应的时辰
