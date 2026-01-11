@@ -243,16 +243,7 @@ export default {
       // 获取月将对应的时辰
       const yuejiangDizhi = this.getYuejiangDizhi(yuejiang);
       
-      // 计算四课
-      const sike = this.calculateSike(dayGanZhi);
-      
-      // 计算三传
-      const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi);
-      
-      // 计算地盘天盘
-      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi);
-      
-      // 计算贵人和昼夜信息
+      // 计算贵人和昼夜信息（先计算，用于后续计算）
       const dayGan = dayGanZhi[0];
       const timeZhi = timeGanZhi[1];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -273,6 +264,37 @@ export default {
         guirenDizhi = isDay ? '午' : '寅'; // 阳贵人午，阴贵人寅
       }
       
+      // 先临时计算天盘，用于查找贵人位置（使用默认isShun=true）
+      const { dipan: tempDipan, tianpan: tempTianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi, true);
+      
+      // 查找贵人所在的地盘地支位置
+      let guirenDipanDizhi = null;
+      for (let i = 0; i < tempTianpan.length; i++) {
+        const tianpanItem = tempTianpan[i];
+        if (tianpanItem && tianpanItem.tianpanDizhi === guirenDizhi) {
+          guirenDipanDizhi = tianpanItem.dizhi; // 地盘的地支
+          break;
+        }
+      }
+      
+      // 计算神将的顺逆方向（根据贵人所落的地盘地支判断）
+      // 顺时针排：亥子丑寅卯辰
+      // 逆时针排：巳午未申酉戌
+      const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
+      const shenjiangDirection = guirenDipanDizhi ? 
+        (shunDizhi.includes(guirenDipanDizhi) ? '顺时针' : '逆时针') : 
+        '未知';
+      const isShun = guirenDipanDizhi ? shunDizhi.includes(guirenDipanDizhi) : true;
+      
+      // 计算四课
+      const sike = this.calculateSike(dayGanZhi);
+      
+      // 计算三传（传入isShun）
+      const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun);
+      
+      // 计算地盘天盘（传入isShun）
+      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi, isShun);
+      
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
       const tianpanGrid = this.convertTo16Grid(tianpan);
@@ -288,37 +310,6 @@ export default {
           tianpan: tianpanCell
         };
       });
-      
-      // 查找贵人所在的地盘地支位置
-      // 贵人的地支是天盘地支，需要找到天盘中哪个位置的天盘地支等于guirenDizhi
-      let guirenDipanDizhi = null;
-      // 在tianpan数组中查找：找到天盘地支等于guirenDizhi的位置，获取对应的地盘地支
-      for (let i = 0; i < tianpan.length; i++) {
-        const tianpanItem = tianpan[i];
-        if (tianpanItem && tianpanItem.tianpanDizhi === guirenDizhi) {
-          guirenDipanDizhi = tianpanItem.dizhi; // 地盘的地支
-          break;
-        }
-      }
-      
-      // 如果还没找到，在合并后的数据中查找（备用方案）
-      if (!guirenDipanDizhi) {
-        for (let i = 0; i < combinedGrid.length; i++) {
-          const cell = combinedGrid[i];
-          if (cell && cell.tianpan && cell.tianpan.tianpanDizhi === guirenDizhi) {
-            guirenDipanDizhi = cell.dipan ? cell.dipan.dizhi : cell.tianpan.dizhi;
-            break;
-          }
-        }
-      }
-      
-      // 计算神将的顺逆方向（根据贵人所落的地盘地支判断）
-      // 顺时针排：亥子丑寅卯辰
-      // 逆时针排：巳午未申酉戌
-      const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
-      const shenjiangDirection = guirenDipanDizhi ? 
-        (shunDizhi.includes(guirenDipanDizhi) ? '顺时针' : '逆时针') : 
-        '未知';
       
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时${minute}分`,
@@ -562,7 +553,7 @@ export default {
       ];
     },
     // 计算三传
-    calculateSanchuan(sike, timeGanZhi, dayGanZhi) {
+    calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun = true) {
       // 大六壬三传计算：根据四课的克应关系
       // 简化处理：使用贼克法（第一课克第二课，或第二课克第一课）
       
@@ -594,25 +585,25 @@ export default {
       const chuan = {
         tiangan: sike[0].tiangan,
         dizhi: chuanDizhi,
-        shenjiang: this.getShenjiang(chuanDizhi, timeGanZhi, dayGanZhi)
+        shenjiang: this.getShenjiang(chuanDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
       
       const zhong = {
         tiangan: sike[1].tiangan,
         dizhi: zhongDizhi,
-        shenjiang: this.getShenjiang(zhongDizhi, timeGanZhi, dayGanZhi)
+        shenjiang: this.getShenjiang(zhongDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
       
       const mo = {
         tiangan: sike[2].tiangan,
         dizhi: moDizhi,
-        shenjiang: this.getShenjiang(moDizhi, timeGanZhi, dayGanZhi)
+        shenjiang: this.getShenjiang(moDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
       
       return { chuan, zhong, mo };
     },
     // 计算十二神将
-    getShenjiang(dizhi, timeGanZhi, dayGanZhi, dipanDizhi = null) {
+    getShenjiang(dizhi, timeGanZhi, dayGanZhi, dipanDizhi = null, isShun = true) {
       // 十二神将顺序：贵人、螣蛇、朱雀、六合、勾陈、青龙、
       //               天空、白虎、太常、玄武、太阴、天后
       const shenjiangList = ['贵人', '螣蛇', '朱雀', '六合', '勾陈', '青龙', 
@@ -646,19 +637,6 @@ export default {
         guirenDizhi = isDay ? '午' : '寅'; // 白天用阳贵人午，黑夜用阴贵人寅
       }
       
-      // 确定贵人的顺逆：根据地盘地支判断
-      // 顺时针排：亥子丑寅卯辰
-      // 逆时针排：巳午未申酉戌
-      let isShun = true; // 默认顺时针
-      if (dipanDizhi) {
-        const shunDizhi = ['亥', '子', '丑', '寅', '卯', '辰'];
-        isShun = shunDizhi.includes(dipanDizhi);
-      } else {
-        // 如果没有传入地盘地支，则根据日干判断（兼容旧逻辑）
-        isShun = (dayGan === '甲' || dayGan === '戊' || dayGan === '庚' || 
-                  dayGan === '丙' || dayGan === '丁' || dayGan === '辛');
-      }
-      
       // 计算当前地支相对于贵人的位置
       const guirenIndex = zhi.indexOf(guirenDizhi);
       const dizhiIndex = zhi.indexOf(dizhi);
@@ -677,7 +655,7 @@ export default {
       };
     },
     // 计算地盘天盘
-    calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi) {
+    calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi, isShun = true) {
       // 地盘固定顺序：子（北）、丑、寅、卯（东）、辰、巳、午（南）、未、申、酉（西）、戌、亥
       // 按顺时针排列，子位为正北方
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
@@ -705,7 +683,7 @@ export default {
       
       // 地盘：固定的十二地支位置，按方位顺序排列，每个位置有神将
       const dipan = zhi.map((dz) => {
-        const shenjiang = this.getShenjiang(dz, timeGanZhi, dayGanZhi);
+        const shenjiang = this.getShenjiang(dz, timeGanZhi, dayGanZhi, null, isShun);
         return {
           dizhi: dz,
           fangwei: fangweiMap[dz],
@@ -734,8 +712,8 @@ export default {
           yuejiangDizhiName = yuejiangDizhi; // 月将对应的时辰（地支）
         }
         
-        // 计算神将（根据天盘的地支位置，但顺逆根据地盘地支判断）
-        const shenjiang = this.getShenjiang(tianpanDizhi, timeGanZhi, dayGanZhi, dz);
+        // 计算神将（根据天盘的地支位置，使用统一的isShun参数）
+        const shenjiang = this.getShenjiang(tianpanDizhi, timeGanZhi, dayGanZhi, dz, isShun);
         
         return {
           dizhi: dz, // 地盘的地支（固定位置）
