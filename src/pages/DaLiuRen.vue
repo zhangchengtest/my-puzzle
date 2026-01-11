@@ -20,11 +20,15 @@
               <div class="sike-item" v-for="(ke, index) in panData.sike" :key="index">
                 <div class="sike-label">第{{ index + 1 }}课</div>
                 <div class="sike-content">
-                  <span class="dizhi" v-if="index === 0">{{ ke.dizhi }}</span>
-                  <span class="tiangan" v-if="index === 0">{{ ke.tiangan }}</span>
-                  <template v-else>
-                    <span class="tiangan">{{ ke.tiangan }}</span>
+                  <template v-if="index === 0">
+                    <!-- 第一课：天干 + 地支 -->
                     <span class="dizhi">{{ ke.dizhi }}</span>
+                    <span class="tiangan">{{ ke.tiangan }}</span>
+                  </template>
+                  <template v-else>
+                    <!-- 其他课：两个地支 -->
+                    <span class="dizhi">{{ ke.dizhiUp }}</span>
+                    <span class="dizhi">{{ ke.dizhiDown }}</span>
                   </template>
                 </div>
               </div>
@@ -46,7 +50,7 @@
               <div class="sanchuan-item">
                 <div class="sanchuan-label">中传</div>
                 <div class="sanchuan-content">
-                  <span class="tiangan">{{ panData.sanchuan.zhong.tiangan }}</span>
+                  <span class="tiangan" v-if="panData.sanchuan.zhong.tiangan">{{ panData.sanchuan.zhong.tiangan }}</span>
                   <span class="dizhi">{{ panData.sanchuan.zhong.dizhi }}</span>
                   <span class="shenjiang" v-if="panData.sanchuan.zhong.shenjiang">{{ panData.sanchuan.zhong.shenjiang.name || panData.sanchuan.zhong.shenjiang }}</span>
                 </div>
@@ -54,7 +58,7 @@
               <div class="sanchuan-item">
                 <div class="sanchuan-label">末传</div>
                 <div class="sanchuan-content">
-                  <span class="tiangan">{{ panData.sanchuan.mo.tiangan }}</span>
+                  <span class="tiangan" v-if="panData.sanchuan.mo.tiangan">{{ panData.sanchuan.mo.tiangan }}</span>
                   <span class="dizhi">{{ panData.sanchuan.mo.dizhi }}</span>
                   <span class="shenjiang" v-if="panData.sanchuan.mo.shenjiang">{{ panData.sanchuan.mo.shenjiang.name || panData.sanchuan.mo.shenjiang }}</span>
                 </div>
@@ -590,46 +594,54 @@ export default {
       }
       const firstKeTiangan = dayGan;
       
-      // 第二课：日支上神
-      // 在天盘中找到日支对应的天盘地支
-      let secondKeDizhi = dayZhi; // 默认值
+      // 第二课：第一课上神
+      // 根据第一课取得的地支，找出在地盘上的位置
+      // 根据地盘上的位置找出对应的天盘上的字，写在第一课地支的上面，即为第二课
+      let secondKeDizhi = firstKeDizhi; // 默认值
       if (tianpan) {
-        const dayZhiIndex = zhi.indexOf(dayZhi);
-        if (dayZhiIndex >= 0 && tianpan[dayZhiIndex]) {
-          secondKeDizhi = tianpan[dayZhiIndex].tianpanDizhi; // 天盘上该位置的地支
-        }
-      }
-      // 日支上神的天干取日支藏干的本气
-      const dayGanIndex = gan.indexOf(dayGan);
-      const secondKeTiangan = dizhiCanggan[dayZhi] ? dizhiCanggan[dayZhi][0] : gan[dayGanIndex];
-      
-      // 第三课：第一课上神
-      // 第一课地支对应的天盘地支（第一课地支在天盘上的位置）
-      let thirdKeDizhi = firstKeDizhi; // 默认值
-      if (tianpan) {
+        // 第一课的地支在地盘上的位置（地盘是固定的：子、丑、寅...亥）
         const firstKeDizhiIndex = zhi.indexOf(firstKeDizhi);
         if (firstKeDizhiIndex >= 0 && tianpan[firstKeDizhiIndex]) {
-          thirdKeDizhi = tianpan[firstKeDizhiIndex].tianpanDizhi; // 天盘上该位置的地支
+          // 在该地盘位置上，对应的天盘地支
+          secondKeDizhi = tianpan[firstKeDizhiIndex].tianpanDizhi;
+        }
+      }
+      // 第二课的天干：使用第一课的天干
+      const secondKeTiangan = firstKeTiangan;
+      
+      // 第三课：第一课上神
+      // 根据第一课取得的地支，找出在地盘上的位置
+      // 根据地盘上的位置找出对应的天盘上的字
+      let thirdKeDizhi = firstKeDizhi; // 默认值
+      if (tianpan) {
+        // 第一课的地支在地盘上的位置（地盘是固定的：子、丑、寅...亥）
+        const firstKeDizhiIndex = zhi.indexOf(firstKeDizhi);
+        if (firstKeDizhiIndex >= 0 && tianpan[firstKeDizhiIndex]) {
+          // 在该地盘位置上，对应的天盘地支
+          thirdKeDizhi = tianpan[firstKeDizhiIndex].tianpanDizhi;
         }
       }
       const thirdKeTiangan = firstKeTiangan;
       
       // 第四课：第二课上神
-      // 第二课地支对应的天盘地支（第二课地支在天盘上的位置）
+      // 根据第二课取得的地支，找出在地盘上的位置
+      // 根据地盘上的位置找出对应的天盘上的字
       let fourthKeDizhi = secondKeDizhi; // 默认值
       if (tianpan) {
+        // 第二课的地支在地盘上的位置
         const secondKeDizhiIndex = zhi.indexOf(secondKeDizhi);
         if (secondKeDizhiIndex >= 0 && tianpan[secondKeDizhiIndex]) {
-          fourthKeDizhi = tianpan[secondKeDizhiIndex].tianpanDizhi; // 天盘上该位置的地支
+          // 在该地盘位置上，对应的天盘地支
+          fourthKeDizhi = tianpan[secondKeDizhiIndex].tianpanDizhi;
         }
       }
       const fourthKeTiangan = secondKeTiangan;
       
       return [
-        { tiangan: firstKeTiangan, dizhi: firstKeDizhi },
-        { tiangan: secondKeTiangan, dizhi: secondKeDizhi },
-        { tiangan: thirdKeTiangan, dizhi: thirdKeDizhi },
-        { tiangan: fourthKeTiangan, dizhi: fourthKeDizhi }
+        { tiangan: firstKeTiangan, dizhi: firstKeDizhi }, // 第一课：天干 + 地支
+        { dizhiUp: secondKeDizhi, dizhiDown: firstKeDizhi },   // 第二课：两个地支
+        { dizhiUp: secondKeDizhi, dizhiDown: thirdKeDizhi },  // 第三课：两个地支
+        { dizhiUp: thirdKeDizhi, dizhiDown: fourthKeDizhi }    // 第四课：两个地支
       ];
     },
     // 计算三传
@@ -656,8 +668,8 @@ export default {
       
       // 简化处理：使用第一课和第二课的地支作为初传和中传
       // 实际应该根据克应关系确定
-      const chuanDizhi = sike[0].dizhi; // 初传
-      const zhongDizhi = sike[1].dizhi; // 中传
+      const chuanDizhi = sike[0].dizhi; // 初传：第一课的地支
+      const zhongDizhi = sike[1].dizhiDown; // 中传：第二课的下地支
       // 末传：根据中传确定（简化处理）
       const zhiIndex = zhi.indexOf(zhongDizhi);
       const moDizhi = zhi[(zhiIndex + 1) % 12]; // 末传
@@ -669,13 +681,13 @@ export default {
       };
       
       const zhong = {
-        tiangan: sike[1].tiangan,
+        tiangan: null, // 中传没有天干
         dizhi: zhongDizhi,
         shenjiang: this.getShenjiang(zhongDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
       
       const mo = {
-        tiangan: sike[2].tiangan,
+        tiangan: null, // 末传没有天干
         dizhi: moDizhi,
         shenjiang: this.getShenjiang(moDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
