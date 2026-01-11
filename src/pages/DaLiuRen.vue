@@ -785,35 +785,119 @@ export default {
     // 计算三传
     calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun = true) {
       // 大六壬三传计算：根据四课的克应关系
-      // 简化处理：使用贼克法（第一课克第二课，或第二课克第一课）
+      // 使用贼克法确定初传
       
       const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       
-      // 五行相克关系
-      const wuxingKe = {
-        '甲': '土', '乙': '土', '丙': '金', '丁': '金', '戊': '水',
-        '己': '水', '庚': '木', '辛': '木', '壬': '火', '癸': '火'
-      };
+      const dayGan = dayGanZhi[0];
       
-      const wuxing = {
-        '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
-        '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水',
-        '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土',
-        '巳': '火', '午': '火', '未': '土', '申': '金', '酉': '金',
-        '戌': '土', '亥': '水'
-      };
+      // 判断日干的阴阳：甲、丙、戊、庚、壬为阳；乙、丁、己、辛、癸为阴
+      const yangGan = ['甲', '丙', '戊', '庚', '壬'];
+      const isDayGanYang = yangGan.includes(dayGan);
       
-      // 简化处理：使用第一课和第二课的地支作为初传和中传
-      // 实际应该根据克应关系确定
-      const chuanDizhi = sike[0].dizhiUp; // 初传：第一课的地支
+      // 判断地支的阴阳：子、寅、辰、午、申、戌为阳；丑、卯、巳、未、酉、亥为阴
+      const yangZhi = ['子', '寅', '辰', '午', '申', '戌'];
+      const isDizhiYang = (dizhi) => yangZhi.includes(dizhi);
+      
+      // 找出所有下克上（贼）的课
+      const zeiKe = [];
+      // 找出所有上克下（克）的课
+      const keKe = [];
+      
+      // 遍历四课，找出贼和克
+      sike.forEach((ke, index) => {
+        if (ke.shengke === '贼') {
+          // 下克上：受克之神是上神（dizhiUp）
+          zeiKe.push({
+            keIndex: index,
+            dizhi: ke.dizhiUp,
+            isGanShang: index < 2, // 第一、二课为干上神，第三、四课为支上神
+            isYang: isDizhiYang(ke.dizhiUp)
+          });
+        } else if (ke.shengke === '克') {
+          // 上克下：克神是上神（dizhiUp）
+          keKe.push({
+            keIndex: index,
+            dizhi: ke.dizhiUp,
+            isGanShang: index < 2,
+            isYang: isDizhiYang(ke.dizhiUp)
+          });
+        }
+      });
+      
+      // 贼克法：优先处理贼（下克上）
+      let chuanDizhi = null;
+      
+      if (zeiKe.length > 0) {
+        // 存在下克上（贼）
+        let candidates = zeiKe;
+        
+        // 若多课存在贼，取与日干同阴阳者
+        if (candidates.length > 1) {
+          const sameYinYang = candidates.filter(item => item.isYang === isDayGanYang);
+          // 如果过滤后还有候选，使用过滤后的；否则保持原候选
+          if (sameYinYang.length > 0) {
+            candidates = sameYinYang;
+          }
+        }
+        
+        // 若仍多课，则取支上神优先于干上神
+        if (candidates.length > 1) {
+          // 优先选择支上神（第三、四课）
+          const zhiShang = candidates.filter(item => !item.isGanShang);
+          if (zhiShang.length > 0) {
+            candidates = zhiShang;
+          }
+        }
+        
+        // 如果还有多个，取第一个（或可以按课的顺序优先）
+        if (candidates.length > 0) {
+          // 按课的顺序排序，优先选择课号小的
+          candidates.sort((a, b) => a.keIndex - b.keIndex);
+          chuanDizhi = candidates[0].dizhi;
+        }
+      } else if (keKe.length > 0) {
+        // 若无贼但存在上克下（克），取克神为初传
+        let candidates = keKe;
+        
+        // 若多课存在克，取与日干同阴阳者
+        if (candidates.length > 1) {
+          const sameYinYang = candidates.filter(item => item.isYang === isDayGanYang);
+          // 如果过滤后还有候选，使用过滤后的；否则保持原候选
+          if (sameYinYang.length > 0) {
+            candidates = sameYinYang;
+          }
+        }
+        
+        // 若仍多课，则取支上神优先于干上神
+        if (candidates.length > 1) {
+          const zhiShang = candidates.filter(item => !item.isGanShang);
+          if (zhiShang.length > 0) {
+            candidates = zhiShang;
+          }
+        }
+        
+        // 如果还有多个，取第一个
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => a.keIndex - b.keIndex);
+          chuanDizhi = candidates[0].dizhi;
+        }
+      }
+      
+      // 如果没有找到初传，使用默认值（第一课的上神）
+      if (!chuanDizhi) {
+        chuanDizhi = sike[0].dizhiUp;
+      }
+      
+      // 简化处理：中传和末传暂时使用简化逻辑
+      // TODO: 后续需要根据初传确定中传和末传
       const zhongDizhi = sike[1].dizhiDown; // 中传：第二课的下地支
-      // 末传：根据中传确定（简化处理）
       const zhiIndex = zhi.indexOf(zhongDizhi);
       const moDizhi = zhi[(zhiIndex + 1) % 12]; // 末传
       
       const chuan = {
-        tiangan: sike[0].tianganDown,
+        tiangan: null, // 初传没有天干
         dizhi: chuanDizhi,
         shenjiang: this.getShenjiang(chuanDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
