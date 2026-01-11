@@ -20,6 +20,7 @@ const routes = [
       Puzzle: '拼图挑战 - Elephant',
       NumberSum: '数字求和工具 - Elephant',
       QimenDunjia: '奇门遁甲排盘 - Elephant',
+      DaLiuRen: '大六壬排盘 - Elephant',
       // 你可以继续补充更多组件名与标题的映射
     };
 
