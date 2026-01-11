@@ -609,39 +609,47 @@ export default {
       // 第二课的天干：使用第一课的天干
       const secondKeTiangan = firstKeTiangan;
       
-      // 第三课：第一课上神
-      // 根据第一课取得的地支，找出在地盘上的位置
-      // 根据地盘上的位置找出对应的天盘上的字
-      let thirdKeDizhi = firstKeDizhi; // 默认值
+      // 第三课：第二课上神
+      // dizhiDown：日支
+      const thirdKeDizhiDown = dayZhi;
+      // dizhiUp：根据thirdKeDizhiDown（dayZhi）在地盘上的位置，找天盘上对应位置的地支
+      let thirdKeDizhiUp = dayZhi; // 默认值
       if (tianpan) {
-        // 第一课的地支在地盘上的位置（地盘是固定的：子、丑、寅...亥）
-        const firstKeDizhiIndex = zhi.indexOf(firstKeDizhi);
-        if (firstKeDizhiIndex >= 0 && tianpan[firstKeDizhiIndex]) {
+        // thirdKeDizhiDown（dayZhi）在地盘上的位置
+        const thirdKeDizhiDownIndex = zhi.indexOf(dayZhi);
+        if (thirdKeDizhiDownIndex >= 0 && tianpan[thirdKeDizhiDownIndex]) {
           // 在该地盘位置上，对应的天盘地支
-          thirdKeDizhi = tianpan[firstKeDizhiIndex].tianpanDizhi;
+          thirdKeDizhiUp = tianpan[thirdKeDizhiDownIndex].tianpanDizhi;
         }
       }
-      const thirdKeTiangan = firstKeTiangan;
       
-      // 第四课：第二课上神
-      // 根据第二课取得的地支，找出在地盘上的位置
-      // 根据地盘上的位置找出对应的天盘上的字
-      let fourthKeDizhi = secondKeDizhi; // 默认值
+      // 第四课：第三课上神
+      // dizhiUp：根据第三课的dizhiUp（thirdKeDizhiUp）在地盘上的位置，找天盘上对应位置的地支
+      let fourthKeDizhiUp = thirdKeDizhiUp; // 默认值
       if (tianpan) {
-        // 第二课的地支在地盘上的位置
-        const secondKeDizhiIndex = zhi.indexOf(secondKeDizhi);
-        if (secondKeDizhiIndex >= 0 && tianpan[secondKeDizhiIndex]) {
+        // 第三课的dizhiUp（thirdKeDizhiUp）在地盘上的位置
+        const thirdKeDizhiUpIndex = zhi.indexOf(thirdKeDizhiUp);
+        if (thirdKeDizhiUpIndex >= 0 && tianpan[thirdKeDizhiUpIndex]) {
           // 在该地盘位置上，对应的天盘地支
-          fourthKeDizhi = tianpan[secondKeDizhiIndex].tianpanDizhi;
+          fourthKeDizhiUp = tianpan[thirdKeDizhiUpIndex].tianpanDizhi;
         }
       }
-      const fourthKeTiangan = secondKeTiangan;
+      // dizhiDown：根据第三课的dizhiDown（dayZhi）在地盘上的位置，找天盘上对应位置的地支
+      let fourthKeDizhiDown = dayZhi; // 默认值
+      if (tianpan) {
+        // 第三课的dizhiDown（dayZhi）在地盘上的位置
+        const thirdKeDizhiDownIndex = zhi.indexOf(dayZhi);
+        if (thirdKeDizhiDownIndex >= 0 && tianpan[thirdKeDizhiDownIndex]) {
+          // 在该地盘位置上，对应的天盘地支
+          fourthKeDizhiDown = tianpan[thirdKeDizhiDownIndex].tianpanDizhi;
+        }
+      }
       
       return [
         { tiangan: firstKeTiangan, dizhi: firstKeDizhi }, // 第一课：天干 + 地支
         { dizhiUp: secondKeDizhi, dizhiDown: firstKeDizhi },   // 第二课：两个地支
-        { dizhiUp: secondKeDizhi, dizhiDown: thirdKeDizhi },  // 第三课：两个地支
-        { dizhiUp: thirdKeDizhi, dizhiDown: fourthKeDizhi }    // 第四课：两个地支
+        { dizhiUp: thirdKeDizhiUp, dizhiDown: thirdKeDizhiDown },  // 第三课：两个地支
+        { dizhiUp: fourthKeDizhiUp, dizhiDown: fourthKeDizhiDown }    // 第四课：两个地支
       ];
     },
     // 计算三传
