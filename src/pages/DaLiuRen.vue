@@ -366,8 +366,8 @@ export default {
       // 计算四课（需要天盘数据）
       const sike = this.calculateSike(dayGanZhi, tianpan, timeGanZhi, isShun);
       
-      // 计算三传（传入isShun）
-      const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun);
+      // 计算三传（传入isShun和tianpan）
+      const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun, tianpan);
       
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
@@ -783,7 +783,7 @@ export default {
       ];
     },
     // 计算三传
-    calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun = true) {
+    calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun = true, tianpan = null) {
       // 大六壬三传计算：根据四课的克应关系
       // 使用贼克法确定初传
       
@@ -890,11 +890,38 @@ export default {
         chuanDizhi = sike[0].dizhiUp;
       }
       
-      // 简化处理：中传和末传暂时使用简化逻辑
-      // TODO: 后续需要根据初传确定中传和末传
-      const zhongDizhi = sike[1].dizhiDown; // 中传：第二课的下地支
-      const zhiIndex = zhi.indexOf(zhongDizhi);
-      const moDizhi = zhi[(zhiIndex + 1) % 12]; // 末传
+      // 中传：初传在地盘上所坐的天盘地支
+      let zhongDizhi = null;
+      if (tianpan && chuanDizhi) {
+        // 找到初传地支在地盘上的位置
+        const chuanDizhiIndex = zhi.indexOf(chuanDizhi);
+        if (chuanDizhiIndex >= 0 && tianpan[chuanDizhiIndex]) {
+          // 获取该地盘位置对应的天盘地支
+          zhongDizhi = tianpan[chuanDizhiIndex].tianpanDizhi;
+        }
+      }
+      
+      // 如果无法计算中传，使用默认值
+      if (!zhongDizhi) {
+        zhongDizhi = sike[1].dizhiDown; // 默认：第二课的下地支
+      }
+      
+      // 末传：中传在地盘上所坐的天盘地支
+      let moDizhi = null;
+      if (tianpan && zhongDizhi) {
+        // 找到中传地支在地盘上的位置
+        const zhongDizhiIndex = zhi.indexOf(zhongDizhi);
+        if (zhongDizhiIndex >= 0 && tianpan[zhongDizhiIndex]) {
+          // 获取该地盘位置对应的天盘地支
+          moDizhi = tianpan[zhongDizhiIndex].tianpanDizhi;
+        }
+      }
+      
+      // 如果无法计算末传，使用默认值
+      if (!moDizhi) {
+        const zhiIndex = zhi.indexOf(zhongDizhi);
+        moDizhi = zhi[(zhiIndex + 1) % 12]; // 默认：下一个地支
+      }
       
       const chuan = {
         tiangan: null, // 初传没有天干
