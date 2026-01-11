@@ -22,16 +22,28 @@
                 <div class="sike-content">
                   <template v-if="index === 0">
                     <!-- 第一课：地支(up) + 天干(down) + 神将 -->
-                    <span class="dizhi">{{ ke.dizhiUp }}</span>
-                    <span class="tiangan">{{ ke.tianganDown }}</span>
+                    <div class="sike-item-row">
+                      <span class="dizhi">{{ ke.dizhiUp }}</span>
+                      <span class="wuxing" v-if="ke.dizhiUpWuxing">{{ ke.dizhiUpWuxing }}</span>
+                    </div>
+                    <div class="sike-item-row">
+                      <span class="tiangan">{{ ke.tianganDown }}</span>
+                      <span class="wuxing" v-if="ke.tianganDownWuxing">{{ ke.tianganDownWuxing }}</span>
+                    </div>
                     <span class="shenjiang" v-if="ke.shenjiangUp">
                       {{ ke.shenjiangUp.name || ke.shenjiangUp }}
                     </span>
                   </template>
                   <template v-else>
                     <!-- 其他课：两个地支 + 神将 -->
-                    <span class="dizhi">{{ ke.dizhiUp }}</span>
-                    <span class="dizhi">{{ ke.dizhiDown }}</span>
+                    <div class="sike-item-row">
+                      <span class="dizhi">{{ ke.dizhiUp }}</span>
+                      <span class="wuxing" v-if="ke.dizhiUpWuxing">{{ ke.dizhiUpWuxing }}</span>
+                    </div>
+                    <div class="sike-item-row">
+                      <span class="dizhi">{{ ke.dizhiDown }}</span>
+                      <span class="wuxing" v-if="ke.dizhiDownWuxing">{{ ke.dizhiDownWuxing }}</span>
+                    </div>
                     <span class="shenjiang" v-if="ke.shenjiangUp">
                       {{ ke.shenjiangUp.name || ke.shenjiangUp }}
                     </span>
@@ -672,11 +684,46 @@ export default {
       const fourthKeDizhiUpDipanDizhi = fourthKeDizhiUpIndex >= 0 ? zhi[fourthKeDizhiUpIndex] : null;
       const fourthKeDizhiUpShenjiang = this.getShenjiang(fourthKeDizhiUp, timeGanZhi, dayGanZhi, fourthKeDizhiUpDipanDizhi, isShun);
       
+      // 五行属性映射
+      const wuxingMap = {
+        // 天干五行
+        '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
+        '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水',
+        // 地支五行
+        '子': '水', '丑': '土', '寅': '木', '卯': '木', '辰': '土',
+        '巳': '火', '午': '火', '未': '土', '申': '金', '酉': '金',
+        '戌': '土', '亥': '水'
+      };
+      
       return [
-        { dizhiUp: firstKeDizhi, tianganDown: firstKeTiangan, shenjiangUp: firstKeShenjiangUp }, // 第一课：地支(up) + 天干(down) + 神将
-        { dizhiUp: secondKeDizhi, dizhiDown: firstKeDizhi, shenjiangUp: secondKeDizhiUpShenjiang },   // 第二课：两个地支 + 神将
-        { dizhiUp: thirdKeDizhiUp, dizhiDown: thirdKeDizhiDown, shenjiangUp: thirdKeDizhiUpShenjiang },  // 第三课：两个地支 + 神将
-        { dizhiUp: fourthKeDizhiUp, dizhiDown: fourthKeDizhiDown, shenjiangUp: fourthKeDizhiUpShenjiang }    // 第四课：两个地支 + 神将
+        { 
+          dizhiUp: firstKeDizhi, 
+          dizhiUpWuxing: wuxingMap[firstKeDizhi] || '',
+          tianganDown: firstKeTiangan, 
+          tianganDownWuxing: wuxingMap[firstKeTiangan] || '',
+          shenjiangUp: firstKeShenjiangUp 
+        }, // 第一课：地支(up) + 天干(down) + 神将
+        { 
+          dizhiUp: secondKeDizhi, 
+          dizhiUpWuxing: wuxingMap[secondKeDizhi] || '',
+          dizhiDown: firstKeDizhi, 
+          dizhiDownWuxing: wuxingMap[firstKeDizhi] || '',
+          shenjiangUp: secondKeDizhiUpShenjiang 
+        },   // 第二课：两个地支 + 神将
+        { 
+          dizhiUp: thirdKeDizhiUp, 
+          dizhiUpWuxing: wuxingMap[thirdKeDizhiUp] || '',
+          dizhiDown: thirdKeDizhiDown, 
+          dizhiDownWuxing: wuxingMap[thirdKeDizhiDown] || '',
+          shenjiangUp: thirdKeDizhiUpShenjiang 
+        },  // 第三课：两个地支 + 神将
+        { 
+          dizhiUp: fourthKeDizhiUp, 
+          dizhiUpWuxing: wuxingMap[fourthKeDizhiUp] || '',
+          dizhiDown: fourthKeDizhiDown, 
+          dizhiDownWuxing: wuxingMap[fourthKeDizhiDown] || '',
+          shenjiangUp: fourthKeDizhiUpShenjiang 
+        }    // 第四课：两个地支 + 神将
       ];
     },
     // 计算三传
@@ -703,14 +750,14 @@ export default {
       
       // 简化处理：使用第一课和第二课的地支作为初传和中传
       // 实际应该根据克应关系确定
-      const chuanDizhi = sike[0].dizhi; // 初传：第一课的地支
+      const chuanDizhi = sike[0].dizhiUp; // 初传：第一课的地支
       const zhongDizhi = sike[1].dizhiDown; // 中传：第二课的下地支
       // 末传：根据中传确定（简化处理）
       const zhiIndex = zhi.indexOf(zhongDizhi);
       const moDizhi = zhi[(zhiIndex + 1) % 12]; // 末传
       
       const chuan = {
-        tiangan: sike[0].tiangan,
+        tiangan: sike[0].tianganDown,
         dizhi: chuanDizhi,
         shenjiang: this.getShenjiang(chuanDizhi, timeGanZhi, dayGanZhi, null, isShun)
       };
@@ -1170,6 +1217,22 @@ export default {
   font-size: 18px;
   font-weight: bold;
   color: #67c23a;
+}
+
+.sike-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.sike-content .wuxing {
+  font-size: 11px;
+  color: #909399;
+  background-color: #f0f0f0;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: normal;
 }
 
 .sike-content .shenjiang {
