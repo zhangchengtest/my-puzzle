@@ -180,6 +180,48 @@
             贵人地盘地支：<strong v-if="panData.guirenDipanDizhi">{{ panData.guirenDipanDizhi }}</strong><strong v-else>未找到</strong> | 
             神将排列：<strong>{{ panData.shenjiangDirection }}</strong></p>
           </div>
+          
+          <!-- 十干寄宫口诀 -->
+          <div class="jigong-koujue">
+            <h4>十干寄宫口诀</h4>
+            <p class="koujue-text">甲课寅兮乙课辰，丙戊课巳不需论；</p>
+            <p class="koujue-text">丁己课未庚申上，辛戌壬亥是其真；</p>
+            <p class="koujue-text">癸课原来丑宫坐，分明不用四正神</p>
+            <div class="jigong-table">
+              <table class="jigong-table-inner">
+                <thead>
+                  <tr>
+                    <th>天干</th>
+                    <th>甲</th>
+                    <th>乙</th>
+                    <th>丙</th>
+                    <th>丁</th>
+                    <th>戊</th>
+                    <th>己</th>
+                    <th>庚</th>
+                    <th>辛</th>
+                    <th>壬</th>
+                    <th>癸</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="jigong-label">寄宫</td>
+                    <td>寅</td>
+                    <td>辰</td>
+                    <td>巳</td>
+                    <td>未</td>
+                    <td>巳</td>
+                    <td>未</td>
+                    <td>申</td>
+                    <td>戌</td>
+                    <td>亥</td>
+                    <td>丑</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -286,14 +328,14 @@ export default {
         '未知';
       const isShun = guirenDipanDizhi ? shunDizhi.includes(guirenDipanDizhi) : true;
       
-      // 计算四课
-      const sike = this.calculateSike(dayGanZhi);
+      // 先计算地盘天盘（传入isShun），因为四课需要天盘数据
+      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi, isShun);
+      
+      // 计算四课（需要天盘数据）
+      const sike = this.calculateSike(dayGanZhi, tianpan);
       
       // 计算三传（传入isShun）
       const sanchuan = this.calculateSanchuan(sike, timeGanZhi, dayGanZhi, isShun);
-      
-      // 计算地盘天盘（传入isShun）
-      const { dipan, tianpan } = this.calculateDipanTianpan(yuejiang, timeGanZhi, dayGanZhi, isShun);
       
       // 转换为16宫格布局（4x4，中间4个为空）
       const dipanGrid = this.convertTo16Grid(dipan);
@@ -507,7 +549,7 @@ export default {
       return yuejiangToDizhi[yuejiang] || '';
     },
     // 计算四课
-    calculateSike(dayGanZhi) {
+    calculateSike(dayGanZhi, tianpan) {
       const gan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
       const zhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
       
@@ -522,27 +564,61 @@ export default {
         '酉': ['辛'], '戌': ['戊', '辛', '丁'], '亥': ['壬', '甲']
       };
       
-      // 第一课：日干上神（日干寄宫的地支）
-      const dayGanIndex = gan.indexOf(dayGan);
-      // 天干寄宫：甲寄寅，乙寄辰，丙戊寄巳，丁己寄未，庚寄申，辛寄戌，壬寄亥，癸寄丑
+      // 十干寄宫口诀：
+      // 甲课寅兮乙课辰，丙戊课巳不需论；
+      // 丁己课未庚申上，辛戌壬亥是其真；
+      // 癸课原来丑宫坐，分明不用四正神
       const ganJigong = {
         '甲': '寅', '乙': '辰', '丙': '巳', '丁': '未', '戊': '巳',
         '己': '未', '庚': '申', '辛': '戌', '壬': '亥', '癸': '丑'
       };
-      const firstKeDizhi = ganJigong[dayGan] || '寅';
+      
+      // 第一课：日干上神
+      // 日干寄宫的地支
+      const dayGanJigong = ganJigong[dayGan] || '寅';
+      // 在天盘中找到日干寄宫对应的天盘地支
+      let firstKeDizhi = dayGanJigong; // 默认值
+      if (tianpan) {
+        const jigongIndex = zhi.indexOf(dayGanJigong);
+        if (jigongIndex >= 0 && tianpan[jigongIndex]) {
+          firstKeDizhi = tianpan[jigongIndex].tianpanDizhi; // 天盘上该位置的地支
+        }
+      }
       const firstKeTiangan = dayGan;
       
-      // 第二课：日支上神（日支的地支）
-      const secondKeDizhi = dayZhi;
+      // 第二课：日支上神
+      // 在天盘中找到日支对应的天盘地支
+      let secondKeDizhi = dayZhi; // 默认值
+      if (tianpan) {
+        const dayZhiIndex = zhi.indexOf(dayZhi);
+        if (dayZhiIndex >= 0 && tianpan[dayZhiIndex]) {
+          secondKeDizhi = tianpan[dayZhiIndex].tianpanDizhi; // 天盘上该位置的地支
+        }
+      }
       // 日支上神的天干取日支藏干的本气
+      const dayGanIndex = gan.indexOf(dayGan);
       const secondKeTiangan = dizhiCanggan[dayZhi] ? dizhiCanggan[dayZhi][0] : gan[dayGanIndex];
       
-      // 第三课：第一课上神（第一课地支的寄宫）
-      const thirdKeDizhi = firstKeDizhi;
+      // 第三课：第一课上神
+      // 第一课地支对应的天盘地支（第一课地支在天盘上的位置）
+      let thirdKeDizhi = firstKeDizhi; // 默认值
+      if (tianpan) {
+        const firstKeDizhiIndex = zhi.indexOf(firstKeDizhi);
+        if (firstKeDizhiIndex >= 0 && tianpan[firstKeDizhiIndex]) {
+          thirdKeDizhi = tianpan[firstKeDizhiIndex].tianpanDizhi; // 天盘上该位置的地支
+        }
+      }
       const thirdKeTiangan = firstKeTiangan;
       
-      // 第四课：第二课上神（第二课地支的寄宫）
-      const fourthKeDizhi = secondKeDizhi;
+      // 第四课：第二课上神
+      // 第二课地支对应的天盘地支（第二课地支在天盘上的位置）
+      let fourthKeDizhi = secondKeDizhi; // 默认值
+      if (tianpan) {
+        const secondKeDizhiIndex = zhi.indexOf(secondKeDizhi);
+        if (secondKeDizhiIndex >= 0 && tianpan[secondKeDizhiIndex]) {
+          fourthKeDizhi = tianpan[secondKeDizhiIndex].tianpanDizhi; // 天盘上该位置的地支
+        }
+      }
       const fourthKeTiangan = secondKeTiangan;
       
       return [
@@ -930,6 +1006,76 @@ export default {
 
 .guiren-note strong {
   color: #409eff;
+  font-weight: bold;
+}
+
+.jigong-koujue {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 2px solid #e4e7ed;
+}
+
+.jigong-koujue h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.koujue-text {
+  text-align: center;
+  font-size: 16px;
+  color: #555;
+  margin: 8px 0;
+  line-height: 1.8;
+  font-family: 'Microsoft YaHei', 'SimSun', serif;
+}
+
+.jigong-table {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.jigong-table-inner {
+  width: 100%;
+  max-width: 900px;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.jigong-table-inner th {
+  background-color: #67c23a;
+  color: white;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.jigong-table-inner td {
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #e4e7ed;
+  font-size: 14px;
+}
+
+.jigong-table-inner tbody tr:nth-child(even) {
+  background-color: #f5f7fa;
+}
+
+.jigong-table-inner tbody tr:hover {
+  background-color: #ecf5ff;
+}
+
+.jigong-label {
+  background-color: #67c23a !important;
+  color: white !important;
   font-weight: bold;
 }
 
