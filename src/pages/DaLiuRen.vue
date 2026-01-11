@@ -58,68 +58,51 @@
             </div>
           </div>
 
-          <!-- 天盘显示 -->
-          <div class="tianpan-section">
-            <h3>天盘</h3>
+          <!-- 天盘地盘合并显示 -->
+          <div class="pan-section">
+            <h3>天盘地盘</h3>
             <div class="pan-grid-container">
               <div class="pan-grid-16">
                 <div 
-                  v-for="(cell, index) in panData.tianpanGrid" 
+                  v-for="(cell, index) in panData.combinedGrid" 
                   :key="index"
                   class="pan-grid-cell"
                   :class="{ 
-                    'tianpan-cell': cell !== null,
+                    'has-content': cell !== null,
                     'empty-cell': cell === null
                   }"
                 >
                   <div class="cell-number">{{ index + 1 }}</div>
                   <template v-if="cell">
-                    <div class="cell-label">天盘</div>
-                    <div class="fangwei-label">{{ cell.fangwei }}</div>
-                    <div class="dizhi-label">{{ cell.tianpanDizhi || cell.dizhi }}</div>
-                    <div class="yuejiang-info" v-if="cell.yuejiang">
-                      <div class="info-label">月将</div>
-                      <div class="yuejiang-name">
-                        {{ cell.yuejiang }}
-                        <span v-if="cell.yuejiangDizhi" class="yuejiang-dizhi">（{{ cell.yuejiangDizhi }}时）</span>
+                    <!-- 天盘信息（上方） -->
+                    <div class="tianpan-part">
+                      <div class="dizhi-label tianpan-dizhi">{{ cell.tianpan?.tianpanDizhi || cell.tianpan?.dizhi }}</div>
+                      <div class="yuejiang-info" v-if="cell.tianpan?.yuejiang">
+                        <div class="info-label">月将</div>
+                        <div class="yuejiang-name">
+                          {{ cell.tianpan.yuejiang }}
+                          <span v-if="cell.tianpan.yuejiangDizhi" class="yuejiang-dizhi">（{{ cell.tianpan.yuejiangDizhi }}时）</span>
+                        </div>
+                      </div>
+                      <div class="shenjiang-info" v-if="cell.tianpan?.shenjiang">
+                        <div class="info-label">神将</div>
+                        <div class="shenjiang-label" :class="{ 'guiren': cell.tianpan.shenjiang === '贵人' }">{{ cell.tianpan.shenjiang }}</div>
                       </div>
                     </div>
-                    <div class="shenjiang-info">
-                      <div class="info-label">神将</div>
-                      <div class="shenjiang-label" :class="{ 'guiren': cell.shenjiang === '贵人' }">{{ cell.shenjiang }}</div>
+                    
+                    <!-- 分隔线 -->
+                    <div class="divider"></div>
+                    
+                    <!-- 地盘信息（下方） -->
+                    <div class="dipan-part">
+                      <div class="dizhi-label dipan-dizhi">{{ cell.dipan?.dizhi }}</div>
+                      <div class="shenjiang-info" v-if="cell.dipan?.shenjiang">
+                        <div class="info-label">神将</div>
+                        <div class="shenjiang-label" :class="{ 'guiren': cell.dipan.shenjiang === '贵人' }">{{ cell.dipan.shenjiang }}</div>
+                      </div>
                     </div>
                   </template>
-                  <div v-else class="empty-label">天盘</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 地盘显示 -->
-          <div class="dipan-section">
-            <h3>地盘</h3>
-            <div class="pan-grid-container">
-              <div class="pan-grid-16">
-                <div 
-                  v-for="(cell, index) in panData.dipanGrid" 
-                  :key="index"
-                  class="pan-grid-cell"
-                  :class="{ 
-                    'dipan-cell': cell !== null,
-                    'empty-cell': cell === null
-                  }"
-                >
-                  <div class="cell-number">{{ index + 1 }}</div>
-                  <template v-if="cell">
-                    <div class="cell-label">地盘</div>
-                    <div class="fangwei-label">{{ cell.fangwei }}</div>
-                    <div class="dizhi-label">{{ cell.dizhi }}</div>
-                    <div class="shenjiang-info">
-                      <div class="info-label">神将</div>
-                      <div class="shenjiang-label" :class="{ 'guiren': cell.shenjiang === '贵人' }">{{ cell.shenjiang }}</div>
-                    </div>
-                  </template>
-                  <div v-else class="empty-label">地盘</div>
+                  <div v-else class="empty-label">空</div>
                 </div>
               </div>
             </div>
@@ -232,6 +215,18 @@ export default {
       const dipanGrid = this.convertTo16Grid(dipan);
       const tianpanGrid = this.convertTo16Grid(tianpan);
       
+      // 合并天盘和地盘数据
+      const combinedGrid = dipanGrid.map((dipanCell, index) => {
+        const tianpanCell = tianpanGrid[index];
+        if (dipanCell === null && tianpanCell === null) {
+          return null;
+        }
+        return {
+          dipan: dipanCell,
+          tianpan: tianpanCell
+        };
+      });
+      
       this.panData = {
         solarDate: `${year}年${month}月${day}日 ${hour}时${minute}分`,
         lunarDate: lunarDate,
@@ -246,7 +241,8 @@ export default {
         dipan: dipan,
         tianpan: tianpan,
         dipanGrid: dipanGrid,
-        tianpanGrid: tianpanGrid
+        tianpanGrid: tianpanGrid,
+        combinedGrid: combinedGrid
       };
     },
     // 计算农历（简化版）
@@ -760,8 +756,7 @@ export default {
 
 .sike-section,
 .sanchuan-section,
-.tianpan-section,
-.dipan-section {
+.pan-section {
   background-color: #f5f7fa;
   padding: 20px;
   border-radius: 8px;
@@ -769,8 +764,7 @@ export default {
 
 .sike-section h3,
 .sanchuan-section h3,
-.tianpan-section h3,
-.dipan-section h3 {
+.pan-section h3 {
   margin-top: 0;
   margin-bottom: 20px;
   color: #333;
@@ -892,16 +886,12 @@ export default {
   gap: 4px;
   padding: 10px;
   position: relative;
-  min-height: 140px;
+  min-height: 200px;
+  background-color: white;
 }
 
-.tianpan-cell {
+.pan-grid-cell.has-content {
   border: 2px solid #409eff;
-  background-color: #ecf5ff;
-}
-
-.dipan-cell {
-  border: 2px solid #67c23a;
   background-color: #f0f9ff;
 }
 
@@ -923,25 +913,48 @@ export default {
   z-index: 10;
 }
 
-.cell-label {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  font-size: 11px;
+.part-label {
+  font-size: 10px;
   color: #fff;
   background-color: #909399;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 3px;
   font-weight: bold;
   letter-spacing: 1px;
+  margin-bottom: 4px;
 }
 
-.tianpan-cell .cell-label {
+.tianpan-part {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding-bottom: 8px;
+}
+
+.tianpan-part .part-label {
   background-color: #409eff;
 }
 
-.dipan-cell .cell-label {
+.dipan-part {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding-top: 8px;
+}
+
+.dipan-part .part-label {
   background-color: #67c23a;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: #ddd;
+  margin: 4px 0;
 }
 
 .fangwei-label {
@@ -959,6 +972,16 @@ export default {
   font-weight: bold;
   color: #333;
   margin-top: 5px;
+}
+
+.tianpan-dizhi {
+  color: #409eff;
+  font-weight: bold;
+}
+
+.dipan-dizhi {
+  color: #67c23a;
+  font-weight: bold;
 }
 
 .yuejiang-info,
@@ -1064,12 +1087,22 @@ export default {
   }
   
   .pan-grid-cell {
-    min-height: 110px;
+    min-height: 160px;
     padding: 8px;
   }
   
   .dizhi-label {
-    font-size: 20px;
+    font-size: 18px;
+  }
+  
+  .tianpan-part,
+  .dipan-part {
+    gap: 2px;
+  }
+  
+  .part-label {
+    font-size: 9px;
+    padding: 1px 4px;
   }
   
   .container {
@@ -1089,12 +1122,27 @@ export default {
   }
   
   .pan-grid-cell {
-    min-height: 80px;
+    min-height: 140px;
     padding: 6px;
   }
   
   .dizhi-label {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  
+  .tianpan-part,
+  .dipan-part {
+    gap: 2px;
+  }
+  
+  .part-label {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+  
+  .yuejiang-name,
+  .shenjiang-label {
+    font-size: 10px;
   }
   
   .fangwei-label {
