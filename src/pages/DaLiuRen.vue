@@ -79,7 +79,10 @@
                     <div class="dizhi-label">{{ cell.dizhi }}</div>
                     <div class="yuejiang-info" v-if="cell.yuejiang">
                       <div class="info-label">月将</div>
-                      <div class="yuejiang-name">{{ cell.yuejiang }}</div>
+                      <div class="yuejiang-name">
+                        {{ cell.yuejiang }}
+                        <span v-if="cell.yuejiangDizhi" class="yuejiang-dizhi">（{{ cell.yuejiangDizhi }}时）</span>
+                      </div>
                     </div>
                     <div class="shenjiang-info">
                       <div class="info-label">神将</div>
@@ -141,8 +144,12 @@
               <span>{{ panData.timeGanZhi }}</span>
             </div>
             <div class="info-item">
+              <span class="label">节气：</span>
+              <span>{{ panData.solarTerm }}</span>
+            </div>
+            <div class="info-item">
               <span class="label">月将：</span>
-              <span>{{ panData.yuejiang }}</span>
+              <span>{{ panData.yuejiang }}<span v-if="panData.yuejiangDizhi">（{{ panData.yuejiangDizhi }}时）</span></span>
             </div>
             <div class="info-item">
               <span class="label">占时：</span>
@@ -156,6 +163,8 @@
 </template>
 
 <script>
+import { getCurrentSolarTermWithDate, getCurrentSolarTerm } from '@/utils/solarTerm';
+
 export default {
   name: 'DaLiuRen',
   data() {
@@ -200,8 +209,15 @@ export default {
       // 计算时辰
       const timeBranch = this.getTimeBranch(hour);
       
-      // 计算月将
-      const yuejiang = this.getYuejiang(month, day);
+      // 计算当前节气
+      const currentSolarTerm = getCurrentSolarTermWithDate(year, month, day, hour, minute);
+      const solarTermName = currentSolarTerm.name;
+      
+      // 根据节气计算月将
+      const yuejiang = this.getYuejiangBySolarTerm(solarTermName);
+      
+      // 获取月将对应的时辰
+      const yuejiangDizhi = this.getYuejiangDizhi(yuejiang);
       
       // 计算四课
       const sike = this.calculateSike(dayGanZhi);
@@ -222,7 +238,9 @@ export default {
         dayGanZhi: dayGanZhi,
         timeGanZhi: timeGanZhi,
         timeBranch: timeBranch,
+        solarTerm: solarTermName,
         yuejiang: yuejiang,
+        yuejiangDizhi: yuejiangDizhi,
         sike: sike,
         sanchuan: sanchuan,
         dipan: dipan,
@@ -326,36 +344,82 @@ export default {
       const index = Math.floor((hour + 1) / 2) % 12;
       return branches[index] + '时';
     },
-    // 计算月将（根据节气确定）
-    getYuejiang(month, day) {
-      // 月将对应关系（根据节气）
-      // 月将顺序：登明(亥)、神后(子)、大吉(丑)、功曹(寅)、太冲(卯)、天罡(辰)、
-      //           太乙(巳)、胜光(午)、小吉(未)、传送(申)、从魁(酉)、河魁(戌)
-      // 对应节气：雨水、春分、谷雨、小满、夏至、大暑、处暑、秋分、霜降、小雪、冬至、大寒
+    // 根据节气计算月将
+    getYuejiangBySolarTerm(solarTermName) {
+      // 月将对应关系（根据节气，节气后使用对应月将）
+      // 雨水后：亥将（登明）
+      // 春分后：戌将（河魁）
+      // 谷雨后：酉将（从魁）
+      // 小满后：申将（传送）
+      // 夏至后：未将（小吉）
+      // 大暑后：午将（胜光）
+      // 处暑后：巳将（太乙）
+      // 秋分后：辰将（天罡）
+      // 霜降后：卯将（太冲）
+      // 小雪后：寅将（功曹）
+      // 冬至后：丑将（大吉）
+      // 大寒后：子将（神后）
       
-      const yuejiangNames = [
-        '登明', '神后', '大吉', '功曹', '太冲', '天罡',
-        '太乙', '胜光', '小吉', '传送', '从魁', '河魁'
-      ];
+      const solarTermToYuejiang = {
+        '雨水': '登明',   // 亥
+        '春分': '河魁',   // 戌
+        '谷雨': '从魁',   // 酉
+        '小满': '传送',   // 申
+        '夏至': '小吉',   // 未
+        '大暑': '胜光',   // 午
+        '处暑': '太乙',   // 巳
+        '秋分': '天罡',   // 辰
+        '霜降': '太冲',   // 卯
+        '小雪': '功曹',   // 寅
+        '冬至': '大吉',   // 丑
+        '大寒': '神后'    // 子
+      };
       
-      // 简化处理：根据月份大致确定月将
-      // 实际应该根据节气精确计算
-      // 雨水(2月)后登明，春分(3月)后神后，以此类推
-      let yuejiangIndex = 0;
-      if (month >= 2 && month < 3) yuejiangIndex = 0; // 登明
-      else if (month >= 3 && month < 4) yuejiangIndex = 1; // 神后
-      else if (month >= 4 && month < 5) yuejiangIndex = 2; // 大吉
-      else if (month >= 5 && month < 6) yuejiangIndex = 3; // 功曹
-      else if (month >= 6 && month < 7) yuejiangIndex = 4; // 太冲
-      else if (month >= 7 && month < 8) yuejiangIndex = 5; // 天罡
-      else if (month >= 8 && month < 9) yuejiangIndex = 6; // 太乙
-      else if (month >= 9 && month < 10) yuejiangIndex = 7; // 胜光
-      else if (month >= 10 && month < 11) yuejiangIndex = 8; // 小吉
-      else if (month >= 11 && month < 12) yuejiangIndex = 9; // 传送
-      else if (month === 12) yuejiangIndex = 10; // 从魁
-      else yuejiangIndex = 11; // 河魁（1月）
+      // 如果当前节气不在映射表中，查找最近的已过去的节气
+      if (!solarTermToYuejiang[solarTermName]) {
+        // 节气顺序
+        const solarTerms = [
+          '立春', '雨水', '惊蛰', '春分', '清明', '谷雨',
+          '立夏', '小满', '芒种', '夏至', '小暑', '大暑',
+          '立秋', '处暑', '白露', '秋分', '寒露', '霜降',
+          '立冬', '小雪', '大雪', '冬至', '小寒', '大寒'
+        ];
+        
+        const currentIndex = solarTerms.indexOf(solarTermName);
+        if (currentIndex === -1) {
+          // 如果找不到，默认使用大寒对应的河魁
+          return '河魁';
+        }
+        
+        // 向前查找最近的月将对应节气
+        for (let i = currentIndex; i >= 0; i--) {
+          if (solarTermToYuejiang[solarTerms[i]]) {
+            return solarTermToYuejiang[solarTerms[i]];
+          }
+        }
+        
+        // 如果向前找不到，从后往前找（处理跨年）
+        for (let i = solarTerms.length - 1; i > currentIndex; i--) {
+          if (solarTermToYuejiang[solarTerms[i]]) {
+            return solarTermToYuejiang[solarTerms[i]];
+          }
+        }
+        
+        // 默认返回河魁
+        return '河魁';
+      }
       
-      return yuejiangNames[yuejiangIndex];
+      return solarTermToYuejiang[solarTermName];
+    },
+    // 获取月将对应的时辰（地支）
+    getYuejiangDizhi(yuejiang) {
+      // 月将名称到地支的映射
+      const yuejiangToDizhi = {
+        '神后': '子', '大吉': '丑', '功曹': '寅', '太冲': '卯',
+        '天罡': '辰', '太乙': '巳', '胜光': '午', '小吉': '未',
+        '传送': '申', '从魁': '酉', '河魁': '戌', '登明': '亥'
+      };
+      return yuejiangToDizhi[yuejiang] || '';
     },
     // 计算四课
     calculateSike(dayGanZhi) {
@@ -552,8 +616,10 @@ export default {
         
         // 判断该位置是否有月将
         let yuejiangName = null;
+        let yuejiangDizhiName = null;
         if (tianpanDizhi === yuejiangDizhi) {
           yuejiangName = yuejiang;
+          yuejiangDizhiName = yuejiangDizhi; // 月将对应的时辰（地支）
         }
         
         // 计算神将（天盘的神将位置与地盘相同）
@@ -563,6 +629,7 @@ export default {
           dizhi: dz,
           fangwei: fangweiMap[dz],
           yuejiang: yuejiangName,
+          yuejiangDizhi: yuejiangDizhiName, // 月将对应的时辰
           shenjiang: shenjiang
         };
       });
@@ -913,6 +980,13 @@ export default {
   border-radius: 3px;
   font-weight: bold;
   width: 100%;
+}
+
+.yuejiang-dizhi {
+  font-size: 11px;
+  color: #67c23a;
+  font-weight: normal;
+  margin-left: 4px;
 }
 
 .shenjiang-label {
