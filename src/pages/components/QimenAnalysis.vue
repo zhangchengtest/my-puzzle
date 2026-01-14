@@ -9,6 +9,10 @@
         <div v-for="(item, index) in analysisResult.items" :key="index" class="result-item">
           <h4>{{ item.title }}</h4>
           <p>{{ item.content }}</p>
+          <div v-if="item.reference" class="result-reference">
+            <strong>参考规则：</strong>
+            <span>{{ item.reference }}</span>
+          </div>
         </div>
       </div>
       <div class="result-summary">
@@ -92,6 +96,27 @@ export default {
   margin: 0;
   line-height: 1.6;
   color: #666;
+}
+
+.result-reference {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-left: 3px solid #909399;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.result-reference strong {
+  color: #606266;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.result-reference span {
+  color: #606266;
+  display: block;
 }
 
 .result-summary {
