@@ -1,9 +1,10 @@
 <template>
   <div class="sales-page">
-    <h1>销售</h1>
-    <p class="tip">先选一级菜单（如桌子、椅子、沙发），再选该分类下的规格。</p>
+    <div class="main-wrap">
+      <h1>销售</h1>
+      <p class="tip">先选一级菜单（如桌子、椅子、沙发），再选该分类下的规格。</p>
 
-    <div v-if="categories.length === 0" class="empty">
+      <div v-if="categories.length === 0" class="empty">
       <p>暂无配置，请先在「家具管理」添加一级菜单和规格。</p>
       <router-link to="/furnituremanage">去家具管理</router-link>
     </div>
@@ -59,6 +60,55 @@
         <button v-if="hasSelection" class="btn-clear" @click="clearSelections">清空选择</button>
       </section>
     </template>
+    </div>
+
+    <!-- 购物车入口 -->
+    <button
+      type="button"
+      class="cart-trigger"
+      :class="{ 'has-items': cartItems.length > 0 }"
+      @click="drawerOpen = true"
+      title="购物车"
+    >
+      <span class="cart-icon">🛒</span>
+      <span v-if="cartItems.length > 0" class="cart-badge">{{ cartItems.length }}</span>
+    </button>
+
+    <!-- 右侧抽屉：购物车 -->
+    <div class="drawer-mask" :class="{ open: drawerOpen }" @click="drawerOpen = false" />
+    <aside class="drawer" :class="{ open: drawerOpen }">
+      <div class="drawer-header">
+        <h2>购物车</h2>
+        <button type="button" class="drawer-close" @click="drawerOpen = false">×</button>
+      </div>
+      <div class="drawer-body">
+        <template v-if="cartItems.length === 0">
+          <p class="cart-empty">暂无已选商品</p>
+        </template>
+        <template v-else>
+          <div class="cart-grid">
+            <div v-for="(block, idx) in cartItems" :key="block.catId + '-' + idx" class="cart-card">
+              <div class="cart-card-head">
+                <img v-if="block.categoryImage" :src="block.categoryImage" class="cart-card-img" alt="" />
+                <span v-else class="cart-card-noimg">图</span>
+                <span class="cart-card-name">{{ block.categoryName }}</span>
+              </div>
+              <ul class="cart-card-specs">
+                <li v-for="item in block.items" :key="item.keyName">
+                  {{ item.keyName }}：{{ item.chosenLabel }}
+                  <span class="cart-item-price">￥{{ formatPrice(item.price) }}</span>
+                </li>
+              </ul>
+              <div class="cart-card-subtotal">小计 ￥{{ formatPrice(block.subtotal) }}</div>
+            </div>
+          </div>
+          <div class="cart-total-row">
+            <span class="cart-total-label">累计总价</span>
+            <span class="cart-total-price">￥{{ formatPrice(totalPrice || 0) }}</span>
+          </div>
+        </template>
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -111,10 +161,41 @@ export default {
       categories: categories || [],
       specsByCategory: specsByCategory || {},
       selectedCategoryIds: loadSelectedIds(),
-      selections: loadSelections()
+      selections: loadSelections(),
+      drawerOpen: false
     };
   },
   computed: {
+    cartItems() {
+      const list = [];
+      for (const catId of this.selectedCategoryIds) {
+        const sel = this.selections[catId] || {};
+        const specs = this.getSpecsByCategoryId(catId);
+        const items = [];
+        let subtotal = 0;
+        for (const spec of specs) {
+          const chosen = sel[spec.keyName];
+          if (!chosen) continue;
+          const opt = (spec.values || []).find(v => v.label === chosen);
+          if (opt) {
+            const price = Number(opt.price) || 0;
+            items.push({ keyName: spec.keyName, chosenLabel: chosen, price });
+            subtotal += price;
+          }
+        }
+        if (items.length > 0) {
+          const cat = this.categories.find(c => c.id === catId);
+          list.push({
+            catId,
+            categoryName: cat ? cat.name : '',
+            categoryImage: cat ? cat.image : '',
+            items,
+            subtotal
+          });
+        }
+      }
+      return list;
+    },
     hasSelection() {
       return this.selectedCategoryIds.some(catId => {
         const sel = this.selections[catId];
@@ -203,10 +284,208 @@ export default {
 
 <style scoped>
 .sales-page {
+  position: relative;
   padding: 1rem;
   max-width: 720px;
   margin: 0 auto;
   text-align: left;
+}
+.main-wrap {
+  padding-right: 3rem;
+}
+.cart-trigger {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: border-color 0.2s, background 0.2s;
+}
+.cart-trigger:hover {
+  border-color: #2196f3;
+  background: #e3f2fd;
+}
+.cart-trigger.has-items {
+  border-color: #2196f3;
+  background: #bbdefb;
+}
+.cart-icon {
+  line-height: 1;
+}
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #f44336;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.drawer-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+}
+.drawer-mask.open {
+  opacity: 1;
+  visibility: visible;
+}
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+.drawer.open {
+  transform: translateX(0);
+}
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+.drawer-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.drawer-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  border-radius: 4px;
+}
+.drawer-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+.drawer-body {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+.cart-empty {
+  text-align: center;
+  color: #999;
+  padding: 2rem 0;
+}
+.cart-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.cart-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #fafafa;
+}
+.cart-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.cart-card-img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.cart-card-noimg {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #999;
+}
+.cart-card-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.cart-card-specs {
+  list-style: none;
+  margin: 0 0 0.5rem 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+.cart-card-specs li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+}
+.cart-item-price {
+  color: #2e7d32;
+  font-weight: 500;
+}
+.cart-card-subtotal {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1565c0;
+  padding-top: 0.35rem;
+  border-top: 1px dashed #ddd;
+}
+.cart-total-row {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #e8f5e9;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cart-total-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.cart-total-price {
+  font-size: 1.25rem;
+  color: #2e7d32;
+  font-weight: 700;
 }
 h1 {
   font-size: 1.5rem;
