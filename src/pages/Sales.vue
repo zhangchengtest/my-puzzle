@@ -90,6 +90,7 @@
                 <img v-if="block.categoryImage" :src="block.categoryImage" class="cart-card-img" alt="" />
                 <span v-else class="cart-card-noimg">图</span>
                 <span class="cart-card-name">{{ block.categoryName }}</span>
+                <button type="button" class="cart-card-remove" title="删除" @click="removeCartItem(block.catId)">×</button>
               </div>
               <ul class="cart-card-specs">
                 <li v-for="item in block.items" :key="item.keyName">
@@ -239,6 +240,10 @@ export default {
     },
     clearSelections() {
       this.selections = {};
+      this.saveSelections();
+    },
+    removeCartItem(catId) {
+      this.selections[catId] = {};
       this.saveSelections();
     }
   },
@@ -397,6 +402,25 @@ export default {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+  position: relative;
+}
+.cart-card-remove {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.cart-card-remove:hover {
+  background: #f44336;
+  color: #fff;
 }
 .cart-card-img {
   width: 40px;
