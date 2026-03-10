@@ -19,7 +19,8 @@
             :class="['tab', { active: selectedCategoryId === cat.id }]"
             @click="selectCategory(cat.id)"
           >
-            {{ cat.name }}
+            <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
+            <span class="tab-name">{{ cat.name }}</span>
           </button>
         </div>
       </section>
@@ -201,6 +202,21 @@ h1 {
 .tab.active {
   background: #2196f3;
   color: #fff;
+}
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cat-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.tab-name {
+  flex: 0 0 auto;
 }
 .form {
   display: flex;

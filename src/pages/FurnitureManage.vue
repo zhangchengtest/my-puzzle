@@ -16,9 +16,26 @@
           :key="cat.id"
           :class="['tab-wrap', { active: selectedCategoryId === cat.id }]"
         >
+          <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
           <button type="button" class="tab" @click="selectedCategoryId = cat.id">{{ cat.name }}</button>
           <button type="button" class="tab-del" @click.stop="removeCategory(index)" title="删除分类">×</button>
         </span>
+      </div>
+      <!-- 当前分类图片 -->
+      <div v-if="selectedCategoryId && currentCategory" class="category-image-edit">
+        <label class="image-label">分类图片</label>
+        <div v-if="currentCategory.image" class="image-preview-wrap">
+          <img :src="currentCategory.image" class="cat-preview" alt="分类图" />
+          <button type="button" class="btn-del small" @click="clearCategoryImage">删除图片</button>
+        </div>
+        <div class="image-input-row">
+          <input v-model="categoryImageUrl" type="text" placeholder="输入图片链接" class="key-input" />
+          <button type="button" class="btn-add small" @click="setCategoryImageUrl">设置链接</button>
+        </div>
+        <div class="image-input-row">
+          <input ref="categoryImageFileRef" type="file" accept="image/*" class="file-input" @change="onCategoryImageFile" />
+          <span class="file-hint">或选择本地图片上传</span>
+        </div>
       </div>
       <p v-if="categories.length === 0" class="empty-hint">请先添加一级菜单。</p>
     </section>
@@ -109,7 +126,8 @@ export default {
     const { categories, specsByCategory } = loadFromStorage();
     const cats = (categories || []).map((c, i) => ({
       id: c.id || 'cat_' + Date.now() + '_' + i,
-      name: c.name || ''
+      name: c.name || '',
+      image: c.image || ''
     }));
     const specs = {};
     for (const [cid, list] of Object.entries(specsByCategory || {})) {
@@ -126,10 +144,15 @@ export default {
       newCategory: '',
       newKey: '',
       newValueInput: {},
-      newPriceInput: {}
+      newPriceInput: {},
+      categoryImageUrl: ''
     };
   },
   computed: {
+    currentCategory() {
+      if (!this.selectedCategoryId) return null;
+      return this.categories.find(c => c.id === this.selectedCategoryId) || null;
+    },
     currentSpecs() {
       if (!this.selectedCategoryId) return [];
       return this.specsByCategory[this.selectedCategoryId] || [];
@@ -148,11 +171,34 @@ export default {
         return;
       }
       const id = 'cat_' + Date.now();
-      this.categories.push({ id, name });
+      this.categories.push({ id, name, image: '' });
       if (!this.specsByCategory[id]) this.specsByCategory[id] = [];
       this.newCategory = '';
       this.selectedCategoryId = id;
       this.save();
+    },
+    setCategoryImageUrl() {
+      const url = (this.categoryImageUrl || '').trim();
+      if (!url || !this.currentCategory) return;
+      this.currentCategory.image = url;
+      this.categoryImageUrl = '';
+      this.save();
+    },
+    clearCategoryImage() {
+      if (!this.currentCategory) return;
+      this.currentCategory.image = '';
+      this.save();
+    },
+    onCategoryImageFile(e) {
+      const file = e.target.files?.[0];
+      if (!file || !file.type.startsWith('image/') || !this.currentCategory) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.currentCategory.image = reader.result;
+        this.save();
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
     },
     removeCategory(index) {
       const cat = this.categories[index];
@@ -211,7 +257,7 @@ export default {
     },
     save() {
       const state = {
-        categories: this.categories.map(c => ({ id: c.id, name: c.name })),
+        categories: this.categories.map(c => ({ id: c.id, name: c.name, image: c.image || '' })),
         specsByCategory: {}
       };
       for (const [cid, list] of Object.entries(this.specsByCategory)) {
@@ -339,6 +385,54 @@ h1 {
 }
 .tab-wrap.active .tab-del:hover {
   color: #ffcdd2;
+}
+.cat-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.category-image-edit {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+.image-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+.image-preview-wrap {
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.cat-preview {
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+.image-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.image-input-row:last-of-type {
+  margin-bottom: 0;
+}
+.file-input {
+  font-size: 0.85rem;
+}
+.file-hint {
+  color: #666;
+  font-size: 0.85rem;
 }
 .list {
   display: flex;
