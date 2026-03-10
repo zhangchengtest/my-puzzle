@@ -10,16 +10,16 @@
     </div>
 
     <template v-else>
-      <!-- 一级菜单（平铺，可多选） -->
+      <!-- 一级菜单（平铺，点击哪个就展示哪个的属性） -->
       <section class="section">
-        <label class="field-label">一级菜单（可多选）</label>
+        <label class="field-label">一级菜单（点击展示该分类规格）</label>
         <div class="category-grid">
           <button
             v-for="cat in categories"
             :key="cat.id"
             type="button"
-            :class="['category-tile', { active: selectedCategoryIds.includes(cat.id) }]"
-            @click="toggleCategory(cat.id)"
+            :class="['category-tile', { active: activeCategoryId === cat.id }]"
+            @click="selectCategory(cat.id)"
           >
             <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
             <span class="tile-name">{{ cat.name }}</span>
@@ -27,32 +27,30 @@
         </div>
       </section>
 
-      <!-- 每个已选分类下的规格 -->
-      <template v-for="catId in selectedCategoryIds" :key="catId">
-        <section v-if="getSpecsByCategoryId(catId).length > 0" class="section form category-form">
-          <h3 class="category-form-title">{{ getCategoryName(catId) }}</h3>
-          <div v-for="spec in getSpecsByCategoryId(catId)" :key="spec.id" class="field">
-            <label class="field-label">{{ spec.keyName }}</label>
-            <select
-              :value="selections[catId]?.[spec.keyName]"
-              class="field-select"
-              @change="onSpecChange(catId, spec.keyName, $event.target.value)"
+      <!-- 仅展示当前选中分类的规格 -->
+      <section v-if="activeCategoryId && getSpecsByCategoryId(activeCategoryId).length > 0" class="section form category-form">
+        <h3 class="category-form-title">{{ getCategoryName(activeCategoryId) }}</h3>
+        <div v-for="spec in getSpecsByCategoryId(activeCategoryId)" :key="spec.id" class="field">
+          <label class="field-label">{{ spec.keyName }}</label>
+          <select
+            :value="selections[activeCategoryId]?.[spec.keyName]"
+            class="field-select"
+            @change="onSpecChange(activeCategoryId, spec.keyName, $event.target.value)"
+          >
+            <option value="">请选择</option>
+            <option
+              v-for="opt in spec.values"
+              :key="opt.label"
+              :value="opt.label"
             >
-              <option value="">请选择</option>
-              <option
-                v-for="opt in spec.values"
-                :key="opt.label"
-                :value="opt.label"
-              >
-                {{ opt.label }} — ￥{{ formatPrice(opt.price) }}
-              </option>
-            </select>
-          </div>
-        </section>
-        <p v-else class="empty-hint">「{{ getCategoryName(catId) }}」暂无规格配置。</p>
-      </template>
+              {{ opt.label }} — ￥{{ formatPrice(opt.price) }}
+            </option>
+          </select>
+        </div>
+      </section>
+      <p v-else-if="activeCategoryId" class="empty-hint">「{{ getCategoryName(activeCategoryId) }}」暂无规格配置。</p>
 
-      <section v-if="selectedCategoryIds.length > 0" class="section summary">
+      <section v-if="cartItems.length > 0" class="section summary">
         <div v-if="totalPrice !== null" class="total-row">
           <span class="total-label">当前合计</span>
           <span class="total-price">￥{{ formatPrice(totalPrice) }}</span>
@@ -115,7 +113,6 @@
 <script>
 const CONFIG_KEY = 'furniture_config';
 const SELECTION_KEY = 'sales_selection';
-const SELECTED_IDS_KEY = 'sales_selected_category_ids';
 
 function loadConfig() {
   try {
@@ -142,17 +139,6 @@ function loadSelections() {
   }
 }
 
-function loadSelectedIds() {
-  try {
-    const raw = localStorage.getItem(SELECTED_IDS_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-
 export default {
   name: 'Sales',
   data() {
@@ -160,7 +146,7 @@ export default {
     return {
       categories: categories || [],
       specsByCategory: specsByCategory || {},
-      selectedCategoryIds: loadSelectedIds(),
+      activeCategoryId: null,
       selections: loadSelections(),
       drawerOpen: false
     };
@@ -168,7 +154,12 @@ export default {
   computed: {
     cartItems() {
       const list = [];
-      for (const catId of this.selectedCategoryIds) {
+      const catIdsWithSelection = new Set();
+      Object.keys(this.selections).forEach(catId => {
+        const sel = this.selections[catId];
+        if (sel && Object.values(sel).some(Boolean)) catIdsWithSelection.add(catId);
+      });
+      for (const catId of catIdsWithSelection) {
         const sel = this.selections[catId] || {};
         const specs = this.getSpecsByCategoryId(catId);
         const items = [];
@@ -197,15 +188,14 @@ export default {
       return list;
     },
     hasSelection() {
-      return this.selectedCategoryIds.some(catId => {
+      return Object.keys(this.selections).some(catId => {
         const sel = this.selections[catId];
         return sel && Object.values(sel).some(Boolean);
       });
     },
     totalPrice() {
-      if (!this.selectedCategoryIds.length) return null;
       let total = 0;
-      for (const catId of this.selectedCategoryIds) {
+      for (const catId of Object.keys(this.selections || {})) {
         const specs = this.getSpecsByCategoryId(catId);
         const sel = this.selections[catId] || {};
         for (const spec of specs) {
@@ -219,6 +209,9 @@ export default {
     }
   },
   methods: {
+    selectCategory(id) {
+      this.activeCategoryId = id;
+    },
     formatPrice(p) {
       const n = Number(p);
       return isNaN(n) ? '0.00' : n.toFixed(2);
@@ -234,15 +227,6 @@ export default {
         values: Array.isArray(s.values) ? s.values.map(v => typeof v === 'object' && v && 'label' in v ? v : { label: String(v), price: 0 }) : []
       }));
     },
-    toggleCategory(id) {
-      const idx = this.selectedCategoryIds.indexOf(id);
-      if (idx === -1) {
-        this.selectedCategoryIds.push(id);
-      } else {
-        this.selectedCategoryIds.splice(idx, 1);
-      }
-      localStorage.setItem(SELECTED_IDS_KEY, JSON.stringify(this.selectedCategoryIds));
-    },
     onSpecChange(catId, keyName, value) {
       if (!this.selections[catId]) {
         this.selections[catId] = {};
@@ -254,9 +238,7 @@ export default {
       localStorage.setItem(SELECTION_KEY, JSON.stringify(this.selections));
     },
     clearSelections() {
-      for (const catId of this.selectedCategoryIds) {
-        this.selections[catId] = {};
-      }
+      this.selections = {};
       this.saveSelections();
     }
   },
@@ -265,19 +247,12 @@ export default {
     this.categories = categories || [];
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
-    const ids = loadSelectedIds();
-    this.selectedCategoryIds = ids.filter(id => this.categories.some(c => c.id === id));
-    if (this.selectedCategoryIds.length !== ids.length) {
-      localStorage.setItem(SELECTED_IDS_KEY, JSON.stringify(this.selectedCategoryIds));
-    }
   },
   activated() {
     const { categories, specsByCategory } = loadConfig();
     this.categories = categories || [];
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
-    const ids = loadSelectedIds();
-    this.selectedCategoryIds = ids.filter(id => this.categories.some(c => c.id === id));
   }
 };
 </script>
