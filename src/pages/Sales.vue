@@ -9,48 +9,55 @@
     </div>
 
     <template v-else>
-      <!-- 一级菜单 -->
+      <!-- 一级菜单（平铺，可多选） -->
       <section class="section">
-        <label class="field-label">一级菜单</label>
-        <div class="category-tabs">
+        <label class="field-label">一级菜单（可多选）</label>
+        <div class="category-grid">
           <button
             v-for="cat in categories"
             :key="cat.id"
-            :class="['tab', { active: selectedCategoryId === cat.id }]"
-            @click="selectCategory(cat.id)"
+            type="button"
+            :class="['category-tile', { active: selectedCategoryIds.includes(cat.id) }]"
+            @click="toggleCategory(cat.id)"
           >
             <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
-            <span class="tab-name">{{ cat.name }}</span>
+            <span class="tile-name">{{ cat.name }}</span>
           </button>
         </div>
       </section>
 
-      <!-- 当前分类下的规格 key + 下拉（选项含价格） -->
-      <section v-if="selectedCategoryId && currentSpecs.length > 0" class="section form">
-        <div v-for="spec in currentSpecs" :key="spec.id" class="field">
-          <label class="field-label">{{ spec.keyName }}</label>
-          <select
-            :value="selections[selectedCategoryId]?.[spec.keyName]"
-            class="field-select"
-            @change="onSpecChange(spec.keyName, $event.target.value)"
-          >
-            <option value="">请选择</option>
-            <option
-              v-for="opt in spec.values"
-              :key="opt.label"
-              :value="opt.label"
+      <!-- 每个已选分类下的规格 -->
+      <template v-for="catId in selectedCategoryIds" :key="catId">
+        <section v-if="getSpecsByCategoryId(catId).length > 0" class="section form category-form">
+          <h3 class="category-form-title">{{ getCategoryName(catId) }}</h3>
+          <div v-for="spec in getSpecsByCategoryId(catId)" :key="spec.id" class="field">
+            <label class="field-label">{{ spec.keyName }}</label>
+            <select
+              :value="selections[catId]?.[spec.keyName]"
+              class="field-select"
+              @change="onSpecChange(catId, spec.keyName, $event.target.value)"
             >
-              {{ opt.label }} — ￥{{ formatPrice(opt.price) }}
-            </option>
-          </select>
-        </div>
+              <option value="">请选择</option>
+              <option
+                v-for="opt in spec.values"
+                :key="opt.label"
+                :value="opt.label"
+              >
+                {{ opt.label }} — ￥{{ formatPrice(opt.price) }}
+              </option>
+            </select>
+          </div>
+        </section>
+        <p v-else class="empty-hint">「{{ getCategoryName(catId) }}」暂无规格配置。</p>
+      </template>
+
+      <section v-if="selectedCategoryIds.length > 0" class="section summary">
         <div v-if="totalPrice !== null" class="total-row">
           <span class="total-label">当前合计</span>
           <span class="total-price">￥{{ formatPrice(totalPrice) }}</span>
         </div>
         <button v-if="hasSelection" class="btn-clear" @click="clearSelections">清空选择</button>
       </section>
-      <p v-else-if="selectedCategoryId" class="empty-hint">该分类下暂无规格配置。</p>
     </template>
   </div>
 </template>
@@ -58,6 +65,7 @@
 <script>
 const CONFIG_KEY = 'furniture_config';
 const SELECTION_KEY = 'sales_selection';
+const SELECTED_IDS_KEY = 'sales_selected_category_ids';
 
 function loadConfig() {
   try {
@@ -84,6 +92,17 @@ function loadSelections() {
   }
 }
 
+function loadSelectedIds() {
+  try {
+    const raw = localStorage.getItem(SELECTED_IDS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
 export default {
   name: 'Sales',
   data() {
@@ -91,32 +110,29 @@ export default {
     return {
       categories: categories || [],
       specsByCategory: specsByCategory || {},
-      selectedCategoryId: null,
+      selectedCategoryIds: loadSelectedIds(),
       selections: loadSelections()
     };
   },
   computed: {
-    currentSpecs() {
-      if (!this.selectedCategoryId) return [];
-      const list = this.specsByCategory[this.selectedCategoryId] || [];
-      return list.map(s => ({
-        ...s,
-        values: Array.isArray(s.values) ? s.values.map(v => typeof v === 'object' && v && 'label' in v ? v : { label: String(v), price: 0 }) : []
-      }));
-    },
     hasSelection() {
-      const sel = this.selections[this.selectedCategoryId];
-      return sel && Object.values(sel).some(Boolean);
+      return this.selectedCategoryIds.some(catId => {
+        const sel = this.selections[catId];
+        return sel && Object.values(sel).some(Boolean);
+      });
     },
     totalPrice() {
-      if (!this.selectedCategoryId || !this.currentSpecs.length) return null;
-      const sel = this.selections[this.selectedCategoryId] || {};
+      if (!this.selectedCategoryIds.length) return null;
       let total = 0;
-      for (const spec of this.currentSpecs) {
-        const chosen = sel[spec.keyName];
-        if (!chosen) continue;
-        const opt = (spec.values || []).find(v => v.label === chosen);
-        if (opt) total += Number(opt.price) || 0;
+      for (const catId of this.selectedCategoryIds) {
+        const specs = this.getSpecsByCategoryId(catId);
+        const sel = this.selections[catId] || {};
+        for (const spec of specs) {
+          const chosen = sel[spec.keyName];
+          if (!chosen) continue;
+          const opt = (spec.values || []).find(v => v.label === chosen);
+          if (opt) total += Number(opt.price) || 0;
+        }
       }
       return total;
     }
@@ -126,23 +142,39 @@ export default {
       const n = Number(p);
       return isNaN(n) ? '0.00' : n.toFixed(2);
     },
-    selectCategory(id) {
-      this.selectedCategoryId = id;
+    getCategoryName(catId) {
+      const cat = this.categories.find(c => c.id === catId);
+      return cat ? cat.name : '';
     },
-    onSpecChange(keyName, value) {
-      if (!this.selectedCategoryId) return;
-      if (!this.selections[this.selectedCategoryId]) {
-        this.selections[this.selectedCategoryId] = {};
+    getSpecsByCategoryId(catId) {
+      const list = this.specsByCategory[catId] || [];
+      return list.map(s => ({
+        ...s,
+        values: Array.isArray(s.values) ? s.values.map(v => typeof v === 'object' && v && 'label' in v ? v : { label: String(v), price: 0 }) : []
+      }));
+    },
+    toggleCategory(id) {
+      const idx = this.selectedCategoryIds.indexOf(id);
+      if (idx === -1) {
+        this.selectedCategoryIds.push(id);
+      } else {
+        this.selectedCategoryIds.splice(idx, 1);
       }
-      this.selections[this.selectedCategoryId][keyName] = value;
+      localStorage.setItem(SELECTED_IDS_KEY, JSON.stringify(this.selectedCategoryIds));
+    },
+    onSpecChange(catId, keyName, value) {
+      if (!this.selections[catId]) {
+        this.selections[catId] = {};
+      }
+      this.selections[catId][keyName] = value;
       this.saveSelections();
     },
     saveSelections() {
       localStorage.setItem(SELECTION_KEY, JSON.stringify(this.selections));
     },
     clearSelections() {
-      if (this.selectedCategoryId) {
-        this.selections[this.selectedCategoryId] = {};
+      for (const catId of this.selectedCategoryIds) {
+        this.selections[catId] = {};
       }
       this.saveSelections();
     }
@@ -152,8 +184,10 @@ export default {
     this.categories = categories || [];
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
-    if (!this.selectedCategoryId && this.categories.length > 0) {
-      this.selectedCategoryId = this.categories[0].id;
+    const ids = loadSelectedIds();
+    this.selectedCategoryIds = ids.filter(id => this.categories.some(c => c.id === id));
+    if (this.selectedCategoryIds.length !== ids.length) {
+      localStorage.setItem(SELECTED_IDS_KEY, JSON.stringify(this.selectedCategoryIds));
     }
   },
   activated() {
@@ -161,9 +195,8 @@ export default {
     this.categories = categories || [];
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
-    if (!this.selectedCategoryId && this.categories.length > 0) {
-      this.selectedCategoryId = this.categories[0].id;
-    }
+    const ids = loadSelectedIds();
+    this.selectedCategoryIds = ids.filter(id => this.categories.some(c => c.id === id));
   }
 };
 </script>
@@ -171,7 +204,7 @@ export default {
 <style scoped>
 .sales-page {
   padding: 1rem;
-  max-width: 480px;
+  max-width: 720px;
   margin: 0 auto;
   text-align: left;
 }
@@ -187,36 +220,57 @@ h1 {
 .section {
   margin-bottom: 1.25rem;
 }
-.category-tabs {
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+}
+.category-tile {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.tab {
-  padding: 0.5rem 1rem;
-  background: #e0e0e0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.tab.active {
-  background: #2196f3;
-  color: #fff;
-}
-.tab {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
   gap: 0.4rem;
+  padding: 0.75rem 0.5rem;
+  background: #e0e0e0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.category-tile:hover {
+  background: #d0d0d0;
+}
+.category-tile.active {
+  background: #bbdefb;
+  border-color: #2196f3;
+  color: #1565c0;
 }
 .cat-thumb {
-  width: 28px;
-  height: 28px;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
   flex-shrink: 0;
 }
-.tab-name {
-  flex: 0 0 auto;
+.tile-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  word-break: break-all;
+}
+.category-form {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fafafa;
+}
+.category-form-title {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+.summary {
+  margin-top: 1rem;
 }
 .form {
   display: flex;
