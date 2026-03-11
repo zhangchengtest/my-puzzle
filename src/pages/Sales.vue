@@ -77,12 +77,8 @@
       </section>
       <p v-else-if="activeCategoryId" class="empty-hint">「{{ getCategoryName(activeCategoryId) }}」暂无规格配置。</p>
 
-      <section v-if="cartItems.length > 0" class="section summary">
-        <div v-if="totalPrice !== null" class="total-row">
-          <span class="total-label">当前合计</span>
-          <span class="total-price">￥{{ formatPrice(totalPrice) }}</span>
-        </div>
-        <button v-if="hasSelection" class="btn-clear" @click="clearSelections">清空选择</button>
+      <section v-if="activeCategoryId && canAddToCart" class="section summary">
+        <button type="button" class="btn-add-cart" @click="addToCart">添加到购物车</button>
       </section>
         </main>
       </div>
@@ -93,12 +89,12 @@
     <button
       type="button"
       class="cart-trigger"
-      :class="{ 'has-items': cartItems.length > 0 }"
+      :class="{ 'has-items': cartLines.length > 0 }"
       @click="drawerOpen = true"
       title="购物车"
     >
       <span class="cart-icon">🛒</span>
-      <span v-if="cartItems.length > 0" class="cart-badge">{{ cartItems.length }}</span>
+      <span v-if="cartLines.length > 0" class="cart-badge">{{ cartLines.length }}</span>
     </button>
 
     <!-- 右侧抽屉：购物车 -->
@@ -109,17 +105,17 @@
         <button type="button" class="drawer-close" @click="drawerOpen = false">×</button>
       </div>
       <div class="drawer-body">
-        <template v-if="cartItems.length === 0">
+        <template v-if="cartLines.length === 0">
           <p class="cart-empty">暂无已选商品</p>
         </template>
         <template v-else>
           <div class="cart-grid">
-            <div v-for="(block, idx) in cartItems" :key="block.catId + '-' + idx" class="cart-card">
+            <div v-for="block in cartLines" :key="block.lineId" class="cart-card">
               <div class="cart-card-head">
                 <img v-if="block.categoryImage" :src="block.categoryImage" class="cart-card-img" alt="" />
                 <span v-else class="cart-card-noimg">图</span>
                 <span class="cart-card-name">{{ block.categoryName }}</span>
-                <button type="button" class="cart-card-remove" title="删除" @click="removeCartItem(block.catId)">×</button>
+                <button type="button" class="cart-card-remove" title="删除" @click="removeCartLine(block.lineId)">×</button>
               </div>
               <ul class="cart-card-specs">
                 <li v-for="item in block.items" :key="item.keyName">
@@ -132,7 +128,7 @@
           </div>
           <div class="cart-total-row">
             <span class="cart-total-label">累计总价</span>
-            <span class="cart-total-price">￥{{ formatPrice(totalPrice || 0) }}</span>
+            <span class="cart-total-price">￥{{ formatPrice(cartTotalPrice) }}</span>
           </div>
         </template>
       </div>
@@ -143,6 +139,7 @@
 <script>
 const CONFIG_KEY = 'furniture_config';
 const SELECTION_KEY = 'sales_selection';
+const CART_LINES_KEY = 'sales_cart_lines';
 
 function loadConfig() {
   try {
@@ -170,6 +167,17 @@ function loadSelections() {
   }
 }
 
+function loadCartLines() {
+  try {
+    const raw = localStorage.getItem(CART_LINES_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
 export default {
   name: 'Sales',
   data() {
@@ -186,6 +194,7 @@ export default {
       selectedGroupId: null,
       activeCategoryId: null,
       selections: loadSelections(),
+      cartLines: loadCartLines(),
       drawerOpen: false,
       searchText: ''
     };
@@ -197,61 +206,20 @@ export default {
       if (!q) return base;
       return base.filter(c => (c.name || '').toLowerCase().includes(q));
     },
-    cartItems() {
-      const list = [];
-      const catIdsWithSelection = new Set();
-      Object.keys(this.selections).forEach(catId => {
-        const sel = this.selections[catId];
-        if (sel && Object.values(sel).some(Boolean)) catIdsWithSelection.add(catId);
-      });
-      for (const catId of catIdsWithSelection) {
-        const sel = this.selections[catId] || {};
-        const specs = this.getSpecsByCategoryId(catId);
-        const items = [];
-        let subtotal = 0;
-        for (const spec of specs) {
-          const chosen = sel[spec.keyName];
-          if (!chosen) continue;
-          const opt = (spec.values || []).find(v => v.label === chosen);
-          if (opt) {
-            const price = Number(opt.price) || 0;
-            items.push({ keyName: spec.keyName, chosenLabel: chosen, price });
-            subtotal += price;
-          }
-        }
-        if (items.length > 0) {
-          const cat = this.categories.find(c => c.id === catId);
-          list.push({
-            catId,
-            categoryName: cat ? cat.name : '',
-            categoryImage: cat ? cat.image : '',
-            items,
-            subtotal
-          });
-        }
+    canAddToCart() {
+      if (!this.activeCategoryId) return false;
+      const catId = this.activeCategoryId;
+      const sel = this.selections[catId] || {};
+      const specs = this.getSpecsByCategoryId(catId);
+      for (const spec of specs) {
+        const chosen = sel[spec.keyName];
+        if (chosen) return true;
       }
-      return list;
+      return false;
     },
-    hasSelection() {
-      return Object.keys(this.selections).some(catId => {
-        const sel = this.selections[catId];
-        return sel && Object.values(sel).some(Boolean);
-      });
+    cartTotalPrice() {
+      return this.cartLines.reduce((sum, line) => sum + (Number(line.subtotal) || 0), 0);
     },
-    totalPrice() {
-      let total = 0;
-      for (const catId of Object.keys(this.selections || {})) {
-        const specs = this.getSpecsByCategoryId(catId);
-        const sel = this.selections[catId] || {};
-        for (const spec of specs) {
-          const chosen = sel[spec.keyName];
-          if (!chosen) continue;
-          const opt = (spec.values || []).find(v => v.label === chosen);
-          if (opt) total += Number(opt.price) || 0;
-        }
-      }
-      return total;
-    }
   },
   methods: {
     selectCategory(id) {
@@ -287,13 +255,42 @@ export default {
     saveSelections() {
       localStorage.setItem(SELECTION_KEY, JSON.stringify(this.selections));
     },
-    clearSelections() {
-      this.selections = {};
-      this.saveSelections();
+    addToCart() {
+      if (!this.activeCategoryId || !this.canAddToCart) return;
+      const catId = this.activeCategoryId;
+      const sel = this.selections[catId] || {};
+      const specs = this.getSpecsByCategoryId(catId);
+      const items = [];
+      let subtotal = 0;
+      for (const spec of specs) {
+        const chosen = sel[spec.keyName];
+        if (!chosen) continue;
+        const opt = (spec.values || []).find(v => v.label === chosen);
+        if (opt) {
+          const price = Number(opt.price) || 0;
+          items.push({ keyName: spec.keyName, chosenLabel: chosen, price });
+          subtotal += price;
+        }
+      }
+      if (items.length === 0) return;
+      const cat = this.categories.find(c => c.id === catId);
+      this.cartLines.push({
+        lineId: 'line_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        catId,
+        categoryName: cat ? cat.name : '',
+        categoryImage: cat ? cat.image : '',
+        items,
+        subtotal
+      });
+      this.saveCartLines();
+      this.drawerOpen = true;
     },
-    removeCartItem(catId) {
-      this.selections[catId] = {};
-      this.saveSelections();
+    saveCartLines() {
+      localStorage.setItem(CART_LINES_KEY, JSON.stringify(this.cartLines));
+    },
+    removeCartLine(lineId) {
+      this.cartLines = this.cartLines.filter(l => l.lineId !== lineId);
+      this.saveCartLines();
     }
   },
   mounted() {
@@ -307,6 +304,7 @@ export default {
     }));
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
+    this.cartLines = loadCartLines();
     this.selectedGroupId = this.groups[0]?.id || null;
     const firstCat = this.filteredCategories[0];
     this.activeCategoryId = firstCat ? firstCat.id : null;
@@ -322,6 +320,7 @@ export default {
     }));
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
+    this.cartLines = loadCartLines();
     if (!this.selectedGroupId) this.selectedGroupId = this.groups[0]?.id || null;
     if (!this.activeCategoryId || !this.filteredCategories.some(c => c.id === this.activeCategoryId)) {
       const firstCat = this.filteredCategories[0];
@@ -737,6 +736,20 @@ h1 {
 }
 .btn-clear:hover {
   background: #f57c00;
+}
+.btn-add-cart {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.btn-add-cart:hover {
+  background: #43a047;
 }
 .empty {
   padding: 0.5rem 0;
