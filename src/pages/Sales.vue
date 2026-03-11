@@ -401,7 +401,7 @@ export default {
 }
 .cart-trigger {
   position: fixed;
-  top: 1rem;
+  bottom: 1rem;
   right: 1rem;
   z-index: 100;
   width: 48px;
@@ -739,13 +739,13 @@ h1 {
   background: #f57c00;
 }
 .empty {
-  padding: 2rem;
-  text-align: center;
+  padding: 0.5rem 0;
+  text-align: left;
   color: #666;
 }
 .empty a {
   color: #646cff;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   display: inline-block;
 }
 .empty-hint {
