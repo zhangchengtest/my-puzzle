@@ -10,39 +10,42 @@
     </div>
 
     <template v-else>
-      <!-- 分组 -->
-      <section class="section">
-        <label class="field-label">分组</label>
-        <div class="group-tabs">
-          <button
-            v-for="g in groups"
-            :key="g.id"
-            type="button"
-            :class="['group-tab', { active: selectedGroupId === g.id }]"
-            @click="selectGroup(g.id)"
-          >
-            {{ g.name }}
-          </button>
-        </div>
-        <p v-if="groups.length === 0" class="empty-hint">暂无分组，请先去「分组管理」添加。</p>
-      </section>
+      <div class="content">
+        <!-- 左侧分组 -->
+        <aside class="sidebar">
+          <div class="sidebar-title">分组</div>
+          <div class="group-tabs">
+            <button
+              v-for="g in groups"
+              :key="g.id"
+              type="button"
+              :class="['group-tab', { active: selectedGroupId === g.id }]"
+              @click="selectGroup(g.id)"
+            >
+              {{ g.name }}
+            </button>
+          </div>
+          <p v-if="groups.length === 0" class="empty-hint">暂无分组，请先去「分组管理」添加。</p>
+        </aside>
 
-      <!-- 产品（平铺，点击哪个就展示哪个的属性） -->
-      <section class="section">
-        <label class="field-label">产品（点击展示该产品规格）</label>
-        <div class="category-grid">
-          <button
-            v-for="cat in filteredCategories"
-            :key="cat.id"
-            type="button"
-            :class="['category-tile', { active: activeCategoryId === cat.id }]"
-            @click="selectCategory(cat.id)"
-          >
-            <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
-            <span class="tile-name">{{ cat.name }}</span>
-          </button>
-        </div>
-      </section>
+        <!-- 右侧内容 -->
+        <main class="main">
+          <!-- 产品（平铺，点击哪个就展示哪个的属性） -->
+          <section class="section">
+            <label class="field-label">产品（点击展示该产品规格）</label>
+            <div class="category-grid">
+              <button
+                v-for="cat in filteredCategories"
+                :key="cat.id"
+                type="button"
+                :class="['category-tile', { active: activeCategoryId === cat.id }]"
+                @click="selectCategory(cat.id)"
+              >
+                <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
+                <span class="tile-name">{{ cat.name }}</span>
+              </button>
+            </div>
+          </section>
 
       <!-- 仅展示当前选中分类的规格 -->
       <section v-if="activeCategoryId && getSpecsByCategoryId(activeCategoryId).length > 0" class="section form category-form">
@@ -74,6 +77,8 @@
         </div>
         <button v-if="hasSelection" class="btn-clear" @click="clearSelections">清空选择</button>
       </section>
+        </main>
+      </div>
     </template>
     </div>
 
@@ -327,6 +332,32 @@ export default {
 .main-wrap {
   padding-right: 3rem;
 }
+.content {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.sidebar {
+  width: 180px;
+  flex: 0 0 180px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafafa;
+  padding: 0.75rem;
+  position: sticky;
+  top: 0.75rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+}
+.sidebar-title {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .cart-trigger {
   position: fixed;
   top: 1rem;
@@ -569,6 +600,17 @@ h1 {
   border-color: #2196f3;
   color: #1565c0;
 }
+.sidebar .group-tabs {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+.sidebar .group-tab {
+  width: 100%;
+  text-align: left;
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+}
 .category-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -685,5 +727,25 @@ h1 {
   font-size: 1.15rem;
   color: #2e7d32;
   font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .content {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: auto;
+    flex: none;
+    position: static;
+    max-height: none;
+  }
+  .sidebar .group-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .sidebar .group-tab {
+    width: auto;
+    border-radius: 999px;
+  }
 }
 </style>
