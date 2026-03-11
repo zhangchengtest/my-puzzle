@@ -1,24 +1,38 @@
 <template>
   <div class="furniture-manage">
     <h1>家具管理</h1>
-    <p class="tip">先添加一级菜单（如桌子、椅子、沙发），选中后再为该分类配置规格 key-value。</p>
+    <p class="tip">先添加分组（产品上层分类），再在分组下添加产品（如桌子、椅子、沙发），最后配置规格 key-value。</p>
 
-    <!-- 一级菜单 -->
+    <!-- 分组 -->
     <section class="section">
-      <h2>一级菜单</h2>
+      <h2>分组</h2>
+      <div class="group-row">
+        <label class="group-label">选择分组</label>
+        <select class="group-select" :value="selectedGroupId" @change="onSelectGroup($event.target.value)">
+          <option v-for="g in groups" :key="g.id" :value="g.id">{{ g.name }}</option>
+        </select>
+      </div>
+      <p v-if="groups.length === 0" class="empty-hint">
+        暂无分组，请先去「FurnitureGroupManage」页面添加分组。
+      </p>
+    </section>
+
+    <!-- 产品 -->
+    <section v-if="selectedGroupId" class="section">
+      <h2>产品</h2>
       <div class="add-key-row">
-        <input v-model="newCategory" type="text" placeholder="输入分类名（如：桌子、椅子、沙发）" class="key-input" />
-        <button class="btn-add" @click="addCategory">添加分类</button>
+        <input v-model="newCategory" type="text" placeholder="输入产品名（如：桌子、椅子、沙发）" class="key-input" />
+        <button class="btn-add" @click="addCategory">添加产品</button>
       </div>
       <div class="category-tabs">
         <span
-          v-for="(cat, index) in categories"
+          v-for="cat in filteredCategories"
           :key="cat.id"
           :class="['tab-wrap', { active: selectedCategoryId === cat.id }]"
         >
           <img v-if="cat.image" :src="cat.image" class="cat-thumb" alt="" />
           <button type="button" class="tab" @click="selectedCategoryId = cat.id">{{ cat.name }}</button>
-          <button type="button" class="tab-del" @click.stop="removeCategory(index)" title="删除分类">×</button>
+          <button type="button" class="tab-del" @click.stop="removeCategory(cat.id)" title="删除产品">×</button>
         </span>
       </div>
       <!-- 当前分类图片 -->
@@ -37,7 +51,7 @@
           <span class="file-hint">或选择本地图片上传</span>
         </div>
       </div>
-      <p v-if="categories.length === 0" class="empty-hint">请先添加一级菜单。</p>
+      <p v-if="filteredCategories.length === 0" class="empty-hint">该分组下暂无产品，请先添加。</p>
     </section>
 
     <!-- 当前分类下的规格 key-value -->
@@ -92,17 +106,18 @@ const STORAGE_KEY = 'furniture_config';
 function loadFromStorage() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { categories: [], specsByCategory: {} };
+    if (!raw) return { groups: [], categories: [], specsByCategory: {} };
     const data = JSON.parse(raw);
     if (Array.isArray(data)) {
-      return { categories: [], specsByCategory: {} };
+      return { groups: [], categories: [], specsByCategory: {} };
     }
     return {
+      groups: Array.isArray(data.groups) ? data.groups : [],
       categories: Array.isArray(data.categories) ? data.categories : [],
       specsByCategory: data.specsByCategory && typeof data.specsByCategory === 'object' ? data.specsByCategory : {}
     };
   } catch {
-    return { categories: [], specsByCategory: {} };
+    return { groups: [], categories: [], specsByCategory: {} };
   }
 }
 
@@ -123,11 +138,20 @@ function normalizeValues(arr) {
 export default {
   name: 'FurnitureManage',
   data() {
-    const { categories, specsByCategory } = loadFromStorage();
+    const { groups, categories, specsByCategory } = loadFromStorage();
+    const grpList = (groups || []).map((g, i) => ({
+      id: g.id || 'grp_' + Date.now() + '_' + i,
+      name: g.name || ''
+    }));
+    if (grpList.length === 0) {
+      grpList.push({ id: 'grp_default', name: '默认分组' });
+    }
+
     const cats = (categories || []).map((c, i) => ({
       id: c.id || 'cat_' + Date.now() + '_' + i,
       name: c.name || '',
-      image: c.image || ''
+      image: c.image || '',
+      groupId: c.groupId || grpList[0].id
     }));
     const specs = {};
     for (const [cid, list] of Object.entries(specsByCategory || {})) {
@@ -138,9 +162,11 @@ export default {
       }));
     }
     return {
+      groups: grpList,
       categories: cats,
       specsByCategory: specs,
-      selectedCategoryId: cats[0]?.id || null,
+      selectedGroupId: grpList[0]?.id || null,
+      selectedCategoryId: cats.find(c => c.groupId === grpList[0]?.id)?.id || null,
       newCategory: '',
       newKey: '',
       newValueInput: {},
@@ -149,6 +175,10 @@ export default {
     };
   },
   computed: {
+    filteredCategories() {
+      if (!this.selectedGroupId) return [];
+      return this.categories.filter(c => c.groupId === this.selectedGroupId);
+    },
     currentCategory() {
       if (!this.selectedCategoryId) return null;
       return this.categories.find(c => c.id === this.selectedCategoryId) || null;
@@ -163,15 +193,21 @@ export default {
     }
   },
   methods: {
+    onSelectGroup(groupId) {
+      this.selectedGroupId = groupId;
+      if (this.selectedCategoryId && this.filteredCategories.some(c => c.id === this.selectedCategoryId)) return;
+      this.selectedCategoryId = this.filteredCategories[0]?.id || null;
+    },
     addCategory() {
+      if (!this.selectedGroupId) return;
       const name = (this.newCategory || '').trim();
       if (!name) return;
-      if (this.categories.some(c => c.name === name)) {
+      if (this.categories.some(c => c.groupId === this.selectedGroupId && c.name === name)) {
         alert('该分类已存在');
         return;
       }
       const id = 'cat_' + Date.now();
-      this.categories.push({ id, name, image: '' });
+      this.categories.push({ id, name, image: '', groupId: this.selectedGroupId });
       if (!this.specsByCategory[id]) this.specsByCategory[id] = [];
       this.newCategory = '';
       this.selectedCategoryId = id;
@@ -200,12 +236,14 @@ export default {
       reader.readAsDataURL(file);
       e.target.value = '';
     },
-    removeCategory(index) {
+    removeCategory(catId) {
+      const index = this.categories.findIndex(c => c.id === catId);
+      if (index === -1) return;
       const cat = this.categories[index];
       this.categories.splice(index, 1);
       delete this.specsByCategory[cat.id];
       if (this.selectedCategoryId === cat.id) {
-        this.selectedCategoryId = this.categories[0]?.id || null;
+        this.selectedCategoryId = this.filteredCategories[0]?.id || null;
       }
       this.save();
     },
@@ -257,7 +295,8 @@ export default {
     },
     save() {
       const state = {
-        categories: this.categories.map(c => ({ id: c.id, name: c.name, image: c.image || '' })),
+        groups: this.groups.map(g => ({ id: g.id, name: g.name })),
+        categories: this.categories.map(c => ({ id: c.id, name: c.name, image: c.image || '', groupId: c.groupId || '' })),
         specsByCategory: {}
       };
       for (const [cid, list] of Object.entries(this.specsByCategory)) {
@@ -295,6 +334,24 @@ h1 {
 .section h2 {
   font-size: 1.1rem;
   margin-bottom: 0.75rem;
+}
+.group-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.group-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.group-select {
+  min-width: 220px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #fff;
 }
 .add-key-row {
   display: flex;

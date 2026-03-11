@@ -2,20 +2,37 @@
   <div class="sales-page">
     <div class="main-wrap">
       <h1>销售</h1>
-      <p class="tip">先选一级菜单（如桌子、椅子、沙发），再选该分类下的规格。</p>
+      <p class="tip">先选分组，再选产品（如桌子、椅子、沙发），再选该产品的规格。</p>
 
-      <div v-if="categories.length === 0" class="empty">
-      <p>暂无配置，请先在「家具管理」添加一级菜单和规格。</p>
+      <div v-if="groups.length === 0 && categories.length === 0" class="empty">
+      <p>暂无配置，请先在「家具管理」添加产品和规格。</p>
       <router-link to="/furnituremanage">去家具管理</router-link>
     </div>
 
     <template v-else>
-      <!-- 一级菜单（平铺，点击哪个就展示哪个的属性） -->
+      <!-- 分组 -->
       <section class="section">
-        <label class="field-label">一级菜单（点击展示该分类规格）</label>
+        <label class="field-label">分组</label>
+        <div class="group-tabs">
+          <button
+            v-for="g in groups"
+            :key="g.id"
+            type="button"
+            :class="['group-tab', { active: selectedGroupId === g.id }]"
+            @click="selectGroup(g.id)"
+          >
+            {{ g.name }}
+          </button>
+        </div>
+        <p v-if="groups.length === 0" class="empty-hint">暂无分组，请先去「分组管理」添加。</p>
+      </section>
+
+      <!-- 产品（平铺，点击哪个就展示哪个的属性） -->
+      <section class="section">
+        <label class="field-label">产品（点击展示该产品规格）</label>
         <div class="category-grid">
           <button
-            v-for="cat in categories"
+            v-for="cat in filteredCategories"
             :key="cat.id"
             type="button"
             :class="['category-tile', { active: activeCategoryId === cat.id }]"
@@ -118,15 +135,16 @@ const SELECTION_KEY = 'sales_selection';
 function loadConfig() {
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
-    if (!raw) return { categories: [], specsByCategory: {} };
+    if (!raw) return { groups: [], categories: [], specsByCategory: {} };
     const data = JSON.parse(raw);
-    if (Array.isArray(data)) return { categories: [], specsByCategory: {} };
+    if (Array.isArray(data)) return { groups: [], categories: [], specsByCategory: {} };
     return {
+      groups: Array.isArray(data.groups) ? data.groups : [],
       categories: Array.isArray(data.categories) ? data.categories : [],
       specsByCategory: data.specsByCategory && typeof data.specsByCategory === 'object' ? data.specsByCategory : {}
     };
   } catch {
-    return { categories: [], specsByCategory: {} };
+    return { groups: [], categories: [], specsByCategory: {} };
   }
 }
 
@@ -143,16 +161,27 @@ function loadSelections() {
 export default {
   name: 'Sales',
   data() {
-    const { categories, specsByCategory } = loadConfig();
+    const { groups, categories, specsByCategory } = loadConfig();
     return {
-      categories: categories || [],
+      groups: (groups || []).map((g, i) => ({ id: g.id || 'grp_' + Date.now() + '_' + i, name: g.name || '' })),
+      categories: (categories || []).map((c, i) => ({
+        id: c.id || 'cat_' + Date.now() + '_' + i,
+        name: c.name || '',
+        image: c.image || '',
+        groupId: c.groupId || ''
+      })),
       specsByCategory: specsByCategory || {},
+      selectedGroupId: null,
       activeCategoryId: null,
       selections: loadSelections(),
       drawerOpen: false
     };
   },
   computed: {
+    filteredCategories() {
+      if (!this.selectedGroupId) return this.categories;
+      return this.categories.filter(c => c.groupId === this.selectedGroupId);
+    },
     cartItems() {
       const list = [];
       const catIdsWithSelection = new Set();
@@ -213,6 +242,11 @@ export default {
     selectCategory(id) {
       this.activeCategoryId = id;
     },
+    selectGroup(id) {
+      this.selectedGroupId = id;
+      const firstCat = this.filteredCategories[0];
+      this.activeCategoryId = firstCat ? firstCat.id : null;
+    },
     formatPrice(p) {
       const n = Number(p);
       return isNaN(n) ? '0.00' : n.toFixed(2);
@@ -248,16 +282,36 @@ export default {
     }
   },
   mounted() {
-    const { categories, specsByCategory } = loadConfig();
-    this.categories = categories || [];
+    const { groups, categories, specsByCategory } = loadConfig();
+    this.groups = (groups || []).map((g, i) => ({ id: g.id || 'grp_' + Date.now() + '_' + i, name: g.name || '' }));
+    this.categories = (categories || []).map((c, i) => ({
+      id: c.id || 'cat_' + Date.now() + '_' + i,
+      name: c.name || '',
+      image: c.image || '',
+      groupId: c.groupId || ''
+    }));
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
+    this.selectedGroupId = this.groups[0]?.id || null;
+    const firstCat = this.filteredCategories[0];
+    this.activeCategoryId = firstCat ? firstCat.id : null;
   },
   activated() {
-    const { categories, specsByCategory } = loadConfig();
-    this.categories = categories || [];
+    const { groups, categories, specsByCategory } = loadConfig();
+    this.groups = (groups || []).map((g, i) => ({ id: g.id || 'grp_' + Date.now() + '_' + i, name: g.name || '' }));
+    this.categories = (categories || []).map((c, i) => ({
+      id: c.id || 'cat_' + Date.now() + '_' + i,
+      name: c.name || '',
+      image: c.image || '',
+      groupId: c.groupId || ''
+    }));
     this.specsByCategory = specsByCategory || {};
     this.selections = loadSelections();
+    if (!this.selectedGroupId) this.selectedGroupId = this.groups[0]?.id || null;
+    if (!this.activeCategoryId || !this.filteredCategories.some(c => c.id === this.activeCategoryId)) {
+      const firstCat = this.filteredCategories[0];
+      this.activeCategoryId = firstCat ? firstCat.id : null;
+    }
   }
 };
 </script>
@@ -497,6 +551,23 @@ h1 {
 }
 .section {
   margin-bottom: 1.25rem;
+}
+.group-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.group-tab {
+  padding: 0.45rem 0.9rem;
+  background: #eee;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.group-tab.active {
+  background: #bbdefb;
+  border-color: #2196f3;
+  color: #1565c0;
 }
 .category-grid {
   display: grid;
