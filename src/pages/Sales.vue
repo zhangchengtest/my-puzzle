@@ -1,19 +1,26 @@
 <template>
   <div class="sales-page">
     <div class="main-wrap">
-      <h1>销售</h1>
-      <p class="tip">先选分组，再选产品（如桌子、椅子、沙发），再选该产品的规格。</p>
+      <div class="search-row">
+        <input
+          v-model.trim="searchText"
+          class="search-input"
+          type="text"
+          placeholder="搜索…"
+          autocomplete="off"
+        />
+        <button v-if="searchText" type="button" class="search-clear" @click="searchText = ''">×</button>
+      </div>
 
       <div v-if="groups.length === 0 && categories.length === 0" class="empty">
-      <p>暂无配置，请先在「家具管理」添加产品和规格。</p>
-      <router-link to="/furnituremanage">去家具管理</router-link>
+      <router-link to="/furnituremanage">去配置</router-link>
     </div>
 
     <template v-else>
       <div class="content">
-        <!-- 左侧分组 -->
+        <!-- 左侧 -->
         <aside class="sidebar">
-          <div class="sidebar-title">分组</div>
+          <div class="sidebar-title">菜单</div>
           <div class="group-tabs">
             <button
               v-for="g in groups"
@@ -25,14 +32,14 @@
               {{ g.name }}
             </button>
           </div>
-          <p v-if="groups.length === 0" class="empty-hint">暂无分组，请先去「分组管理」添加。</p>
+          <p v-if="groups.length === 0" class="empty-hint">暂无数据</p>
         </aside>
 
         <!-- 右侧内容 -->
         <main class="main">
-          <!-- 产品（平铺，点击哪个就展示哪个的属性） -->
+          <!-- 列表 -->
           <section class="section">
-            <label class="field-label">产品（点击展示该产品规格）</label>
+            <label class="field-label">列表</label>
             <div class="category-grid">
               <button
                 v-for="cat in filteredCategories"
@@ -179,13 +186,16 @@ export default {
       selectedGroupId: null,
       activeCategoryId: null,
       selections: loadSelections(),
-      drawerOpen: false
+      drawerOpen: false,
+      searchText: ''
     };
   },
   computed: {
     filteredCategories() {
-      if (!this.selectedGroupId) return this.categories;
-      return this.categories.filter(c => c.groupId === this.selectedGroupId);
+      const base = !this.selectedGroupId ? this.categories : this.categories.filter(c => c.groupId === this.selectedGroupId);
+      const q = (this.searchText || '').toLowerCase();
+      if (!q) return base;
+      return base.filter(c => (c.name || '').toLowerCase().includes(q));
     },
     cartItems() {
       const list = [];
@@ -331,6 +341,37 @@ export default {
 }
 .main-wrap {
   padding-right: 3rem;
+}
+.search-row {
+  position: relative;
+  margin: 0.5rem 0 1rem 0;
+}
+.search-input {
+  width: 100%;
+  padding: 0.6rem 2.2rem 0.6rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #fff;
+}
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: #f0f0f0;
+  cursor: pointer;
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.search-clear:hover {
+  background: #e0e0e0;
+  color: #333;
 }
 .content {
   display: flex;
@@ -730,22 +771,38 @@ h1 {
 }
 
 @media (max-width: 720px) {
-  .content {
-    flex-direction: column;
-  }
   .sidebar {
-    width: auto;
-    flex: none;
-    position: static;
-    max-height: none;
+    width: 120px;
+    flex: 0 0 120px;
+    position: sticky;
+    top: 0.5rem;
+    max-height: calc(100vh - 1.5rem);
+    padding: 0.5rem;
   }
   .sidebar .group-tabs {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
   }
   .sidebar .group-tab {
-    width: auto;
-    border-radius: 999px;
+    width: 100%;
+    border-radius: 8px;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  .content {
+    gap: 0.75rem;
+  }
+  .category-grid {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 0.6rem;
+  }
+  .category-tile {
+    padding: 0.6rem 0.4rem;
+  }
+  .cat-thumb {
+    width: 42px;
+    height: 42px;
   }
 }
 </style>
