@@ -20,7 +20,7 @@
       <div class="content">
         <!-- 左侧 -->
         <aside class="sidebar">
-          <div class="sidebar-title">菜单</div>
+        
           <div class="group-tabs">
             <button
               v-for="g in groups"
@@ -39,7 +39,7 @@
         <main class="main">
           <!-- 列表 -->
           <section class="section">
-            <label class="field-label">列表</label>
+            
             <div class="category-grid">
               <button
                 v-for="cat in filteredCategories"
