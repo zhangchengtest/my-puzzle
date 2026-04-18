@@ -51,6 +51,8 @@ const PAD = 60
 const BALL_R = 12
 const POCKET_R = 18
 
+const baulkLineX = PAD + (W - PAD * 2) * 0.22
+
 // 简化关卡：白球 -> 目标球 -> 目标球需要沿 cue->target 方向进入指定球袋
 const cueBall = ref({ x: 304, y: 158 })
 const targetBall = ref({ x: 550, y: 200 })
@@ -222,6 +224,11 @@ function draw() {
     ctx.fill()
   }
 
+  // 斯诺克六彩球点位标记（仅展示标准点位）
+  for (const c of getSnookerColorBalls()) {
+    drawBall(c, c.fill, c.highlight, c.label)
+  }
+
   // 目标球
   drawBall(targetBall.value, '#e85d5d', '#ffb1b1', '目标球')
 
@@ -356,6 +363,22 @@ function getPockets() {
       Math.abs(p.x - selectedPocket.x) < 1e-6 && Math.abs(p.y - selectedPocket.y) < 1e-6
     return { ...p, kind: isTarget ? 'target' : p.kind }
   })
+}
+
+function getSnookerColorBalls() {
+  const centerY = H / 2
+  return [
+    // 开球线（D区）上的三颗
+    { x: baulkLineX, y: centerY - 65, fill: '#f0d43a', highlight: '#fff3ad', label: '黄' },
+    { x: baulkLineX, y: centerY, fill: '#7e4d2a', highlight: '#c49a76', label: '棕' },
+    { x: baulkLineX, y: centerY + 65, fill: '#3bb35d', highlight: '#b8f0c9', label: '绿' },
+    // 中央蓝球
+    { x: W / 2, y: centerY, fill: '#3d7be0', highlight: '#b8d1ff', label: '蓝' },
+    // 粉球点（通常在蓝球与黑球之间）
+    { x: W * 0.66, y: centerY, fill: '#e57db2', highlight: '#ffd3ea', label: '粉' },
+    // 黑球点（靠近顶库）
+    { x: W - PAD - 95, y: centerY, fill: '#1f1f1f', highlight: '#767676', label: '黑' },
+  ]
 }
 
 function pickPocket(point) {
