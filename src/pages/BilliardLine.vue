@@ -21,6 +21,16 @@
       <button type="button" @click="showHint = !showHint">
         {{ showHint ? '隐藏提示' : '显示提示' }}
       </button>
+      <button type="button" :class="{ active: editMode === 'cue' }" @click="toggleEditMode('cue')">
+        {{ editMode === 'cue' ? '取消移动白球' : '移动白球' }}
+      </button>
+      <button
+        type="button"
+        :class="{ active: editMode === 'target' }"
+        @click="toggleEditMode('target')"
+      >
+        {{ editMode === 'target' ? '取消移动目标球' : '移动目标球' }}
+      </button>
       <span class="result" aria-live="polite">{{ resultText }}</span>
     </div>
   </div>
@@ -42,22 +52,23 @@ const BALL_R = 12
 const POCKET_R = 18
 
 // 简化关卡：白球 -> 目标球 -> 目标球需要沿 cue->target 方向进入指定球袋
-const cue0 = { x: 304, y: 158 }
-const target0 = { x: 550, y: 200 }
+const cueBall = ref({ x: 304, y: 158 })
+const targetBall = ref({ x: 550, y: 200 })
 const requiredPocket = { x: W - PAD, y: H / 2 } // 右中袋
 
 const state = ref({
   aiming: false,
   hasAim: false,
   aimDir: { x: 1, y: 0 }, // 归一化
-  aimEnd: { x: cue0.x + 200, y: cue0.y }, // 画线用
+  aimEnd: { x: cueBall.value.x + 200, y: cueBall.value.y }, // 画线用
 })
 
 const showHint = ref(false)
 const resultText = ref('点击白球附近开始瞄准')
+const editMode = ref('none')
 
-const requiredCueToTargetDir = computed(() => normalize(sub(target0, cue0)))
-const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket, target0)))
+const requiredCueToTargetDir = computed(() => normalize(sub(targetBall.value, cueBall.value)))
+const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket, targetBall.value)))
 
 const angleToleranceDeg = 3.0
 const angleToleranceRad = (angleToleranceDeg * Math.PI) / 180
@@ -146,18 +157,16 @@ function updateAimFromPointer(clientX, clientY) {
   const ctx = ctxRef.value
   if (!canvas || !ctx) return
 
-  const rect = canvas.getBoundingClientRect()
-  const scaleX = canvas.width / rect.width
-  const scaleY = canvas.height / rect.height
+  const point = getCanvasPoint(clientX, clientY)
+  if (!point) return
+  const { x: px, y: py } = point
 
-  const px = (clientX - rect.left) * scaleX
-  const py = (clientY - rect.top) * scaleY
-
-  const rawDir = normalize({ x: px - cue0.x, y: py - cue0.y })
+  const cue = cueBall.value
+  const rawDir = normalize({ x: px - cue.x, y: py - cue.y })
   if (!Number.isFinite(rawDir.x) || !Number.isFinite(rawDir.y)) return
 
-  const t = rayBoxIntersectionT(cue0, rawDir)
-  const aimEnd = t ? { x: cue0.x + rawDir.x * t, y: cue0.y + rawDir.y * t } : { x: px, y: py }
+  const t = rayBoxIntersectionT(cue, rawDir)
+  const aimEnd = t ? { x: cue.x + rawDir.x * t, y: cue.y + rawDir.y * t } : { x: px, y: py }
 
   state.value.aimDir = rawDir
   state.value.aimEnd = aimEnd
@@ -166,11 +175,13 @@ function updateAimFromPointer(clientX, clientY) {
 function checkAim() {
   const userDir = normalize(state.value.aimDir)
   const requiredDir = requiredCueToTargetDir.value
+  const cue = cueBall.value
+  const target = targetBall.value
 
   // 1) 线路上是否真的“能撞到”目标球（简化：白球沿线射出，目标球中心距离线段 <= 球半径）
-  const t = rayBoxIntersectionT(cue0, userDir)
+  const t = rayBoxIntersectionT(cue, userDir)
   const segLen = t ?? 0
-  const hitTarget = rayIntersectsCircleSegment(cue0, userDir, segLen, target0, BALL_R)
+  const hitTarget = rayIntersectsCircleSegment(cue, userDir, segLen, target, BALL_R)
 
   // 2) 线路方向是否与“正确进袋方向”对齐（只判断角度）
   const dirOk = hitTarget && angleOk(userDir, requiredDir)
@@ -210,23 +221,24 @@ function draw() {
   }
 
   // 目标球
-  drawBall(target0, '#e85d5d', '#ffb1b1', '目标球')
+  drawBall(targetBall.value, '#e85d5d', '#ffb1b1', '目标球')
 
   // 白球
-  drawBall(cue0, '#f5f5f5', '#bcbcbc', '白球')
+  drawBall(cueBall.value, '#f5f5f5', '#bcbcbc', '白球')
 
   // 画你自己的瞄准线（拖拽后保留）
   if (state.value.aiming || state.value.hasAim) {
+    const cue = cueBall.value
     const userDir = state.value.aimDir
-    const userT = rayBoxIntersectionT(cue0, userDir)
+    const userT = rayBoxIntersectionT(cue, userDir)
     if (userT) {
-      const userEnd = { x: cue0.x + userDir.x * userT, y: cue0.y + userDir.y * userT }
+      const userEnd = { x: cue.x + userDir.x * userT, y: cue.y + userDir.y * userT }
       ctx.save()
       ctx.setLineDash([10, 8])
       ctx.lineWidth = 3
       ctx.strokeStyle = '#4db6ff'
       ctx.beginPath()
-      ctx.moveTo(cue0.x, cue0.y)
+      ctx.moveTo(cue.x, cue.y)
       ctx.lineTo(userEnd.x, userEnd.y)
       ctx.stroke()
       ctx.restore()
@@ -235,16 +247,17 @@ function draw() {
 
   // 画提示线（和用户线并存）
   if (showHint.value) {
+    const cue = cueBall.value
     const hintDir = requiredCueToTargetDir.value
-    const hintT = rayBoxIntersectionT(cue0, hintDir)
+    const hintT = rayBoxIntersectionT(cue, hintDir)
     if (hintT) {
-      const hintEnd = { x: cue0.x + hintDir.x * hintT, y: cue0.y + hintDir.y * hintT }
+      const hintEnd = { x: cue.x + hintDir.x * hintT, y: cue.y + hintDir.y * hintT }
       ctx.save()
       ctx.setLineDash([4, 6])
       ctx.lineWidth = 2
       ctx.strokeStyle = '#ffd166'
       ctx.beginPath()
-      ctx.moveTo(cue0.x, cue0.y)
+      ctx.moveTo(cue.x, cue.y)
       ctx.lineTo(hintEnd.x, hintEnd.y)
       ctx.stroke()
       ctx.restore()
@@ -314,15 +327,16 @@ function getPockets() {
 }
 
 function onPointerDown(e) {
-  if (!canvasRef.value) return
-  // 只允许点击白球附近开始
-  const rect = canvasRef.value.getBoundingClientRect()
-  const scaleX = canvasRef.value.width / rect.width
-  const scaleY = canvasRef.value.height / rect.height
-  const px = (e.clientX - rect.left) * scaleX
-  const py = (e.clientY - rect.top) * scaleY
+  const point = getCanvasPoint(e.clientX, e.clientY)
+  if (!point) return
 
-  if (dist2({ x: px, y: py }, cue0) > (BALL_R * 1.6) * (BALL_R * 1.6)) return
+  if (editMode.value !== 'none') {
+    placeBall(point.x, point.y, editMode.value)
+    return
+  }
+
+  // 只允许点击白球附近开始
+  if (dist2(point, cueBall.value) > (BALL_R * 1.6) * (BALL_R * 1.6)) return
 
   state.value.aiming = true
   resultText.value = '保持拖拽，松手检查线路'
@@ -345,12 +359,60 @@ function onPointerUp() {
 function reset() {
   state.value.aiming = false
   state.value.hasAim = false
+  editMode.value = 'none'
+  cueBall.value = { x: 304, y: 158 }
+  targetBall.value = { x: 550, y: 200 }
   state.value.aimDir = requiredCueToTargetDir.value
-  const t = rayBoxIntersectionT(cue0, state.value.aimDir)
-  state.value.aimEnd = t ? { x: cue0.x + state.value.aimDir.x * t, y: cue0.y + state.value.aimDir.y * t } : { x: cue0.x + 200, y: cue0.y }
+  const cue = cueBall.value
+  const t = rayBoxIntersectionT(cue, state.value.aimDir)
+  state.value.aimEnd = t ? { x: cue.x + state.value.aimDir.x * t, y: cue.y + state.value.aimDir.y * t } : { x: cue.x + 200, y: cue.y }
   resultText.value = '点击白球附近开始瞄准'
   showHint.value = false
   nextTick(() => draw())
+}
+
+function getCanvasPoint(clientX, clientY) {
+  const canvas = canvasRef.value
+  if (!canvas) return null
+  const rect = canvas.getBoundingClientRect()
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY,
+  }
+}
+
+function clampToTable(x, y) {
+  return {
+    x: clamp(x, PAD + BALL_R, W - PAD - BALL_R),
+    y: clamp(y, PAD + BALL_R, H - PAD - BALL_R),
+  }
+}
+
+function placeBall(x, y, mode) {
+  const pos = clampToTable(x, y)
+  if (mode === 'cue') {
+    cueBall.value = pos
+    resultText.value = '白球位置已更新'
+  } else if (mode === 'target') {
+    targetBall.value = pos
+    resultText.value = '目标球位置已更新'
+  }
+  state.value.hasAim = false
+  state.value.aiming = false
+  state.value.aimDir = requiredCueToTargetDir.value
+}
+
+function toggleEditMode(mode) {
+  editMode.value = editMode.value === mode ? 'none' : mode
+  if (editMode.value === 'cue') {
+    resultText.value = '点击球桌可移动白球'
+  } else if (editMode.value === 'target') {
+    resultText.value = '点击球桌可移动目标球'
+  } else {
+    resultText.value = '点击白球附近开始瞄准'
+  }
 }
 
 onMounted(() => {
@@ -419,6 +481,10 @@ onBeforeUnmount(() => {
   align-items: center;
   margin-top: 12px;
   flex-wrap: wrap;
+}
+
+.active {
+  border-color: #ffd166;
 }
 
 .result {
