@@ -54,7 +54,7 @@ const POCKET_R = 18
 // 简化关卡：白球 -> 目标球 -> 目标球需要沿 cue->target 方向进入指定球袋
 const cueBall = ref({ x: 304, y: 158 })
 const targetBall = ref({ x: 550, y: 200 })
-const requiredPocket = { x: W - PAD, y: H / 2 } // 右中袋
+const requiredPocket = ref({ x: W - PAD, y: PAD }) // 默认右上袋，可点击袋口切换
 
 const state = ref({
   aiming: false,
@@ -68,7 +68,7 @@ const resultText = ref('点击白球附近开始瞄准')
 const editMode = ref('none')
 
 const requiredCueToTargetDir = computed(() => normalize(sub(targetBall.value, cueBall.value)))
-const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket, targetBall.value)))
+const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket.value, targetBall.value)))
 
 const angleToleranceDeg = 3.0
 const angleToleranceRad = (angleToleranceDeg * Math.PI) / 180
@@ -247,17 +247,17 @@ function draw() {
 
   // 画提示线（和用户线并存）
   if (showHint.value) {
-    const cue = cueBall.value
-    const hintDir = requiredCueToTargetDir.value
-    const hintT = rayBoxIntersectionT(cue, hintDir)
+    const target = targetBall.value
+    const hintDir = requiredTargetToPocketDir.value
+    const hintT = rayBoxIntersectionT(target, hintDir)
     if (hintT) {
-      const hintEnd = { x: cue.x + hintDir.x * hintT, y: cue.y + hintDir.y * hintT }
+      const hintEnd = { x: target.x + hintDir.x * hintT, y: target.y + hintDir.y * hintT }
       ctx.save()
       ctx.setLineDash([4, 6])
       ctx.lineWidth = 2
       ctx.strokeStyle = '#ffd166'
       ctx.beginPath()
-      ctx.moveTo(cue.x, cue.y)
+      ctx.moveTo(target.x, target.y)
       ctx.lineTo(hintEnd.x, hintEnd.y)
       ctx.stroke()
       ctx.restore()
@@ -301,12 +301,13 @@ function drawBall(center, fill, highlight, label) {
 }
 
 function getPockets() {
-  const midY = H / 2
+  const selectedPocket = requiredPocket.value
   const leftX = PAD
   const rightX = W - PAD
   const topY = PAD
   const bottomY = H - PAD
 
+  // 斯诺克球桌：上方 3 袋 + 下方 3 袋（共 6 袋）
   const pockets = [
     { x: leftX, y: topY, kind: 'corner' },
     { x: rightX, y: topY, kind: 'corner' },
@@ -314,21 +315,35 @@ function getPockets() {
     { x: rightX, y: bottomY, kind: 'corner' },
     { x: W / 2, y: topY, kind: 'mid' },
     { x: W / 2, y: bottomY, kind: 'mid' },
-    { x: leftX, y: midY, kind: 'mid' },
-    { x: rightX, y: midY, kind: 'mid' },
   ]
 
   // 标记目标球袋
   return pockets.map((p) => {
     const isTarget =
-      Math.abs(p.x - requiredPocket.x) < 1e-6 && Math.abs(p.y - requiredPocket.y) < 1e-6
+      Math.abs(p.x - selectedPocket.x) < 1e-6 && Math.abs(p.y - selectedPocket.y) < 1e-6
     return { ...p, kind: isTarget ? 'target' : p.kind }
   })
+}
+
+function pickPocket(point) {
+  const pockets = getPockets()
+  const hit = pockets.find((p) => dist2(point, p) <= POCKET_R * POCKET_R * 1.2)
+  if (!hit) return false
+  requiredPocket.value = { x: hit.x, y: hit.y }
+  state.value.hasAim = false
+  state.value.aiming = false
+  state.value.aimDir = requiredCueToTargetDir.value
+  resultText.value = '目标袋口已切换，继续瞄准'
+  return true
 }
 
 function onPointerDown(e) {
   const point = getCanvasPoint(e.clientX, e.clientY)
   if (!point) return
+
+  if (editMode.value === 'none' && pickPocket(point)) {
+    return
+  }
 
   if (editMode.value !== 'none') {
     placeBall(point.x, point.y, editMode.value)
@@ -363,6 +378,7 @@ function reset() {
   cueBall.value = { x: 304, y: 158 }
   targetBall.value = { x: 550, y: 200 }
   state.value.aimDir = requiredCueToTargetDir.value
+  requiredPocket.value = { x: W - PAD, y: PAD }
   const cue = cueBall.value
   const t = rayBoxIntersectionT(cue, state.value.aimDir)
   state.value.aimEnd = t ? { x: cue.x + state.value.aimDir.x * t, y: cue.y + state.value.aimDir.y * t } : { x: cue.x + 200, y: cue.y }
