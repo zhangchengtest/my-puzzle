@@ -67,8 +67,15 @@ const showHint = ref(false)
 const resultText = ref('点击白球附近开始瞄准')
 const editMode = ref('none')
 
-const requiredCueToTargetDir = computed(() => normalize(sub(targetBall.value, cueBall.value)))
 const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket.value, targetBall.value)))
+const requiredGhostPoint = computed(() => {
+  const d = requiredTargetToPocketDir.value
+  return {
+    x: targetBall.value.x - d.x * BALL_R * 2,
+    y: targetBall.value.y - d.y * BALL_R * 2,
+  }
+})
+const requiredCueShotDir = computed(() => normalize(sub(requiredGhostPoint.value, cueBall.value)))
 
 const angleToleranceDeg = 3.0
 const angleToleranceRad = (angleToleranceDeg * Math.PI) / 180
@@ -174,21 +181,16 @@ function updateAimFromPointer(clientX, clientY) {
 
 function checkAim() {
   const userDir = normalize(state.value.aimDir)
-  const requiredDir = requiredCueToTargetDir.value
+  const requiredDir = requiredCueShotDir.value
   const cue = cueBall.value
-  const target = targetBall.value
 
-  // 1) 线路上是否真的“能撞到”目标球（简化：白球沿线射出，目标球中心距离线段 <= 球半径）
+  // 1) 击球线是否经过幽灵球点（标准进球瞄准）
   const t = rayBoxIntersectionT(cue, userDir)
   const segLen = t ?? 0
-  const hitTarget = rayIntersectsCircleSegment(cue, userDir, segLen, target, BALL_R)
+  const hitGhost = rayIntersectsCircleSegment(cue, userDir, segLen, requiredGhostPoint.value, BALL_R * 0.8)
 
-  // 2) 线路方向是否与“正确进袋方向”对齐（只判断角度）
-  const dirOk = hitTarget && angleOk(userDir, requiredDir)
-
-  // 3) 进一步校验：目标球走向球袋的方向也要一致（同轴即可）
-  const targetDirOk = angleOk(requiredTargetToPocketDir.value, requiredCueToTargetDir.value)
-  const ok = dirOk && targetDirOk
+  // 2) 线路方向是否与“母球正确出击方向”对齐
+  const ok = hitGhost && angleOk(userDir, requiredDir)
 
   resultText.value = ok ? '正确！目标球会进入指定球袋（判线通过）' : '不对：瞄准方向偏了，目标球进袋失败'
   return ok
@@ -247,21 +249,52 @@ function draw() {
 
   // 画提示线（和用户线并存）
   if (showHint.value) {
+    const cue = cueBall.value
     const target = targetBall.value
-    const hintDir = requiredTargetToPocketDir.value
-    const hintT = rayBoxIntersectionT(target, hintDir)
-    if (hintT) {
-      const hintEnd = { x: target.x + hintDir.x * hintT, y: target.y + hintDir.y * hintT }
+    const ghost = requiredGhostPoint.value
+
+    // A. 母球击球线（主提示线）
+    const cueDir = requiredCueShotDir.value
+    const cueT = rayBoxIntersectionT(cue, cueDir)
+    if (cueT) {
+      const cueEnd = { x: cue.x + cueDir.x * cueT, y: cue.y + cueDir.y * cueT }
       ctx.save()
       ctx.setLineDash([4, 6])
-      ctx.lineWidth = 2
+      ctx.lineWidth = 3
       ctx.strokeStyle = '#ffd166'
       ctx.beginPath()
-      ctx.moveTo(target.x, target.y)
-      ctx.lineTo(hintEnd.x, hintEnd.y)
+      ctx.moveTo(cue.x, cue.y)
+      ctx.lineTo(cueEnd.x, cueEnd.y)
       ctx.stroke()
       ctx.restore()
     }
+
+    // B. 目标球进袋线（辅助参考）
+    const targetDir = requiredTargetToPocketDir.value
+    const targetT = rayBoxIntersectionT(target, targetDir)
+    if (targetT) {
+      const targetEnd = { x: target.x + targetDir.x * targetT, y: target.y + targetDir.y * targetT }
+      ctx.save()
+      ctx.setLineDash([2, 6])
+      ctx.lineWidth = 2
+      ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)'
+      ctx.beginPath()
+      ctx.moveTo(target.x, target.y)
+      ctx.lineTo(targetEnd.x, targetEnd.y)
+      ctx.stroke()
+      ctx.restore()
+    }
+
+    // C. 幽灵球点
+    ctx.save()
+    ctx.fillStyle = 'rgba(255, 209, 102, 0.25)'
+    ctx.strokeStyle = 'rgba(255, 209, 102, 0.9)'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.arc(ghost.x, ghost.y, BALL_R, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.stroke()
+    ctx.restore()
   }
 }
 
@@ -332,7 +365,7 @@ function pickPocket(point) {
   requiredPocket.value = { x: hit.x, y: hit.y }
   state.value.hasAim = false
   state.value.aiming = false
-  state.value.aimDir = requiredCueToTargetDir.value
+  state.value.aimDir = requiredCueShotDir.value
   resultText.value = '目标袋口已切换，继续瞄准'
   return true
 }
@@ -377,7 +410,7 @@ function reset() {
   editMode.value = 'none'
   cueBall.value = { x: 304, y: 158 }
   targetBall.value = { x: 550, y: 200 }
-  state.value.aimDir = requiredCueToTargetDir.value
+  state.value.aimDir = requiredCueShotDir.value
   requiredPocket.value = { x: W - PAD, y: PAD }
   const cue = cueBall.value
   const t = rayBoxIntersectionT(cue, state.value.aimDir)
@@ -417,7 +450,7 @@ function placeBall(x, y, mode) {
   }
   state.value.hasAim = false
   state.value.aiming = false
-  state.value.aimDir = requiredCueToTargetDir.value
+  state.value.aimDir = requiredCueShotDir.value
 }
 
 function toggleEditMode(mode) {
@@ -441,7 +474,7 @@ onMounted(() => {
   ctxRef.value = ctx
 
   // 初始化 aimDir
-  state.value.aimDir = requiredCueToTargetDir.value
+  state.value.aimDir = requiredCueShotDir.value
 
   reset()
 
