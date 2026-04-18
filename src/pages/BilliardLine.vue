@@ -48,6 +48,7 @@ const requiredPocket = { x: W - PAD, y: H / 2 } // 右中袋
 
 const state = ref({
   aiming: false,
+  hasAim: false,
   aimDir: { x: 1, y: 0 }, // 归一化
   aimEnd: { x: cue0.x + 200, y: cue0.y }, // 画线用
 })
@@ -214,26 +215,37 @@ function draw() {
   // 白球
   drawBall(cue0, '#f5f5f5', '#bcbcbc', '白球')
 
-  // 画瞄准线
-  const showLine = state.value.aiming || showHint.value
-  if (showLine) {
-    const origin = cue0
-    let dir = state.value.aimDir
-
-    if (showHint.value && !state.value.aiming) {
-      dir = requiredCueToTargetDir.value
-    }
-
-    const t = rayBoxIntersectionT(origin, dir)
-    if (t) {
-      const end = { x: origin.x + dir.x * t, y: origin.y + dir.y * t }
+  // 画你自己的瞄准线（拖拽后保留）
+  if (state.value.aiming || state.value.hasAim) {
+    const userDir = state.value.aimDir
+    const userT = rayBoxIntersectionT(cue0, userDir)
+    if (userT) {
+      const userEnd = { x: cue0.x + userDir.x * userT, y: cue0.y + userDir.y * userT }
       ctx.save()
       ctx.setLineDash([10, 8])
       ctx.lineWidth = 3
       ctx.strokeStyle = '#4db6ff'
       ctx.beginPath()
-      ctx.moveTo(origin.x, origin.y)
-      ctx.lineTo(end.x, end.y)
+      ctx.moveTo(cue0.x, cue0.y)
+      ctx.lineTo(userEnd.x, userEnd.y)
+      ctx.stroke()
+      ctx.restore()
+    }
+  }
+
+  // 画提示线（和用户线并存）
+  if (showHint.value) {
+    const hintDir = requiredCueToTargetDir.value
+    const hintT = rayBoxIntersectionT(cue0, hintDir)
+    if (hintT) {
+      const hintEnd = { x: cue0.x + hintDir.x * hintT, y: cue0.y + hintDir.y * hintT }
+      ctx.save()
+      ctx.setLineDash([4, 6])
+      ctx.lineWidth = 2
+      ctx.strokeStyle = '#ffd166'
+      ctx.beginPath()
+      ctx.moveTo(cue0.x, cue0.y)
+      ctx.lineTo(hintEnd.x, hintEnd.y)
       ctx.stroke()
       ctx.restore()
     }
@@ -319,17 +331,20 @@ function onPointerDown(e) {
 
 function onPointerMove(e) {
   if (!state.value.aiming) return
+  state.value.hasAim = true
   updateAimFromPointer(e.clientX, e.clientY)
 }
 
 function onPointerUp() {
   if (!state.value.aiming) return
   state.value.aiming = false
+  state.value.hasAim = true
   checkAim()
 }
 
 function reset() {
   state.value.aiming = false
+  state.value.hasAim = false
   state.value.aimDir = requiredCueToTargetDir.value
   const t = rayBoxIntersectionT(cue0, state.value.aimDir)
   state.value.aimEnd = t ? { x: cue0.x + state.value.aimDir.x * t, y: cue0.y + state.value.aimDir.y * t } : { x: cue0.x + 200, y: cue0.y }
