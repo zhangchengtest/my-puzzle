@@ -31,6 +31,9 @@
       >
         {{ editMode === 'target' ? '取消移动目标球' : '移动目标球' }}
       </button>
+      <span v-if="showHint" class="angle-tip">
+        提示夹角：{{ cueTargetPocketAngleDeg.toFixed(1) }}°
+      </span>
       <span class="result" aria-live="polite">{{ resultText }}</span>
     </div>
   </div>
@@ -78,6 +81,14 @@ const requiredGhostPoint = computed(() => {
   }
 })
 const requiredCueShotDir = computed(() => normalize(sub(requiredGhostPoint.value, cueBall.value)))
+const cueToTargetDir = computed(() => normalize(sub(targetBall.value, cueBall.value)))
+const targetToPocketDir = computed(() => normalize(sub(requiredPocket.value, targetBall.value)))
+const cueTargetPocketAngleDeg = computed(() => {
+  const a = cueToTargetDir.value
+  const b = targetToPocketDir.value
+  const cos = clamp(dot(a, b), -1, 1)
+  return (Math.acos(cos) * 180) / Math.PI
+})
 
 const angleToleranceDeg = 3.0
 const angleToleranceRad = (angleToleranceDeg * Math.PI) / 180
@@ -562,6 +573,11 @@ onBeforeUnmount(() => {
 .result {
   padding-left: 8px;
   opacity: 0.95;
+}
+
+.angle-tip {
+  color: #ffd166;
+  font-weight: 600;
 }
 </style>
 
