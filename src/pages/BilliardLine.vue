@@ -31,6 +31,34 @@
       >
         {{ editMode === 'target' ? '取消移动目标球' : '移动目标球' }}
       </button>
+      <div class="color-spots" title="把目标球放到斯诺克彩球标准点位（台面坐标）">
+        <span class="color-spots-label">目标落点</span>
+        <div class="color-spots-row">
+          <button
+            v-for="s in snookerColorSpots"
+            :key="s.id"
+            type="button"
+            class="color-spot-btn"
+            @click="snapTargetToSpot(s)"
+          >
+            {{ s.short }}
+          </button>
+        </div>
+      </div>
+      <div class="cue-nudge" title="每次平移 5 像素（台面坐标）">
+        <span class="cue-nudge-label">白球微调</span>
+        <div class="cue-nudge-grid">
+          <span class="cue-nudge-spacer" />
+          <button type="button" class="cue-nudge-btn" aria-label="白球上移" @click="nudgeCue(0, -1)">↑</button>
+          <span class="cue-nudge-spacer" />
+          <button type="button" class="cue-nudge-btn" aria-label="白球左移" @click="nudgeCue(-1, 0)">←</button>
+          <span class="cue-nudge-center" />
+          <button type="button" class="cue-nudge-btn" aria-label="白球右移" @click="nudgeCue(1, 0)">→</button>
+          <span class="cue-nudge-spacer" />
+          <button type="button" class="cue-nudge-btn" aria-label="白球下移" @click="nudgeCue(0, 1)">↓</button>
+          <span class="cue-nudge-spacer" />
+        </div>
+      </div>
       <span v-if="showHint" class="angle-tip">
         提示夹角：{{ cueTargetPocketAngleDeg.toFixed(1) }}°
       </span>
@@ -53,8 +81,21 @@ const PAD = 60
 
 const BALL_R = 12
 const POCKET_R = 18
+const CUE_NUDGE_STEP = 5
 
 const baulkLineX = PAD + (W - PAD * 2) * 0.22
+
+const snookerColorSpots = (() => {
+  const centerY = H / 2
+  return [
+    { id: 'yellow', short: '黄', label: '黄球点', x: baulkLineX, y: centerY - 65 },
+    { id: 'brown', short: '棕', label: '棕球点', x: baulkLineX, y: centerY },
+    { id: 'green', short: '绿', label: '绿球点', x: baulkLineX, y: centerY + 65 },
+    { id: 'blue', short: '蓝', label: '蓝球点', x: W / 2, y: centerY },
+    { id: 'pink', short: '粉', label: '粉球点', x: W * 0.66, y: centerY },
+    { id: 'black', short: '黑', label: '黑球点', x: W - PAD - 95, y: centerY },
+  ]
+})()
 
 // 简化关卡：白球 -> 目标球 -> 目标球需要沿 cue->target 方向进入指定球袋
 const cueBall = ref({ x: 304, y: 158 })
@@ -440,18 +481,13 @@ function getPockets() {
 }
 
 function getSnookerColorBalls() {
-  const centerY = H / 2
   return [
-    // 开球线（D区）上的三颗
-    { x: baulkLineX, y: centerY - 65, fill: '#f0d43a', highlight: '#fff3ad', label: '黄' },
-    { x: baulkLineX, y: centerY, fill: '#7e4d2a', highlight: '#c49a76', label: '棕' },
-    { x: baulkLineX, y: centerY + 65, fill: '#3bb35d', highlight: '#b8f0c9', label: '绿' },
-    // 中央蓝球
-    { x: W / 2, y: centerY, fill: '#3d7be0', highlight: '#b8d1ff', label: '蓝' },
-    // 粉球点（通常在蓝球与黑球之间）
-    { x: W * 0.66, y: centerY, fill: '#e57db2', highlight: '#ffd3ea', label: '粉' },
-    // 黑球点（靠近顶库）
-    { x: W - PAD - 95, y: centerY, fill: '#1f1f1f', highlight: '#767676', label: '黑' },
+    { x: snookerColorSpots[0].x, y: snookerColorSpots[0].y, fill: '#f0d43a', highlight: '#fff3ad', label: '黄' },
+    { x: snookerColorSpots[1].x, y: snookerColorSpots[1].y, fill: '#7e4d2a', highlight: '#c49a76', label: '棕' },
+    { x: snookerColorSpots[2].x, y: snookerColorSpots[2].y, fill: '#3bb35d', highlight: '#b8f0c9', label: '绿' },
+    { x: snookerColorSpots[3].x, y: snookerColorSpots[3].y, fill: '#3d7be0', highlight: '#b8d1ff', label: '蓝' },
+    { x: snookerColorSpots[4].x, y: snookerColorSpots[4].y, fill: '#e57db2', highlight: '#ffd3ea', label: '粉' },
+    { x: snookerColorSpots[5].x, y: snookerColorSpots[5].y, fill: '#1f1f1f', highlight: '#767676', label: '黑' },
   ]
 }
 
@@ -550,6 +586,27 @@ function placeBall(x, y, mode) {
   state.value.aimDir = requiredCueShotDir.value
 }
 
+function nudgeCue(dx, dy) {
+  const c = cueBall.value
+  const nx = c.x + dx * CUE_NUDGE_STEP
+  const ny = c.y + dy * CUE_NUDGE_STEP
+  cueBall.value = clampToTable(nx, ny)
+  state.value.hasAim = false
+  state.value.aiming = false
+  state.value.aimDir = requiredCueShotDir.value
+  editMode.value = 'none'
+  resultText.value = `白球已平移（步长 ${CUE_NUDGE_STEP}px）`
+}
+
+function snapTargetToSpot(spot) {
+  targetBall.value = clampToTable(spot.x, spot.y)
+  state.value.hasAim = false
+  state.value.aiming = false
+  state.value.aimDir = requiredCueShotDir.value
+  editMode.value = 'none'
+  resultText.value = `目标球已放到：${spot.label}`
+}
+
 function toggleEditMode(mode) {
   editMode.value = editMode.value === mode ? 'none' : mode
   if (editMode.value === 'cue') {
@@ -641,6 +698,80 @@ onBeforeUnmount(() => {
 .angle-tip {
   color: #ffd166;
   font-weight: 600;
+}
+
+.cue-nudge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+.cue-nudge-label {
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.cue-nudge-grid {
+  display: grid;
+  grid-template-columns: 2.4em 2.4em 2.4em;
+  grid-template-rows: 2.4em 2.4em 2.4em;
+  gap: 4px;
+  align-items: center;
+  justify-items: center;
+}
+
+.cue-nudge-btn {
+  width: 2.4em;
+  height: 2.4em;
+  padding: 0;
+  line-height: 1;
+  font-size: 16px;
+}
+
+.cue-nudge-spacer {
+  width: 2.4em;
+  height: 2.4em;
+}
+
+.cue-nudge-center {
+  width: 2.4em;
+  height: 2.4em;
+}
+
+.color-spots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+.color-spots-label {
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.color-spots-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.color-spot-btn {
+  min-width: 2.2em;
+  height: 2.2em;
+  padding: 0 0.35em;
+  line-height: 1;
+  font-size: 14px;
 }
 </style>
 
