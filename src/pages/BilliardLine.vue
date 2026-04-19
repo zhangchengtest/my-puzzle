@@ -338,6 +338,9 @@ function draw() {
       ctx.restore()
     }
 
+    // A2. 切线辅助线：与击球线平行，与母球相切，且（在法向意义上）经过目标球
+    drawCueParallelTangentThroughTarget(ctx, cue, target, cueDir)
+
     // B. 进袋方向线：穿过幽灵球中心，与进球瞄准线在该点相交（目标球→袋口 所在直线）
     const pocketDir = requiredTargetToPocketDir.value
     const tBack = rayBoxIntersectionT(ghost, { x: -pocketDir.x, y: -pocketDir.y })
@@ -374,6 +377,31 @@ function draw() {
     // D. 台面夹角：在幽灵球中心，入射瞄准线 vs 出射进袋线
     drawGhostPottingAngleOnTable(ctx, ghost, cue, target, cueTargetPocketAngleDeg.value)
   }
+}
+
+function drawCueParallelTangentThroughTarget(ctx, cue, target, shotDir) {
+  const d = shotDir
+  const n = { x: -d.y, y: d.x } // 与击球方向垂直的单位法向（|d|=1）
+  const h = dot(n, sub(target, cue)) // 目标球相对击球线的有向距离（带符号）
+  const t = BALL_R - h
+  const p0 = { x: target.x + n.x * t, y: target.y + n.y * t }
+
+  const tPos = rayBoxIntersectionT(p0, d)
+  const tNeg = rayBoxIntersectionT(p0, { x: -d.x, y: -d.y })
+  if (!tPos || !tNeg) return
+
+  const a = { x: p0.x - d.x * tNeg, y: p0.y - d.y * tNeg }
+  const b = { x: p0.x + d.x * tPos, y: p0.y + d.y * tPos }
+
+  ctx.save()
+  ctx.setLineDash([1, 5])
+  ctx.lineWidth = 2
+  ctx.strokeStyle = 'rgba(125, 240, 212, 0.85)'
+  ctx.beginPath()
+  ctx.moveTo(a.x, a.y)
+  ctx.lineTo(b.x, b.y)
+  ctx.stroke()
+  ctx.restore()
 }
 
 function drawGhostPottingAngleOnTable(ctx, ghost, cue, target, angleDeg) {
