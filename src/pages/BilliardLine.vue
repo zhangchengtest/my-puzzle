@@ -21,6 +21,17 @@
       <button type="button" @click="showHint = !showHint">
         {{ showHint ? '隐藏提示' : '显示提示' }}
       </button>
+      <div class="tangent-side" title="切线在击球方向的左侧或右侧（相对前进方向）">
+        <span class="tangent-side-label">切线</span>
+        <div class="seg">
+          <button type="button" class="seg-btn" :class="{ on: tangentSide === 'left' }" @click="tangentSide = 'left'">
+            左
+          </button>
+          <button type="button" class="seg-btn" :class="{ on: tangentSide === 'right' }" @click="tangentSide = 'right'">
+            右
+          </button>
+        </div>
+      </div>
       <button type="button" :class="{ active: editMode === 'cue' }" @click="toggleEditMode('cue')">
         {{ editMode === 'cue' ? '取消移动白球' : '移动白球' }}
       </button>
@@ -112,6 +123,7 @@ const state = ref({
 const showHint = ref(false)
 const resultText = ref('点击白球附近开始瞄准')
 const editMode = ref('none')
+const tangentSide = ref('left')
 
 const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket.value, targetBall.value)))
 const requiredGhostPoint = computed(() => {
@@ -339,7 +351,7 @@ function draw() {
     }
 
     // A2. 切线辅助线：与击球线平行，与母球相切，且（在法向意义上）经过目标球
-    drawCueParallelTangentThroughTarget(ctx, cue, target, cueDir)
+    drawCueParallelTangentThroughTarget(ctx, cue, target, cueDir, tangentSide.value)
 
     // B. 进袋方向线：穿过幽灵球中心，与进球瞄准线在该点相交（目标球→袋口 所在直线）
     const pocketDir = requiredTargetToPocketDir.value
@@ -379,9 +391,10 @@ function draw() {
   }
 }
 
-function drawCueParallelTangentThroughTarget(ctx, cue, target, shotDir) {
+function drawCueParallelTangentThroughTarget(ctx, cue, target, shotDir, side) {
   const d = shotDir
-  const n = { x: -d.y, y: d.x } // 与击球方向垂直的单位法向（|d|=1）
+  const nLeft = { x: -d.y, y: d.x }
+  const n = side === 'right' ? { x: d.y, y: -d.x } : nLeft
   const h = dot(n, sub(target, cue)) // 目标球相对击球线的有向距离（带符号）
   const t = BALL_R - h
   const p0 = { x: target.x + n.x * t, y: target.y + n.y * t }
@@ -578,6 +591,7 @@ function reset() {
   state.value.aimEnd = t ? { x: cue.x + state.value.aimDir.x * t, y: cue.y + state.value.aimDir.y * t } : { x: cue.x + 200, y: cue.y }
   resultText.value = '点击白球附近开始瞄准'
   showHint.value = false
+  tangentSide.value = 'left'
   nextTick(() => draw())
 }
 
@@ -800,6 +814,39 @@ onBeforeUnmount(() => {
   padding: 0 0.35em;
   line-height: 1;
   font-size: 14px;
+}
+
+.tangent-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+.tangent-side-label {
+  font-size: 12px;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.seg {
+  display: flex;
+  gap: 6px;
+}
+
+.seg-btn {
+  min-width: 2.6em;
+  height: 2.2em;
+  padding: 0 0.45em;
+  line-height: 1;
+  font-size: 14px;
+}
+
+.seg-btn.on {
+  border-color: rgba(125, 240, 212, 0.95);
 }
 </style>
 
