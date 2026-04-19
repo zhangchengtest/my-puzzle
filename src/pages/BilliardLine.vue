@@ -81,12 +81,14 @@ const requiredGhostPoint = computed(() => {
   }
 })
 const requiredCueShotDir = computed(() => normalize(sub(requiredGhostPoint.value, cueBall.value)))
-const cueToTargetDir = computed(() => normalize(sub(targetBall.value, cueBall.value)))
-const targetToPocketDir = computed(() => normalize(sub(requiredPocket.value, targetBall.value)))
 const cueTargetPocketAngleDeg = computed(() => {
-  const a = cueToTargetDir.value
-  const b = targetToPocketDir.value
-  const cos = clamp(dot(a, b), -1, 1)
+  const ghost = requiredGhostPoint.value
+  const cue = cueBall.value
+  const target = targetBall.value
+  // 在幽灵球中心读夹角：入射 母球→幽灵球；另一侧沿进袋直线取 幽灵球→目标球（与 目标球→袋口 共线）
+  const incoming = normalize(sub(ghost, cue))
+  const alongPotLine = normalize(sub(target, ghost))
+  const cos = clamp(dot(incoming, alongPotLine), -1, 1)
   return (Math.acos(cos) * 180) / Math.PI
 })
 
@@ -114,6 +116,14 @@ function crossAbs(a, b) {
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n))
+}
+
+function wrapPi(angle) {
+  // wrap to (-pi, pi]
+  let a = angle
+  while (a <= -Math.PI) a += Math.PI * 2
+  while (a > Math.PI) a -= Math.PI * 2
+  return a
 }
 
 function dist2(a, b) {
@@ -277,9 +287,9 @@ function draw() {
     if (cueT) {
       const cueEnd = { x: cue.x + cueDir.x * cueT, y: cue.y + cueDir.y * cueT }
       ctx.save()
-      ctx.setLineDash([4, 6])
-      ctx.lineWidth = 3
-      ctx.strokeStyle = '#ffd166'
+      ctx.setLineDash([8, 6])
+      ctx.lineWidth = 2
+      ctx.strokeStyle = '#c084fc'
       ctx.beginPath()
       ctx.moveTo(cue.x, cue.y)
       ctx.lineTo(cueEnd.x, cueEnd.y)
@@ -287,23 +297,29 @@ function draw() {
       ctx.restore()
     }
 
-    // B. 目标球进袋线（辅助参考）
-    const targetDir = requiredTargetToPocketDir.value
-    const targetT = rayBoxIntersectionT(target, targetDir)
-    if (targetT) {
-      const targetEnd = { x: target.x + targetDir.x * targetT, y: target.y + targetDir.y * targetT }
-      ctx.save()
-      ctx.setLineDash([2, 6])
-      ctx.lineWidth = 2
-      ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)'
-      ctx.beginPath()
-      ctx.moveTo(target.x, target.y)
-      ctx.lineTo(targetEnd.x, targetEnd.y)
-      ctx.stroke()
-      ctx.restore()
+    // B. 进袋方向线：穿过幽灵球中心，与进球瞄准线在该点相交（目标球→袋口 所在直线）
+    const pocketDir = requiredTargetToPocketDir.value
+    const tBack = rayBoxIntersectionT(ghost, { x: -pocketDir.x, y: -pocketDir.y })
+    const tFwd = rayBoxIntersectionT(ghost, pocketDir)
+    ctx.save()
+    ctx.setLineDash([2, 6])
+    ctx.lineWidth = 2
+    ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)'
+    ctx.beginPath()
+    ctx.moveTo(ghost.x, ghost.y)
+    if (tFwd) {
+      const fwdEnd = { x: ghost.x + pocketDir.x * tFwd, y: ghost.y + pocketDir.y * tFwd }
+      ctx.lineTo(fwdEnd.x, fwdEnd.y)
     }
+    ctx.moveTo(ghost.x, ghost.y)
+    if (tBack) {
+      const backEnd = { x: ghost.x - pocketDir.x * tBack, y: ghost.y - pocketDir.y * tBack }
+      ctx.lineTo(backEnd.x, backEnd.y)
+    }
+    ctx.stroke()
+    ctx.restore()
 
-    // C. 幽灵球点
+    // C. 幽灵球点（画在线之上，便于看到“交于幽灵球中心”）
     ctx.save()
     ctx.fillStyle = 'rgba(255, 209, 102, 0.25)'
     ctx.strokeStyle = 'rgba(255, 209, 102, 0.9)'
@@ -313,7 +329,54 @@ function draw() {
     ctx.fill()
     ctx.stroke()
     ctx.restore()
+
+    // D. 台面夹角：在幽灵球中心，入射瞄准线 vs 出射进袋线
+    drawGhostPottingAngleOnTable(ctx, ghost, cue, target, cueTargetPocketAngleDeg.value)
   }
+}
+
+function drawGhostPottingAngleOnTable(ctx, ghost, cue, target, angleDeg) {
+  const incoming = normalize(sub(ghost, cue))
+  const outgoing = normalize(sub(target, ghost))
+  const a0 = Math.atan2(incoming.y, incoming.x)
+  const a1 = Math.atan2(outgoing.y, outgoing.x)
+  const delta = wrapPi(a1 - a0)
+  const absDelta = Math.abs(delta)
+
+  // Canvas 的 arc 默认走“小角/大角”取决于逆时针参数；这里强制走最短角，保证弧线落在两线夹角内侧
+  const anticlockwise = delta > 0
+  const start = a0
+  const end = anticlockwise ? a0 + absDelta : a0 - absDelta
+
+  const arcR = BALL_R + 10
+
+  ctx.save()
+  ctx.setLineDash([])
+  ctx.lineWidth = 2
+  ctx.strokeStyle = 'rgba(255, 209, 102, 0.95)'
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)'
+  ctx.beginPath()
+  ctx.arc(ghost.x, ghost.y, arcR, start, end, anticlockwise)
+  ctx.stroke()
+
+  const bisLen = Math.hypot(incoming.x + outgoing.x, incoming.y + outgoing.y)
+  const bis =
+    bisLen > 1e-6
+      ? { x: (incoming.x + outgoing.x) / bisLen, y: (incoming.y + outgoing.y) / bisLen }
+      : { x: -incoming.y, y: incoming.x }
+  const labelR = arcR + 18
+  const lx = ghost.x + bis.x * labelR
+  const ly = ghost.y + bis.y * labelR
+
+  ctx.font = 'bold 13px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)'
+  ctx.lineWidth = 3
+  const text = `${angleDeg.toFixed(1)}°`
+  ctx.strokeText(text, lx, ly)
+  ctx.fillText(text, lx, ly)
+  ctx.restore()
 }
 
 function drawBall(center, fill, highlight, label) {
