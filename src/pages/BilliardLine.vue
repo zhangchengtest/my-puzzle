@@ -70,10 +70,20 @@
           <span class="cue-nudge-spacer" />
         </div>
       </div>
-      <span v-if="showHint" class="angle-tip">
+      <span v-if="showHint && lineVisibility.hintAngleArc" class="angle-tip">
         提示夹角：{{ cueTargetPocketAngleDeg.toFixed(1) }}°
       </span>
       <span class="result" aria-live="polite">{{ resultText }}</span>
+    </div>
+
+    <div class="overlay-panel">
+      <div class="overlay-title">辅助线显示</div>
+      <div class="overlay-grid">
+        <label v-for="item in overlayLineItems" :key="item.key" class="overlay-item">
+          <input v-model="lineVisibility[item.key]" type="checkbox" />
+          <span class="overlay-name">{{ item.label }}</span>
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -124,6 +134,28 @@ const showHint = ref(false)
 const resultText = ref('点击白球附近开始瞄准')
 const editMode = ref('none')
 const tangentSide = ref('left')
+
+const defaultLineVisibility = {
+  userAimLine: true,
+  userTangentLine: true,
+  hintAimLine: true,
+  hintTangentLine: true,
+  hintPocketLine: true,
+  hintGhostBall: true,
+  hintAngleArc: true,
+}
+
+const lineVisibility = ref({ ...defaultLineVisibility })
+
+const overlayLineItems = [
+  { key: 'userAimLine', label: '我的瞄准线（拖拽）' },
+  { key: 'userTangentLine', label: '我的切线（与瞄准线平行、切母球）' },
+  { key: 'hintAimLine', label: '提示：进球瞄准线（幽灵球）' },
+  { key: 'hintTangentLine', label: '提示：切线（与进球瞄准线平行、切母球）' },
+  { key: 'hintPocketLine', label: '提示：进袋方向线（过幽灵球）' },
+  { key: 'hintGhostBall', label: '提示：幽灵球标记' },
+  { key: 'hintAngleArc', label: '提示：夹角弧线（幽灵球处）' },
+]
 
 const requiredTargetToPocketDir = computed(() => normalize(sub(requiredPocket.value, targetBall.value)))
 const requiredGhostPoint = computed(() => {
@@ -314,7 +346,7 @@ function draw() {
     const cue = cueBall.value
     const userDir = state.value.aimDir
     const userT = rayBoxIntersectionT(cue, userDir)
-    if (userT) {
+    if (userT && lineVisibility.value.userAimLine) {
       const userEnd = { x: cue.x + userDir.x * userT, y: cue.y + userDir.y * userT }
       ctx.save()
       ctx.setLineDash([10, 8])
@@ -325,6 +357,14 @@ function draw() {
       ctx.lineTo(userEnd.x, userEnd.y)
       ctx.stroke()
       ctx.restore()
+    }
+
+    // 用户瞄准线的切线辅助线（与拖拽方向平行、与母球相切）
+    if (userT && lineVisibility.value.userTangentLine) {
+      drawCueParallelTangentThroughTarget(ctx, cue, targetBall.value, userDir, tangentSide.value, {
+        dash: [2, 5],
+        stroke: 'rgba(125, 200, 255, 0.9)',
+      })
     }
   }
 
@@ -337,7 +377,7 @@ function draw() {
     // A. 母球击球线（主提示线）
     const cueDir = requiredCueShotDir.value
     const cueT = rayBoxIntersectionT(cue, cueDir)
-    if (cueT) {
+    if (cueT && lineVisibility.value.hintAimLine) {
       const cueEnd = { x: cue.x + cueDir.x * cueT, y: cue.y + cueDir.y * cueT }
       ctx.save()
       ctx.setLineDash([8, 6])
@@ -351,47 +391,58 @@ function draw() {
     }
 
     // A2. 切线辅助线：与击球线平行，与母球相切，且（在法向意义上）经过目标球
-    drawCueParallelTangentThroughTarget(ctx, cue, target, cueDir, tangentSide.value)
+    if (cueT && lineVisibility.value.hintTangentLine) {
+      drawCueParallelTangentThroughTarget(ctx, cue, target, cueDir, tangentSide.value, {
+        dash: [1, 5],
+        stroke: 'rgba(125, 240, 212, 0.85)',
+      })
+    }
 
     // B. 进袋方向线：穿过幽灵球中心，与进球瞄准线在该点相交（目标球→袋口 所在直线）
-    const pocketDir = requiredTargetToPocketDir.value
-    const tBack = rayBoxIntersectionT(ghost, { x: -pocketDir.x, y: -pocketDir.y })
-    const tFwd = rayBoxIntersectionT(ghost, pocketDir)
-    ctx.save()
-    ctx.setLineDash([2, 6])
-    ctx.lineWidth = 2
-    ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)'
-    ctx.beginPath()
-    ctx.moveTo(ghost.x, ghost.y)
-    if (tFwd) {
-      const fwdEnd = { x: ghost.x + pocketDir.x * tFwd, y: ghost.y + pocketDir.y * tFwd }
-      ctx.lineTo(fwdEnd.x, fwdEnd.y)
+    if (lineVisibility.value.hintPocketLine) {
+      const pocketDir = requiredTargetToPocketDir.value
+      const tBack = rayBoxIntersectionT(ghost, { x: -pocketDir.x, y: -pocketDir.y })
+      const tFwd = rayBoxIntersectionT(ghost, pocketDir)
+      ctx.save()
+      ctx.setLineDash([2, 6])
+      ctx.lineWidth = 2
+      ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)'
+      ctx.beginPath()
+      ctx.moveTo(ghost.x, ghost.y)
+      if (tFwd) {
+        const fwdEnd = { x: ghost.x + pocketDir.x * tFwd, y: ghost.y + pocketDir.y * tFwd }
+        ctx.lineTo(fwdEnd.x, fwdEnd.y)
+      }
+      ctx.moveTo(ghost.x, ghost.y)
+      if (tBack) {
+        const backEnd = { x: ghost.x - pocketDir.x * tBack, y: ghost.y - pocketDir.y * tBack }
+        ctx.lineTo(backEnd.x, backEnd.y)
+      }
+      ctx.stroke()
+      ctx.restore()
     }
-    ctx.moveTo(ghost.x, ghost.y)
-    if (tBack) {
-      const backEnd = { x: ghost.x - pocketDir.x * tBack, y: ghost.y - pocketDir.y * tBack }
-      ctx.lineTo(backEnd.x, backEnd.y)
-    }
-    ctx.stroke()
-    ctx.restore()
 
     // C. 幽灵球点（画在线之上，便于看到“交于幽灵球中心”）
-    ctx.save()
-    ctx.fillStyle = 'rgba(255, 209, 102, 0.25)'
-    ctx.strokeStyle = 'rgba(255, 209, 102, 0.9)'
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    ctx.arc(ghost.x, ghost.y, BALL_R, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-    ctx.restore()
+    if (lineVisibility.value.hintGhostBall) {
+      ctx.save()
+      ctx.fillStyle = 'rgba(255, 209, 102, 0.25)'
+      ctx.strokeStyle = 'rgba(255, 209, 102, 0.9)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(ghost.x, ghost.y, BALL_R, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+      ctx.restore()
+    }
 
     // D. 台面夹角：在幽灵球中心，入射瞄准线 vs 出射进袋线
-    drawGhostPottingAngleOnTable(ctx, ghost, cue, target, cueTargetPocketAngleDeg.value)
+    if (lineVisibility.value.hintAngleArc) {
+      drawGhostPottingAngleOnTable(ctx, ghost, cue, target, cueTargetPocketAngleDeg.value)
+    }
   }
 }
 
-function drawCueParallelTangentThroughTarget(ctx, cue, target, shotDir, side) {
+function drawCueParallelTangentThroughTarget(ctx, cue, target, shotDir, side, style) {
   const d = shotDir
   const nLeft = { x: -d.y, y: d.x }
   const n = side === 'right' ? { x: d.y, y: -d.x } : nLeft
@@ -407,9 +458,9 @@ function drawCueParallelTangentThroughTarget(ctx, cue, target, shotDir, side) {
   const b = { x: p0.x + d.x * tPos, y: p0.y + d.y * tPos }
 
   ctx.save()
-  ctx.setLineDash([1, 5])
+  ctx.setLineDash(style?.dash ?? [1, 5])
   ctx.lineWidth = 2
-  ctx.strokeStyle = 'rgba(125, 240, 212, 0.85)'
+  ctx.strokeStyle = style?.stroke ?? 'rgba(125, 240, 212, 0.85)'
   ctx.beginPath()
   ctx.moveTo(a.x, a.y)
   ctx.lineTo(b.x, b.y)
@@ -592,6 +643,7 @@ function reset() {
   resultText.value = '点击白球附近开始瞄准'
   showHint.value = false
   tangentSide.value = 'left'
+  lineVisibility.value = { ...defaultLineVisibility }
   nextTick(() => draw())
 }
 
@@ -847,6 +899,50 @@ onBeforeUnmount(() => {
 
 .seg-btn.on {
   border-color: rgba(125, 240, 212, 0.95);
+}
+
+.overlay-panel {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.overlay-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  opacity: 0.95;
+}
+
+.overlay-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 8px 14px;
+}
+
+@media (max-width: 720px) {
+  .overlay-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overlay-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.25;
+  opacity: 0.95;
+}
+
+.overlay-item input {
+  margin-top: 2px;
+}
+
+.overlay-name {
+  text-align: left;
 }
 </style>
 
