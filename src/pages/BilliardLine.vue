@@ -70,6 +70,13 @@
           <span class="cue-nudge-spacer" />
         </div>
       </div>
+      <div class="aim-nudge" title="每次旋转 0.5° 微调瞄准线（无需拖拽）">
+        <span class="cue-nudge-label">瞄准微调</span>
+        <div class="seg">
+          <button type="button" class="seg-btn" aria-label="瞄准线左旋" @click="nudgeAim(-1)">左旋</button>
+          <button type="button" class="seg-btn" aria-label="瞄准线右旋" @click="nudgeAim(1)">右旋</button>
+        </div>
+      </div>
       <span v-if="showHint && lineVisibility.hintAngleArc" class="angle-tip">
         提示夹角：{{ cueTargetPocketAngleDeg.toFixed(1) }}°
       </span>
@@ -103,6 +110,7 @@ const PAD = 60
 const BALL_R = 12
 const POCKET_R = 18
 const CUE_NUDGE_STEP = 5
+const AIM_NUDGE_DEG = 0.5
 
 const baulkLineX = PAD + (W - PAD * 2) * 0.22
 
@@ -692,6 +700,23 @@ function nudgeCue(dx, dy) {
   resultText.value = `白球已平移（步长 ${CUE_NUDGE_STEP}px）`
 }
 
+function nudgeAim(direction) {
+  const dir = normalize(state.value.aimDir)
+  const rad = ((AIM_NUDGE_DEG * Math.PI) / 180) * direction
+  const c = Math.cos(rad)
+  const si = Math.sin(rad)
+  const rotated = normalize({
+    x: dir.x * c - dir.y * si,
+    y: dir.x * si + dir.y * c,
+  })
+
+  state.value.aimDir = rotated
+  state.value.aiming = false
+  state.value.hasAim = true
+  editMode.value = 'none'
+  resultText.value = `瞄准线已微调 ${AIM_NUDGE_DEG}°`
+}
+
 function snapTargetToSpot(spot) {
   targetBall.value = clampToTable(spot.x, spot.y)
   state.value.hasAim = false
@@ -794,7 +819,8 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.cue-nudge {
+.cue-nudge,
+.aim-nudge {
   display: flex;
   flex-direction: column;
   align-items: center;
