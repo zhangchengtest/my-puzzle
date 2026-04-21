@@ -674,6 +674,25 @@ function clampToTable(x, y) {
   }
 }
 
+function randomBallPos() {
+  return {
+    x: PAD + BALL_R + Math.random() * (W - PAD * 2 - BALL_R * 2),
+    y: PAD + BALL_R + Math.random() * (H - PAD * 2 - BALL_R * 2),
+  }
+}
+
+function randomizeBallsForNewPage() {
+  cueBall.value = randomBallPos()
+  targetBall.value = randomBallPos()
+  let guard = 0
+  // 避免两球太近导致初始视图重叠难操作
+  while (dist2(cueBall.value, targetBall.value) < (BALL_R * 6) * (BALL_R * 6) && guard < 50) {
+    targetBall.value = randomBallPos()
+    guard += 1
+  }
+  state.value.aimDir = requiredCueShotDir.value
+}
+
 function placeBall(x, y, mode) {
   const pos = clampToTable(x, y)
   if (mode === 'cue') {
@@ -750,6 +769,7 @@ onMounted(() => {
   state.value.aimDir = requiredCueShotDir.value
 
   reset()
+  randomizeBallsForNewPage()
 
   // 简单的动画循环：aiming 时每帧重画，否则也会在重置时画一次
   const loop = () => {
