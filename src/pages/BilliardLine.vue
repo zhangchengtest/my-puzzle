@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const canvasRef = ref(null)
 const boardWrapRef = ref(null)
@@ -153,7 +153,44 @@ const defaultLineVisibility = {
   hintAngleArc: true,
 }
 
-const lineVisibility = ref({ ...defaultLineVisibility })
+const LINE_VISIBILITY_STORAGE_KEY = 'billiardLine.overlayVisibility.v1'
+
+function mergeLineVisibility(raw) {
+  const next = { ...defaultLineVisibility }
+  if (!raw || typeof raw !== 'object') return next
+  for (const key of Object.keys(defaultLineVisibility)) {
+    if (typeof raw[key] === 'boolean') next[key] = raw[key]
+  }
+  return next
+}
+
+function loadLineVisibility() {
+  try {
+    const s = localStorage.getItem(LINE_VISIBILITY_STORAGE_KEY)
+    if (!s) return { ...defaultLineVisibility }
+    return mergeLineVisibility(JSON.parse(s))
+  } catch {
+    return { ...defaultLineVisibility }
+  }
+}
+
+function saveLineVisibility(v) {
+  try {
+    localStorage.setItem(LINE_VISIBILITY_STORAGE_KEY, JSON.stringify(v))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+const lineVisibility = ref(loadLineVisibility())
+
+watch(
+  lineVisibility,
+  (v) => {
+    saveLineVisibility(v)
+  },
+  { deep: true },
+)
 
 const overlayLineItems = [
   { key: 'userAimLine', label: '我的瞄准线（拖拽）' },
@@ -651,7 +688,6 @@ function reset() {
   resultText.value = '点击白球附近开始瞄准'
   showHint.value = false
   tangentSide.value = 'left'
-  lineVisibility.value = { ...defaultLineVisibility }
   nextTick(() => draw())
 }
 
