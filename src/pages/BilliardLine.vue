@@ -1,18 +1,19 @@
 <template>
-  <div class="wrap">
+  <div class="wrap billiard-page">
     <h2 class="title">2D 台球判线（不击打）</h2>
     <div class="sub">
       拖拽白球附近拉出“瞄准线”，只判断线路是否能让目标球进指定球袋。
     </div>
 
-    <div class="board-wrap" ref="boardWrapRef">
+    <div class="board-wrap" ref="boardWrapRef" @contextmenu.prevent>
       <canvas
         ref="canvasRef"
         class="board"
         @pointerdown="onPointerDown"
         @pointermove="onPointerMove"
         @pointerup="onPointerUp"
-        @pointercancel="onPointerUp"
+        @pointercancel="onPointerCancel"
+        @contextmenu.prevent
       />
     </div>
 
@@ -640,16 +641,40 @@ function pickPocket(point) {
   return true
 }
 
+function captureBoardPointer(e) {
+  const el = canvasRef.value
+  if (!el?.setPointerCapture) return
+  try {
+    el.setPointerCapture(e.pointerId)
+  } catch {
+    /* ignore */
+  }
+}
+
+function releaseBoardPointer(e) {
+  const el = canvasRef.value
+  if (!el?.releasePointerCapture) return
+  try {
+    if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId)
+  } catch {
+    /* ignore */
+  }
+}
+
 function onPointerDown(e) {
+  if (e.pointerType === 'touch' || e.pointerType === 'pen') e.preventDefault()
+
   const point = getCanvasPoint(e.clientX, e.clientY)
   if (!point) return
 
   if (editMode.value === 'none' && pickPocket(point)) {
+    captureBoardPointer(e)
     return
   }
 
   if (editMode.value !== 'none') {
     placeBall(point.x, point.y, editMode.value)
+    captureBoardPointer(e)
     return
   }
 
@@ -658,20 +683,31 @@ function onPointerDown(e) {
 
   state.value.aiming = true
   resultText.value = '保持拖拽，松手检查线路'
+  captureBoardPointer(e)
   updateAimFromPointer(e.clientX, e.clientY)
 }
 
 function onPointerMove(e) {
   if (!state.value.aiming) return
+  if (e.pointerType === 'touch' || e.pointerType === 'pen') e.preventDefault()
   state.value.hasAim = true
   updateAimFromPointer(e.clientX, e.clientY)
 }
 
-function onPointerUp() {
-  if (!state.value.aiming) return
+function onPointerUp(e) {
+  if (!state.value.aiming) {
+    releaseBoardPointer(e)
+    return
+  }
   state.value.aiming = false
   state.value.hasAim = true
+  releaseBoardPointer(e)
   checkAim()
+}
+
+function onPointerCancel(e) {
+  state.value.aiming = false
+  releaseBoardPointer(e)
 }
 
 function reset() {
@@ -792,6 +828,8 @@ function toggleEditMode(mode) {
   }
 }
 
+let removeTouchGuards = null
+
 onMounted(() => {
   const canvas = canvasRef.value
   if (!canvas) return
@@ -800,6 +838,15 @@ onMounted(() => {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   ctxRef.value = ctx
+
+  const blockTouchDefault = (e) => e.preventDefault()
+  const touchOpts = { passive: false }
+  canvas.addEventListener('touchstart', blockTouchDefault, touchOpts)
+  canvas.addEventListener('touchmove', blockTouchDefault, touchOpts)
+  removeTouchGuards = () => {
+    canvas.removeEventListener('touchstart', blockTouchDefault, touchOpts)
+    canvas.removeEventListener('touchmove', blockTouchDefault, touchOpts)
+  }
 
   // 初始化 aimDir
   state.value.aimDir = requiredCueShotDir.value
@@ -817,10 +864,24 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (rafId) cancelAnimationFrame(rafId)
+  removeTouchGuards?.()
 })
 </script>
 
 <style scoped>
+.billiard-page {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.billiard-page button,
+.billiard-page input[type='checkbox'] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .wrap {
   padding: 18px;
   max-width: 980px;
@@ -841,6 +902,7 @@ onBeforeUnmount(() => {
   width: min(980px, 100%);
   display: flex;
   justify-content: center;
+  touch-action: none;
 }
 
 .board {
@@ -850,6 +912,9 @@ onBeforeUnmount(() => {
   aspect-ratio: 9 / 5;
   border-radius: 10px;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   background: #0a3b2e;
 }
 
