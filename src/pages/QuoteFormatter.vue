@@ -16,6 +16,47 @@
       ></textarea>
     </div>
 
+    <!-- 符号替换 -->
+    <div style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 4px; border: 1px solid #eee;">
+      <label style="display: block; margin-bottom: 10px; font-weight: bold;">符号替换：</label>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <span>将</span>
+        <input
+          v-model="replaceFrom"
+          type="text"
+          placeholder="如 | 或 ;"
+          maxlength="10"
+          style="width: 80px; padding: 6px 8px; font-family: monospace; border: 1px solid #ddd; border-radius: 4px;"
+        />
+        <span>替换为</span>
+        <label style="cursor: pointer;">
+          <input v-model="replaceTo" type="radio" value="space" /> 空格
+        </label>
+        <label style="cursor: pointer;">
+          <input v-model="replaceTo" type="radio" value="," /> 逗号 ,
+        </label>
+        <label style="cursor: pointer;">
+          <input v-model="replaceTo" type="radio" value="，" /> 中文逗号 ，
+        </label>
+        <label style="cursor: pointer;">
+          <input v-model="replaceTo" type="radio" value="custom" /> 自定义
+        </label>
+        <input
+          v-if="replaceTo === 'custom'"
+          v-model="replaceToCustom"
+          type="text"
+          placeholder="自定义符号"
+          maxlength="10"
+          style="width: 100px; padding: 6px 8px; font-family: monospace; border: 1px solid #ddd; border-radius: 4px;"
+        />
+      </div>
+      <button
+        @click="replaceSymbol"
+        :disabled="!input.trim() || !replaceFrom"
+        style="background-color: #909399;"
+      >执行符号替换</button>
+    </div>
+
     <div style="margin-bottom: 20px;">
       <button @click="formatText" :disabled="!input.trim()" style="margin-right: 10px; background-color: #409eff;">格式化（单引号+逗号）</button>
       <button @click="removeNewlines" :disabled="!input.trim()" style="margin-right: 10px; background-color: #e6a23c;">去掉换行符</button>
@@ -52,7 +93,10 @@ export default {
     return {
       input: '',
       items: [],
-      formattedResult: ''
+      formattedResult: '',
+      replaceFrom: '',
+      replaceTo: 'space',
+      replaceToCustom: ''
     };
   },
   methods: {
@@ -90,6 +134,31 @@ export default {
         }
       } catch (e) {
         console.error('格式化出错：', e);
+      }
+    },
+    getReplaceTarget() {
+      if (this.replaceTo === 'space') return ' ';
+      if (this.replaceTo === 'custom') return this.replaceToCustom;
+      return this.replaceTo;
+    },
+    replaceSymbol() {
+      if (!this.input.trim() || !this.replaceFrom) {
+        return;
+      }
+
+      const target = this.getReplaceTarget();
+      if (this.replaceTo === 'custom' && target === '') {
+        alert('请输入自定义替换符号');
+        return;
+      }
+
+      try {
+        const escaped = this.replaceFrom.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escaped, 'g');
+        this.formattedResult = this.input.replace(regex, target);
+        this.items = [];
+      } catch (e) {
+        console.error('符号替换出错：', e);
       }
     },
     removeNewlines() {
