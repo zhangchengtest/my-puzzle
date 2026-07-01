@@ -103,12 +103,26 @@ const loadExample = () => {
 }
 
 const copyToClipboard = async () => {
+  const text = finalSql.value
+  if (!text) return
+
   try {
-    await navigator.clipboard.writeText(finalSql.value)
+    await navigator.clipboard.writeText(text)
     alert('SQL已复制到剪贴板')
-  } catch (error) {
-    console.error('复制失败:', error)
-    alert('复制失败，请手动复制')
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-999999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      alert('SQL已复制到剪贴板')
+    } catch {
+      alert('复制失败，请手动复制')
+    }
+    document.body.removeChild(textarea)
   }
 }
 
