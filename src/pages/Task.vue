@@ -50,7 +50,7 @@ import Modal from './components/Modal.vue'
 import TaskDelete from './components/TaskDelete.vue'
 import Calendar from './components/Calendar.vue'
 import FloatingIcon from "./components/FloatingIcon.vue";
-const baseUrl = import.meta.env.VITE_APP_API_URL
+import { apiUrl } from '@/config';
 export default {
   components: {
     Loading,
@@ -85,7 +85,7 @@ export default {
   methods: {
     getTask() {
     
-      const url = 'https://clock.cuiyi.club/openapi/clocks/page?pageSize=100'
+      const url = `${apiUrl}/openapi/clocks/page?pageSize=100`
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
         console.log(response.data);
@@ -135,7 +135,7 @@ export default {
     },
     rollback() {
       this.loadingVisible = true
-      axios.post('https://clock.cuiyi.club/openapi/clocks/rollback', {})
+      axios.post(`${apiUrl}/openapi/clocks/rollback`, {})
         .then(response => {
           this.getTask();
         })
@@ -145,7 +145,7 @@ export default {
 
     },
     report() {
-      axios.post('https://clock.cuiyi.club/openapi/report', {})
+      axios.post(`${apiUrl}/openapi/report`, {})
         .then(response => {
         })
         .catch(error => {
@@ -153,7 +153,7 @@ export default {
         })
     },
     clockin() {
-      axios.post('https://clock.cuiyi.club/openapi/clocks/clockin', {})
+      axios.post(`${apiUrl}/openapi/clocks/clockin`, {})
         .then(response => {
         })
         .catch(error => {
@@ -172,7 +172,7 @@ export default {
     },
     completeTask(index) {
       this.loadingVisible = true
-      axios.post('https://clock.cuiyi.club/openapi/clocks/finish', { clockId: this.tasks[index].id })
+      axios.post(`${apiUrl}/openapi/clocks/finish`, { clockId: this.tasks[index].id })
         .then(response => {
           this.getTask();
         })

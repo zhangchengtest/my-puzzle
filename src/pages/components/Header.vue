@@ -18,7 +18,7 @@
   
 <script>
 import axios from 'axios';
-const baseUrl = import.meta.env.VITE_APP_API_URL
+import { apiUrl, ssoUrl } from '@/config';
 export default {
     name: 'Header',
     data() {
@@ -44,7 +44,7 @@ export default {
         // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
         if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-            axios.get('https://clock.cuiyi.club/api/auth/info')
+            axios.get(`${apiUrl}/api/auth/info`)
                 .then(response => {
                     this.isLoggedIn = true
                     this.username = response.data.data.userName
@@ -58,7 +58,7 @@ export default {
           
         }
 
-        axios.get('https://clock.cuiyi.club/openapi/scores/getByUserId')
+        axios.get(`${apiUrl}/openapi/scores/getByUserId`)
             .then(response => {
                 this.score = response.data.data.score
             })
@@ -80,7 +80,7 @@ export default {
         },
         jump() {
             console.log('ssss')
-            window.location = 'https://sso.cuiyi.club?redirectUrl=' + baseUrl +'/callback'
+            window.location = `${ssoUrl}?redirectUrl=${apiUrl}/callback`
         },
         logout() {
             localStorage.clear();

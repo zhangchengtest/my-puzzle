@@ -25,16 +25,17 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { apiUrl } from '@/config'
 import M3U8Player from './components/M3U8Player.vue'
 
 const sourceList = ref([])
 const currentSrc = ref('')
 
-const apiUrl = 'https://clock.cuiyi.club/openapi/media/list'
+const apiUrlPath = `${apiUrl}/openapi/media/list`
 
 onMounted(async () => {
   try {
-    const res = await axios.get(apiUrl)
+    const res = await axios.get(apiUrlPath)
     sourceList.value = res.data
 
     if (sourceList.value.length > 0) {

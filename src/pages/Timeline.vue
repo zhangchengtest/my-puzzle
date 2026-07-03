@@ -36,6 +36,7 @@
 
 <script>
 import axios from 'axios';
+import { apiUrl } from '@/config';
 import markdownToHtml from '@/utils/markdown';
 
 export default {
@@ -57,7 +58,7 @@ export default {
       this.fetchEvents();
     },
     fetchEvents() {
-      const url = `https://clock.cuiyi.club/openapi/articles/list?category=${this.eventName}&pageSize=1000`;
+      const url = `${apiUrl}/openapi/articles/list?category=${this.eventName}&pageSize=1000`;
       axios.get(url)
         .then(response => {
           this.events = response.data.data;

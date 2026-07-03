@@ -13,6 +13,7 @@
 
 <script>
 import axios from 'axios'
+import { apiUrl } from '@/config'
 
 export default {
   data() {
@@ -32,7 +33,7 @@ export default {
       let formData = new FormData()
       formData.append('file', this.file)
       formData.append('fileName', this.fileName)
-      axios.post('https://clock.cuiyi.club/openapi/upload/', formData).then(response => {
+      axios.post(`${apiUrl}/openapi/upload/`, formData).then(response => {
         this.fileUrl = response.data.data
       }).catch(error => {
         console.log(error)

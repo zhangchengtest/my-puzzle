@@ -49,6 +49,8 @@
 </template>
 
 <script>
+import { apiUrl } from '@/config';
+
 export default {
   data() {
     return {
@@ -78,7 +80,7 @@ export default {
     // 获取 website_tag 数据
     async fetchWebsiteTags() {
       try {
-        const response = await this.$http.get('https://clock.cuiyi.club/openapi/websiteTags/all'); // 替换为你的API接口
+        const response = await this.$http.get(`${apiUrl}/openapi/websiteTags/all`);
         this.websiteTags = response.data.data.map(item => this.camelToSnake(item));
         this.filteredTags = [...this.websiteTags]; // 初始化过滤后的数据
         this.sortData(); // 获取数据后进行排序
@@ -127,7 +129,7 @@ export default {
       }
       try {
         // 发送 API 请求，添加新的标签
-        const response = await this.$http.post('https://clock.cuiyi.club/openapi/websiteTags/add', this.newTag);
+        const response = await this.$http.post(`${apiUrl}/openapi/websiteTags/add`, this.newTag);
          // 将新标签插入到数组的开头
         this.websiteTags.unshift(response.data.data);
         this.filteredTags = [...this.websiteTags]; // 更新过滤后的数据
@@ -142,7 +144,7 @@ export default {
     async handleClick(id, url) {
       try {
         // 调用后端 API 更新点击次数
-        await this.$http.post(`https://clock.cuiyi.club/openapi/websiteTags/click`, { id });
+        await this.$http.post(`${apiUrl}/openapi/websiteTags/click`, { id });
         const tag = this.websiteTags.find(item => item.id === id);
         if (tag) {
           tag.clickCount += 1;
@@ -182,7 +184,7 @@ export default {
     // 删除标签
     async deleteTag(tagId) {
       try {
-        await this.$http.delete(`https://clock.cuiyi.club/openapi/websiteTags/delete/${tagId}`);
+        await this.$http.delete(`${apiUrl}/openapi/websiteTags/delete/${tagId}`);
         this.websiteTags = this.websiteTags.filter(item => item.id !== tagId);
         this.filteredTags = [...this.websiteTags]; // 更新过滤后的数据
       } catch (error) {

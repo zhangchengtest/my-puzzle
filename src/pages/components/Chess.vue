@@ -38,6 +38,7 @@
 </template>
   
 <script>
+import { wsUrl } from '@/config';
 
 const parseNestedArrays = (key, value) => {
     if (typeof value === "string") {
@@ -101,7 +102,7 @@ export default {
         if (!this.playerColor) {
             this.playerColor = 'black'
         }
-        const socket = new WebSocket('wss://clock.cuiyi.club/chess');
+        const socket = new WebSocket(wsUrl('/chess'));
 
         socket.onopen = () => {
 

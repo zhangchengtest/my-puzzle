@@ -35,6 +35,7 @@
   
   <script>
     import axios from 'axios'
+    import { apiUrl } from '@/config'
   export default {
     props: {
         listData: {
@@ -57,7 +58,7 @@
           if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
           }
-          axios.post('https://clock.cuiyi.club/openapi/clocks/add', { eventType: this.eventType, notifyDate: this.notifyDate,eventDescription: this.eventDescription })
+          axios.post(`${apiUrl}/openapi/clocks/add`, { eventType: this.eventType, notifyDate: this.notifyDate,eventDescription: this.eventDescription })
         .then(response => {
           location.reload()
         })

@@ -43,6 +43,7 @@
   
 <script>
 import axios from 'axios';
+import { apiUrl } from '@/config';
 export default {
   data() {
     return {
@@ -73,7 +74,7 @@ export default {
       var token = localStorage.getItem('puzzle-token');
       // 如果 myData 的值不存在，则将默认值 'hello world' 存入 localStorage 中
 
-      const url = 'https://clock.cuiyi.club/openapi/clocks/history?clockId=' + this.clockId + "&month=" + this.currentMonth
+      const url = `${apiUrl}/openapi/clocks/history?clockId=${this.clockId}&month=${this.currentMonth}`
       // const url = 'http://localhost:8080/articles/list?category='+ this.eventName + '&pageSize=100'
       axios.get(url).then(response => {
         console.log(response.data);
@@ -97,7 +98,7 @@ export default {
       this.loadingVisible = true
       const formatteddate = date < 10 ? "0" + date : date;
       const day = this.currentMonth + "-" + formatteddate;
-      axios.post('https://clock.cuiyi.club/openapi/clocks/append', { clockId: this.clockId, day })
+      axios.post(`${apiUrl}/openapi/clocks/append`, { clockId: this.clockId, day })
         .then(response => {
           this.loadData();
         })

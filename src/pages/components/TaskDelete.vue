@@ -25,6 +25,7 @@
   
   <script>
     import axios from 'axios'
+    import { apiUrl } from '@/config'
   export default {
     props: {
         listData: {
@@ -45,7 +46,7 @@
           if (token) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
           }
-          axios.post('https://clock.cuiyi.club/openapi/clocks/delete', {eventDescription: this.eventDescription })
+          axios.post(`${apiUrl}/openapi/clocks/delete`, {eventDescription: this.eventDescription })
         .then(response => {
           location.reload()
         })

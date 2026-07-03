@@ -13,6 +13,7 @@
 
 <script>
 import axios from 'axios';
+import { apiUrl } from '@/config';
 
 export default {
   data() {
@@ -51,7 +52,7 @@ export default {
     // 秒杀请求
     async seckill() {
       try {
-        const response = await axios.post('https://clock.cuiyi.club/openapi/coupons/seckill', null, {
+        const response = await axios.post(`${apiUrl}/openapi/coupons/seckill`, null, {
           params: { userId: this.userId, couponId: this.couponId }
         });
         console.log(response)
@@ -69,7 +70,7 @@ export default {
     async pollResult() {
       const interval = setInterval(async () => {
         try {
-          const response = await axios.get('https://clock.cuiyi.club/openapi/coupons/result', {
+          const response = await axios.get(`${apiUrl}/openapi/coupons/result`, {
             params: { requestId: this.requestId }
           });
           this.message = response.data;

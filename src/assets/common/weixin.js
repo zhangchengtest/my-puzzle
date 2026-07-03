@@ -1,4 +1,5 @@
 import wx from "weixin-js-sdk"
+import { shareImageUrl } from '@/config'
 
 /*
  * 微信分享
@@ -28,7 +29,7 @@ export const wexinShare = (data, shareData) => {
         wx.onMenuShareTimeline({
             title: '分享标题', // 分享标题
             link: shareData.link, // 分享链接 该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
-            imgUrl: 'https://cheng-resource.oss-cn-hangzhou.aliyuncs.com/blog-resource/apemgr.jpg', // 分享图标
+            imgUrl: shareImageUrl, // 分享图标
             success: function(res) {
                 console.log("分享朋友成功返回的信息为1:", res);;
             }
@@ -39,7 +40,7 @@ export const wexinShare = (data, shareData) => {
             title: shareData.title, // 分享标题
             desc: shareData.desc, // 分享描述
             link: shareData.link, // 分享链接 该链接域名或路径必须与当前页面对应的公众号JS安全域名一致
-            imgUrl: 'https://cheng-resource.oss-cn-hangzhou.aliyuncs.com/blog-resource/apemgr.jpg', // 分享图标
+            imgUrl: shareImageUrl, // 分享图标
             success: function(res) {
                 console.log("分享朋友成功返回的信息为:", res);
             }

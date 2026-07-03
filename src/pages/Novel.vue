@@ -11,6 +11,7 @@
   
   import FloatingIcon from "./components/FloatingIcon.vue";
   import axios from 'axios';
+  import { apiUrl } from '@/config';
 import Loading from './components/Loading.vue'
   export default {
     components: {
@@ -34,7 +35,7 @@ import Loading from './components/Loading.vue'
       getNovelData() {
 
         this.loadingVisible = true
-        axios.get('https://clock.cuiyi.club/api/game/randomNovel')
+        axios.get(`${apiUrl}/api/game/randomNovel`)
             .then(response => {
                 this.title = response.data.data.title
                 this.content = response.data.data.content

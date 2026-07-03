@@ -1,5 +1,6 @@
 // auth.js
 import axios from 'axios';
+import { apiUrl } from './config';
 
 // 通过检查用户是否登录来判断是否可以访问路由
 export function isAuthenticated() {
@@ -23,7 +24,7 @@ export function requireAuth(to, from, next) {
   
     if(to.query.code){
       const code = to.query.code;
-      axios.get('https://clock.cuiyi.club/api/auth/getByCodeForPuzzle?code=' + code)
+      axios.get(`${apiUrl}/api/auth/getByCodeForPuzzle?code=${code}`)
                 .then(response => {
                     // 将token保存到localStorage中
                     console.log('to login')
