@@ -16,5 +16,12 @@ export default defineConfig({
       ]
     })],
     base: '/mix', // 设置publicPath
- 
+  server: {
+    proxy: {
+      '/downloads': {
+        target: 'https://clock.cuiyi.club',
+        changeOrigin: true,
+      },
+    },
+  },
 })
