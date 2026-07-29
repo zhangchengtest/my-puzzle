@@ -15,7 +15,7 @@ export default defineConfig({
         }
       ]
     })],
-    base: '/mix', // 设置publicPath
+    base: '/',
   server: {
     proxy: {
       '/files': {
