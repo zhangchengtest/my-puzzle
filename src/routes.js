@@ -23,6 +23,7 @@ const routes = [
       DaLiuRen: '大六壬排盘 - Elephant',
       Downloads: '文件管理 - Elephant',
       Career: '简历与面试 - Elephant',
+      Chat: '房间聊天 - Elephant',
       // 你可以继续补充更多组件名与标题的映射
     };
 
