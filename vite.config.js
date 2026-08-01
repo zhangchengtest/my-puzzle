@@ -22,6 +22,13 @@ export default defineConfig({
         target: 'https://clock.cuiyi.club',
         changeOrigin: true,
       },
+      // 模拟电商调用 s2t OpenAPI（绕过浏览器 CORS）
+      '/openapi-proxy': {
+        target: 'https://s2t-openapi.infiniax.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/openapi-proxy/, ''),
+      },
     },
   },
 })
