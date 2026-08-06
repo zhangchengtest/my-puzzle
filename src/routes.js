@@ -25,6 +25,8 @@ const routes = [
       Career: '简历与面试 - Elephant',
       Chat: '房间聊天 - Elephant',
       ShopBinding: '模拟电商绑定 - Elephant',
+      Writing: '名著知乎文 - Elephant',
+      SurgeAssets: '暴涨资产档案 - Elephant',
       // 你可以继续补充更多组件名与标题的映射
     };
 
