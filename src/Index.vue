@@ -1,6 +1,7 @@
 <template>
   <div>
     <h1><a href="http://175.24.178.171:8888/">大象</a></h1>
+    <p class="version">v{{ appVersion }}</p>
     <ul class="route-list">
       <li v-for="(route, index) in routes" :key="route.path">
         <span class="number">{{ index + 1 }}</span>
@@ -17,7 +18,8 @@ export default defineComponent({
   name: 'Index',
   data() {
     return {
-      routes: []
+      routes: [],
+      appVersion: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
     };
   },
   created() {
@@ -28,6 +30,12 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.version {
+  margin: -0.5em 0 1em;
+  color: #888;
+  font-size: 0.85em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
 .route-list {
   list-style: none;
   padding: 0;

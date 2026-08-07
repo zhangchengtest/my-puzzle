@@ -4,6 +4,11 @@ import  { resolve } from 'path'
 import alias from '@rollup/plugin-alias'
 const projectRootDir = resolve(__dirname);
 
+const buildVersion = new Date().toLocaleString('sv-SE', {
+  timeZone: 'Asia/Shanghai',
+  hour12: false,
+}).replace(' ', '_')
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue(),
@@ -16,6 +21,9 @@ export default defineConfig({
       ]
     })],
     base: '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(buildVersion),
+  },
   server: {
     proxy: {
       '/files': {
