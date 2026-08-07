@@ -82,8 +82,7 @@ const NICK_KEY = 'puzzle-chat-nickname'
 // 去掉坏节点，保留目前相对可用的公共 WSS tracker。
 const TRACKER_URLS = [
   'wss://tracker.webtorrent.dev',
-  'wss://tracker.btorrent.xyz',
-  'wss://tracker.files.fm:7073/announce',
+  'wss://tracker.btorrent.xyz'
 ]
 
 function randomRoomId() {
