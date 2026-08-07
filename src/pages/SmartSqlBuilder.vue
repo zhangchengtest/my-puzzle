@@ -9,23 +9,23 @@
           <textarea
             id="sql-input"
             v-model="sqlInput"
-            @input="handleSqlInput"
-            placeholder="请输入SQL语句，使用?作为参数占位符"
+            placeholder="粘贴完整SQL可直接美化；或输入带?占位符的SQL后填写参数再构建"
             class="sql-textarea"
           ></textarea>
         </div>
         
         <div class="input-group">
-          <label for="params-input">参数：</label>
+          <label for="params-input">参数（可选）：</label>
           <textarea
             id="params-input"
             v-model="paramsInput"
-            placeholder="请输入参数，格式：值(类型)，例如：150005(Integer), 6(Integer), 1(Integer)"
+            placeholder="构建时填写，格式：值(类型)，例如：150005(Integer), 6(Integer), 1(Integer)"
             class="params-textarea"
           ></textarea>
         </div>
         
         <div class="button-group">
+          <button @click="beautifySql" class="beautify-btn">美化SQL</button>
           <button @click="buildSql" class="build-btn">构建SQL</button>
           <button @click="clearAll" class="clear-btn">清空</button>
           <button @click="loadExample" class="example-btn">加载示例</button>
@@ -53,20 +53,33 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { format as formatSqlLib } from 'sql-formatter'
 
 const sqlInput = ref('')
 const paramsInput = ref('')
 const finalSql = ref('')
 const errorMessage = ref('')
 
-const handleSqlInput = (event) => {
-  sqlInput.value = event.target.value.replace(/\r?\n/g, '')
-}
-
 const formattedSql = computed(() => {
   if (!finalSql.value) return ''
-  return formatSql(finalSql.value, 120)
+  return formatSql(finalSql.value)
 })
+
+const beautifySql = () => {
+  try {
+    errorMessage.value = ''
+
+    if (!sqlInput.value.trim()) {
+      errorMessage.value = '请输入SQL语句'
+      return
+    }
+
+    finalSql.value = sqlInput.value.trim()
+  } catch (error) {
+    errorMessage.value = error.message
+    finalSql.value = ''
+  }
+}
 
 const buildSql = () => {
   try {
@@ -76,6 +89,14 @@ const buildSql = () => {
       errorMessage.value = '请输入SQL语句'
       return
     }
+
+    const hasPlaceholder = sqlInput.value.includes('?')
+    
+    if (!hasPlaceholder) {
+      // 无占位符时等同于直接美化
+      finalSql.value = sqlInput.value.trim()
+      return
+    }
     
     if (!paramsInput.value.trim()) {
       errorMessage.value = '请输入参数'
@@ -83,7 +104,7 @@ const buildSql = () => {
     }
     
     const parsedParams = parseParams(paramsInput.value)
-    finalSql.value = buildFinalSql(sqlInput.value, parsedParams)
+    finalSql.value = buildFinalSql(sqlInput.value.replace(/\r?\n/g, ' '), parsedParams)
   } catch (error) {
     errorMessage.value = error.message
     finalSql.value = ''
@@ -103,7 +124,7 @@ const loadExample = () => {
 }
 
 const copyToClipboard = async () => {
-  const text = finalSql.value
+  const text = formattedSql.value || finalSql.value
   if (!text) return
 
   try {
@@ -196,14 +217,27 @@ const formatValue = (value) => {
   }
 }
 
-const formatSql = (sql, maxLineLength) => {
+const formatSql = (sql) => {
+  try {
+    return formatSqlLib(sql, {
+      language: 'sql',
+      tabWidth: 2,
+      keywordCase: 'upper',
+      linesBetweenQueries: 1
+    })
+  } catch {
+    // 格式化失败时回退为按空格/逗号折行
+    return wrapSql(sql, 120)
+  }
+}
+
+const wrapSql = (sql, maxLineLength) => {
   let result = ''
   let start = 0
-  
+
   while (start < sql.length) {
     let end = Math.min(start + maxLineLength, sql.length)
-    
-    // 如果不是最后一行，往前找空格或逗号进行折行
+
     if (end < sql.length) {
       const lastSpace = sql.lastIndexOf(' ', end)
       const lastComma = sql.lastIndexOf(',', end)
@@ -212,11 +246,11 @@ const formatSql = (sql, maxLineLength) => {
         end = breakPoint + 1
       }
     }
-    
+
     result += sql.substring(start, end).trim() + '\n'
     start = end
   }
-  
+
   return result.trim()
 }
 </script>
@@ -304,6 +338,7 @@ const formatSql = (sql, maxLineLength) => {
   box-sizing: border-box;
 }
 
+.beautify-btn,
 .build-btn,
 .clear-btn,
 .example-btn,
@@ -315,6 +350,17 @@ const formatSql = (sql, maxLineLength) => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.beautify-btn {
+  background: #0d9488;
+  color: white;
+}
+
+.beautify-btn:hover {
+  background: #0f766e;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(13, 148, 136, 0.4);
 }
 
 .build-btn {
@@ -375,7 +421,7 @@ const formatSql = (sql, maxLineLength) => {
   font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .copy-section {
@@ -428,6 +474,7 @@ const formatSql = (sql, maxLineLength) => {
     flex-direction: column;
   }
   
+  .beautify-btn,
   .build-btn,
   .clear-btn,
   .example-btn {

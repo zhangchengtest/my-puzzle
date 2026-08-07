@@ -24,6 +24,7 @@
     "markdown-it-katex-external": "^1.0.0",
     "node-forge": "^1.4.0",
     "qrcode": "^1.5.4",
+    "sql-formatter": "^15.8.2",
     "video.js": "^8.23.3",
     "vue": "^3.2.47",
     "vue-m-message": "^4.0.2",
