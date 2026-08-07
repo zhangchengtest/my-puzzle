@@ -2,7 +2,7 @@
   <div class="chat-page">
     <header class="chat-header">
       <h1>房间聊天</h1>
-      <p class="hint">纯前端 P2P（BitTorrent 信令），消息不经自有服务器。建议同房 ≤6 人。</p>
+      <p class="hint">纯前端 P2P（公共 WebTorrent 信令），消息不经自有服务器。建议同房 ≤6 人。</p>
       <p v-if="!secureOk" class="secure-warn">
         当前不是安全上下文（需要 HTTPS 或 localhost），浏览器禁用了 Web Crypto / WebRTC，无法进房。
         <template v-if="localhostHint">请改用 <a :href="localhostHint">{{ localhostHint }}</a></template>
@@ -30,7 +30,7 @@
       <div class="room-bar">
         <div>
           <strong>{{ roomId }}</strong>
-          <span class="meta">在线 {{ peerCount + 1 }} · 我是 {{ nickname }}</span>
+          <span class="meta">在线 {{ peerCount + 1 }} · 信令 {{ relayLabel }} · 我是 {{ nickname }}</span>
         </div>
         <div class="actions">
           <button type="button" class="ghost" @click="copyShareLink">{{ copied ? '已复制' : '复制链接' }}</button>
@@ -73,10 +73,18 @@
 </template>
 
 <script>
-import { joinRoom, selfId } from '@trystero-p2p/torrent'
+import { getRelaySockets, joinRoom, selfId } from '@trystero-p2p/torrent'
 
 const APP_ID = 'my-puzzle-chat-v1'
 const NICK_KEY = 'puzzle-chat-nickname'
+
+// Trystero 默认会连 open.ftorrent.com（证书无效）和 openwebtorrent（常 503）。
+// 去掉坏节点，保留目前相对可用的公共 WSS tracker。
+const TRACKER_URLS = [
+  'wss://tracker.webtorrent.dev',
+  'wss://tracker.btorrent.xyz',
+  'wss://tracker.files.fm:7073/announce',
+]
 
 function randomRoomId() {
   const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -117,6 +125,8 @@ export default {
       sendChat: null,
       sendName: null,
       msgSeq: 0,
+      relayOk: 0,
+      relayTimer: null,
       secureOk: isCryptoReady(),
       localhostHint: suggestLocalhostUrl(),
     }
@@ -124,6 +134,10 @@ export default {
   computed: {
     canJoin() {
       return Boolean(this.nickname && this.roomId)
+    },
+    relayLabel() {
+      if (this.relayOk > 0) return `已连接 ${this.relayOk}`
+      return '连接中…'
     },
   },
   mounted() {
@@ -189,7 +203,10 @@ export default {
 
       try {
         const room = joinRoom(
-          { appId: APP_ID },
+          {
+            appId: APP_ID,
+            relayConfig: { urls: TRACKER_URLS },
+          },
           this.roomId,
           {
             onJoinError: ({ error: err }) => {
@@ -199,6 +216,7 @@ export default {
             },
           },
         )
+        this.startRelayWatch()
         const chat = room.makeAction('chat')
         const name = room.makeAction('name')
 
@@ -315,7 +333,30 @@ export default {
       this.messages = []
       this.peerCount = 0
     },
+    startRelayWatch() {
+      this.stopRelayWatch()
+      const tick = () => {
+        try {
+          const sockets = getRelaySockets?.() || {}
+          this.relayOk = Object.values(sockets).filter(
+            (ws) => ws && ws.readyState === WebSocket.OPEN,
+          ).length
+        } catch {
+          this.relayOk = 0
+        }
+      }
+      tick()
+      this.relayTimer = setInterval(tick, 2000)
+    },
+    stopRelayWatch() {
+      if (this.relayTimer) {
+        clearInterval(this.relayTimer)
+        this.relayTimer = null
+      }
+      this.relayOk = 0
+    },
     teardownRoom() {
+      this.stopRelayWatch()
       try {
         this.room?.leave?.()
       } catch (_) { /* ignore */ }
