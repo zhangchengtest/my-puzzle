@@ -1,11 +1,10 @@
 <template>
   <div class="writing-page">
     <h1 class="page-title">名著知乎文</h1>
-    <p class="subtitle">选名著、填观点，一键生成适合发到知乎的评价长文</p>
+    <p class="subtitle">先定调性与观点，最后才落书名——点选即可生成知乎长文</p>
 
     <section class="section">
-      <h2 class="section-title">1. 选择名著</h2>
-      <label class="field-label tight">分类</label>
+      <h2 class="section-title">1. 分类</h2>
       <div class="genre-row">
         <button
           v-for="c in categories"
@@ -15,26 +14,6 @@
         >{{ c.name }}</button>
       </div>
       <p class="hint">{{ currentCategory.desc }}</p>
-
-      <label class="field-label">书目</label>
-      <div class="genre-row">
-        <button
-          v-for="b in filteredBooks"
-          :key="b.id"
-          :class="['chip', { active: bookId === b.id }]"
-          @click="selectBook(b.id)"
-        >{{ b.title }}</button>
-        <button
-          :class="['chip', { active: bookId === 'custom' }]"
-          @click="selectBook('custom')"
-        >自定义</button>
-      </div>
-      <div v-if="bookId === 'custom'" class="custom-book">
-        <input v-model="customTitle" class="text-input" placeholder="书名，如：围城" />
-        <input v-model="customAuthor" class="text-input" placeholder="作者，如：钱钟书" />
-        <input v-model="customYear" class="text-input" placeholder="年代（可选），如：1947" />
-      </div>
-      <p v-else class="hint">{{ currentBook.blurb }}</p>
     </section>
 
     <section class="section">
@@ -51,79 +30,154 @@
     </section>
 
     <section class="section">
-      <h2 class="section-title">3. 你的观点（决定文章调性）</h2>
-      <label class="field-label">综合评分（1–10）</label>
-      <div class="score-row">
-        <input v-model.number="score" type="range" min="1" max="10" step="0.5" class="score-range" />
-        <span class="score-num">{{ score }}</span>
+      <h2 class="section-title">3. 观点与调性（全选）</h2>
+
+      <label class="field-label tight">综合评分</label>
+      <div class="genre-row">
+        <button
+          v-for="s in scoreOptions"
+          :key="s"
+          :class="['chip', { active: score === s }]"
+          @click="score = s"
+        >{{ s }}</button>
       </div>
 
-      <label class="field-label">一句话评价（可用作标题钩子）</label>
-      <input
-        v-model="oneLiner"
-        class="text-input"
-        :placeholder="currentBook.oneLinerHint || '例如：读完才懂，所谓清醒有多残酷'"
-      />
+      <label class="field-label">一句话评价（标题钩子）</label>
+      <div class="genre-row">
+        <button
+          v-for="o in oneLinerOptions"
+          :key="o.id"
+          :class="['chip', { active: oneLinerId === o.id }]"
+          @click="oneLinerId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">阅读情境</label>
-      <input
-        v-model="context"
-        class="text-input"
-        placeholder="例如：高三暑假硬着头皮读的；离职那天重读；失恋后第一次读懂"
-      />
+      <div class="genre-row">
+        <button
+          v-for="o in contextOptions"
+          :key="o.id"
+          :class="['chip', { active: contextId === o.id }]"
+          @click="contextId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">最打动你的点</label>
-      <textarea
-        v-model="highlight"
-        class="outline-input"
-        rows="2"
-        :placeholder="currentBook.highlightHint || '某个情节、人物、句子，或你读完后的真实感受'"
-      ></textarea>
+      <div class="genre-row">
+        <button
+          v-for="o in highlightOptions"
+          :key="o.id"
+          :class="['chip', { active: highlightId === o.id }]"
+          @click="highlightId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">核心人物</label>
-      <input
-        v-model="character"
-        class="text-input"
-        placeholder="例如：最难忘林黛玉；最恨宋江；方鸿渐让我又气又懂"
-      />
+      <div class="genre-row">
+        <button
+          v-for="o in characterOptions"
+          :key="o.id"
+          :class="['chip', { active: characterId === o.id }]"
+          @click="characterId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">最大槽点 / 争议</label>
-      <textarea
-        v-model="flaw"
-        class="outline-input"
-        rows="2"
-        placeholder="节奏拖沓、人物扁平、译本问题、被过度神话……没有可留空"
-      ></textarea>
+      <div class="genre-row">
+        <button
+          v-for="o in flawOptions"
+          :key="o.id"
+          :class="['chip', { active: flawId === o.id }]"
+          @click="flawId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">常见误读（你想纠正的）</label>
-      <textarea
-        v-model="misread"
-        class="outline-input"
-        rows="2"
-        placeholder="例如：很多人只当爱情悲剧；其实更狠的是家族与秩序；别只记住那句名言"
-      ></textarea>
+      <div class="genre-row">
+        <button
+          v-for="o in misreadOptions"
+          :key="o.id"
+          :class="['chip', { active: misreadId === o.id }]"
+          @click="misreadId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">读完带走什么</label>
-      <input
-        v-model="takeaway"
-        class="text-input"
-        placeholder="例如：少用道德审判别人；遇事先分清规则和人情；允许自己普通地活着"
-      />
+      <div class="genre-row">
+        <button
+          v-for="o in takeawayOptions"
+          :key="o.id"
+          :class="['chip', { active: takeawayId === o.id }]"
+          @click="takeawayId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
       <label class="field-label">适合谁读</label>
-      <input
-        v-model="audience"
-        class="text-input"
-        placeholder="例如：刚经历职场内耗的人；高中生；想补经典却怕枯燥的读者"
-      />
+      <div class="genre-row">
+        <button
+          v-for="o in audienceOptions"
+          :key="o.id"
+          :class="['chip', { active: audienceId === o.id }]"
+          @click="audienceId = o.id"
+        >{{ o.label }}</button>
+      </div>
 
-      <label class="field-label">补充金句或细节（可选，每行一条）</label>
-      <textarea
-        v-model="quotes"
-        class="outline-input"
-        rows="3"
-        placeholder="可粘贴书中句子，或写下你想展开的细节"
-      ></textarea>
+      <label class="field-label">展开细节（可多选）</label>
+      <div class="genre-row">
+        <button
+          v-for="o in detailOptions"
+          :key="o.id"
+          :class="['chip', { active: detailIds.includes(o.id) }]"
+          @click="toggleDetail(o.id)"
+        >{{ o.label }}</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">4. 最后：落哪本书</h2>
+      <p class="hint">调性定好了，再选具体书名；也可写任意一本。</p>
+      <input
+        v-model="bookSearch"
+        class="text-input"
+        placeholder="搜书名、作者"
+      />
+      <div class="genre-row book-row">
+        <button
+          v-for="b in filteredBooks"
+          :key="b.id"
+          :class="['chip', 'book-chip', { active: bookId === b.id, custom: b.custom }]"
+          @click="selectBook(b.id)"
+        >
+          {{ b.title }}
+          <span
+            v-if="b.custom"
+            class="chip-del"
+            title="从书目移除"
+            @click.stop="removeCustomBook(b.id)"
+          >×</span>
+        </button>
+        <button
+          :class="['chip', { active: bookId === 'custom' }]"
+          @click="selectBook('custom')"
+        >写任意一本</button>
+      </div>
+      <p v-if="!filteredBooks.length && bookId !== 'custom'" class="hint">
+        当前分类没有匹配书目——点「写任意一本」即可。
+      </p>
+      <div v-if="bookId === 'custom'" class="custom-book">
+        <input v-model="customTitle" class="text-input" placeholder="书名 *" />
+        <input v-model="customAuthor" class="text-input" placeholder="作者" />
+        <input v-model="customYear" class="text-input" placeholder="年代（可选）" />
+        <div class="draft-actions">
+          <button class="btn ghost" type="button" :disabled="!canSaveCustom" @click="saveCustomBook">
+            加入书目（本机保存）
+          </button>
+        </div>
+      </div>
+      <p v-else-if="currentBook" class="hint book-meta">
+        {{ currentBook.author }}{{ currentBook.year ? ` · ${currentBook.year}` : '' }}
+        <template v-if="currentBook.blurb"> — {{ currentBook.blurb }}</template>
+      </p>
     </section>
 
     <section class="section">
@@ -135,7 +189,7 @@
     </section>
 
     <section v-if="article" class="section output">
-      <h2 class="section-title">4. 输出（可直接粘贴知乎）</h2>
+      <h2 class="section-title">5. 输出（可直接粘贴知乎）</h2>
 
       <div class="title-block">
         <span class="field-label">推荐标题</span>
@@ -161,6 +215,8 @@
 </template>
 
 <script>
+const STORAGE_KEY = 'puzzle-writing-books';
+
 const CATEGORIES = [
   {
     id: 'four',
@@ -176,19 +232,22 @@ const CATEGORIES = [
     id: 'world',
     name: '外国文学',
     desc: '译介经典，知乎上讨论密度高、容易引发对照现实的话题。'
+  },
+  {
+    id: 'mine',
+    name: '我的书目',
+    desc: '你自己加入的书，保存在本机。'
   }
 ];
 
-const BOOKS = [
+const BUILTIN_BOOKS = [
   {
     id: 'honglou',
     category: 'four',
     title: '红楼梦',
     author: '曹雪芹',
     year: '清代',
-    blurb: '家族兴衰与少女命运交织，是中国古典小说高峰，也是读法最多的一部书。',
-    oneLinerHint: '例如：原来悲剧不是死，而是眼睁睁看着美一点点碎掉',
-    highlightHint: '例如：刘姥姥进大观园、黛玉葬花、抄家前后的气氛变化……',
+    blurb: '家族兴衰与少女命运交织。',
     topics: ['红楼梦', '经典名著', '读书', '中国文学', '小说']
   },
   {
@@ -197,9 +256,7 @@ const BOOKS = [
     title: '三国演义',
     author: '罗贯中',
     year: '元末明初',
-    blurb: '乱世英雄、权谋忠义，后世「三国」想象多半从这里长出来。',
-    oneLinerHint: '例如：最迷人的不是战争，是每个人怎么给自己的选择找理由',
-    highlightHint: '例如：三顾茅庐、赤壁、失街亭、或某个你最恨/最敬的人物',
+    blurb: '乱世英雄与权谋忠义。',
     topics: ['三国演义', '经典名著', '历史小说', '读书', '人物评价']
   },
   {
@@ -208,9 +265,7 @@ const BOOKS = [
     title: '西游记',
     author: '吴承恩',
     year: '明代',
-    blurb: '取经是表层，紧箍、师徒、神佛体系才是常读常新的部分。',
-    oneLinerHint: '例如：西游记讲的不是成佛，是怎么在规则里活成自己',
-    highlightHint: '例如：三打白骨精、真假美猴王、或某段你觉得被低估的情节',
+    blurb: '取经表层下是规则与自我。',
     topics: ['西游记', '经典名著', '神话', '读书', '文学解读']
   },
   {
@@ -219,9 +274,7 @@ const BOOKS = [
     title: '水浒传',
     author: '施耐庵',
     year: '元末明初',
-    blurb: '逼上梁山的群像史诗，读到后面往往比开头更让人沉默。',
-    oneLinerHint: '例如：所谓替天行道，读完只剩一股寒意',
-    highlightHint: '例如：武松、林冲、宋江招安，或某次你读不下去又拾起来的理由',
+    blurb: '逼上梁山的群像史诗。',
     topics: ['水浒传', '经典名著', '读书', '中国文学', '社会']
   },
   {
@@ -230,9 +283,7 @@ const BOOKS = [
     title: '围城',
     author: '钱钟书',
     year: '1947',
-    blurb: '婚姻是围城，留学、学术、知识分子的体面与窘迫同样是围城。',
-    oneLinerHint: '例如：讽刺写到骨子里，笑完比哭还难受',
-    highlightHint: '例如：方鸿渐、苏文纨、三闾大学，或某句让你背下来的比喻',
+    blurb: '婚姻、留学与知识分子的体面窘迫。',
     topics: ['围城', '钱钟书', '经典名著', '读书', '知识分子']
   },
   {
@@ -241,9 +292,7 @@ const BOOKS = [
     title: '活着',
     author: '余华',
     year: '1993',
-    blurb: '用极克制的叙述写尽苦难，却让「活着」本身成为答案。',
-    oneLinerHint: '例如：越平静的句子，越像一记闷拳',
-    highlightHint: '例如：福贵与家珍、与牛相对的结局、某次你合上书说不出话',
+    blurb: '克制叙述下的苦难与活着本身。',
     topics: ['活着', '余华', '经典名著', '读书', '人生']
   },
   {
@@ -252,9 +301,7 @@ const BOOKS = [
     title: '1984',
     author: '乔治·奥威尔',
     year: '1949',
-    blurb: '监视、语言与真理被改写——警世寓言，也是理解当代话语的钥匙。',
-    oneLinerHint: '例如：可怕的不是暴力，是你开始相信虚假本身',
-    highlightHint: '例如：双重思想、新话、二分钟仇恨，或某段让你后背发凉的描写',
+    blurb: '监视、语言与真理被改写。',
     topics: ['1984', '奥威尔', '反乌托邦', '经典名著', '读书']
   },
   {
@@ -263,9 +310,7 @@ const BOOKS = [
     title: '百年孤独',
     author: '加西亚·马尔克斯',
     year: '1967',
-    blurb: '马孔多的兴衰循环，魔幻外壳下是家族记忆与拉丁美洲的孤独。',
-    oneLinerHint: '例如：人名记不住没关系，孤独的感觉会记住你',
-    highlightHint: '例如：冰块、失眠症、雨、或某个你最喜欢的布恩迪亚',
+    blurb: '马孔多循环与拉丁美洲的孤独。',
     topics: ['百年孤独', '马尔克斯', '魔幻现实主义', '经典名著', '读书']
   }
 ];
@@ -298,6 +343,86 @@ const ANGLES = [
   }
 ];
 
+const SCORE_OPTIONS = [9.5, 9, 8.5, 8, 7.5, 7, 6, 5, 4];
+
+const ONE_LINER_OPTIONS = [
+  { id: 'wake', label: '被生活打醒才读懂', text: '读完才懂：所谓清醒，有多残酷' },
+  { id: 'mirror', label: '像一面刺人的镜子', text: '它不像故事，更像一面把你照穿的镜子' },
+  { id: 'overrated', label: '神作光环下说实话', text: '被夸过头了吗？我的真实评分在这里' },
+  { id: 'still', label: '今天一点没过时', text: '放到当下看，才发现它一点都没过时' },
+  { id: 'quiet', label: '越平静越狠', text: '越平静的句子，越像一记闷拳' },
+  { id: 'none', label: '不用钩子（模板标题）', text: '' }
+];
+
+const CONTEXT_OPTIONS = [
+  { id: 'school', label: '学生时代硬读', text: '学生时代硬着头皮读完的，当时只追情节，很多地方其实没读懂。' },
+  { id: 'reread-job', label: '离职/转岗后重读', text: '离职那天重读，忽然觉得以前当情节看的东西，全是规则与体面。' },
+  { id: 'breakup', label: '情绪低谷时读', text: '情绪低谷时翻开，第一次觉得书不像在讲别人，而在讲我当下的处境。' },
+  { id: 'bored', label: '无聊随手翻', text: '无聊随手翻开，没打算认真读，结果被某一段拽住了。' },
+  { id: 'recommend', label: '被安利/考试逼读', text: '被安利或考试逼着读的，预期虚高，开读前先带了一层滤镜。' },
+  { id: 'skip', label: '不写情境', text: '' }
+];
+
+const HIGHLIGHT_OPTIONS = [
+  { id: 'choice', label: '人物选择', text: '最打动我的不是金句，是人物在关键头怎么给自己找理由、做选择。' },
+  { id: 'atmosphere', label: '气氛与细节', text: '最打动我的是气氛和细节：某一页的沉默、某个物件、某次对话的分寸。' },
+  { id: 'structure', label: '结构与节奏', text: '最打动我的是结构：铺垫、对照、循环——读到后面才明白前面为什么那样写。' },
+  { id: 'language', label: '语言与比喻', text: '最打动我的是语言：比喻准、句子短、笑完比哭还难受。' },
+  { id: 'ending', label: '结局余味', text: '最打动我的是结局余味：合上书之后，脑子里仍停在那一页。' },
+  { id: 'theme', label: '主题刺到现实', text: '最打动我的是主题刺到现实：职场、关系、秩序——很多桥段换了皮肤还在。' }
+];
+
+const CHARACTER_OPTIONS = [
+  { id: 'protag', label: '主角软肋', text: '最难忘的是主角：能力不差，但软肋和体面才是真正的戏。' },
+  { id: 'hate', label: '又恨又懂的人', text: '最绕不开的是那个又恨又懂的人——讨厌 TA 的选择，却懂 TA 为什么那样选。' },
+  { id: 'side', label: '配角抢戏', text: '真正抢戏的是配角：出场不多，却把主线的残酷/温柔点透了。' },
+  { id: 'group', label: '群像对比', text: '我更想聊群像：几个人对照着看，主题不用喊，自己会站出来。' },
+  { id: 'skip', label: '不单写人物', text: '' }
+];
+
+const FLAW_OPTIONS = [
+  { id: 'pace', label: '节奏拖沓', text: '槽点很实在：中段节奏拖沓，耐心不够的人很容易劝退。' },
+  { id: 'flat', label: '人物扁平', text: '有些人物写得偏扁，符号化一强，代入感就会掉。' },
+  { id: 'translate', label: '译本/文言门槛', text: '门槛不低：文言、译本或叙事习惯，都会让一部分读者中途放弃。' },
+  { id: 'myth', label: '被过度神话', text: '最大争议是被过度神话：社交货币和名人安利，把预期推得太高。' },
+  { id: 'length', label: '太长难啃', text: '太长、线索多，第一次读很容易迷失，需要「合适的打开方式」。' },
+  { id: 'skip', label: '暂不挑刺', text: '' }
+];
+
+const MISREAD_OPTIONS = [
+  { id: 'love', label: '别只当爱情故事', text: '常见误读是只当爱情故事。其实更狠的是秩序、体面、家族/社会规则怎么碾人。' },
+  { id: 'quote', label: '别只记一句金句', text: '别只记住那句名言。金句好传播，却常把复杂裁成顺口溜。' },
+  { id: 'moral', label: '别急着道德审判', text: '别急着用道德审判人物。先看 TA 面对什么规则，再谈对错更公平。' },
+  { id: 'outdated', label: '别说过时无用', text: '有人说过时。把职场、关系、舆论换上去看，很多戏码一点没老。' },
+  { id: 'must', label: '别被「必读」绑架', text: '别被「必读」绑架。经典值得读，但不等于你此刻必须读完、读懂、读出深刻。' },
+  { id: 'skip', label: '不纠正误读', text: '' }
+];
+
+const TAKEAWAY_OPTIONS = [
+  { id: 'judge', label: '少用道德审判', text: '少用道德审判别人；先分清规则和人情，再谈对错。' },
+  { id: 'ordinary', label: '允许自己普通', text: '允许自己普通地活着——不是所有选择都要被写成励志。' },
+  { id: 'rule', label: '看清规则再行动', text: '遇事先看清规则再行动；硬刚时代/系统，往往先伤自己。' },
+  { id: 'reread-self', label: '重读是在读自己', text: '重读往往不是更懂情节，而是更懂自己当年为什么没看懂。' },
+  { id: 'no-worship', label: '少膜拜多对照', text: '少一点膜拜，多一点对照——名著有用时，往往是它戳中你正在过的日子。' },
+  { id: 'skip', label: '不写带走句', text: '' }
+];
+
+const AUDIENCE_OPTIONS = [
+  { id: 'burnout', label: '职场内耗的人', text: '刚经历职场内耗、需要被「说中」的人' },
+  { id: 'student', label: '高中生/大学生', text: '高中生、大学生，或第一次系统补经典的人' },
+  { id: 'afraid', label: '怕经典枯燥的人', text: '想补经典却怕枯燥、需要一张「地图」的读者' },
+  { id: 'rereader', label: '准备重读的人', text: '读过一遍、想带着问题重读的人' },
+  { id: 'general', label: '不爱被必读绑架的人', text: '对经典感兴趣、又不想被「必读」绑架的读者' }
+];
+
+const DETAIL_OPTIONS = [
+  { id: 'scene', label: '关键场景', text: '某个关键场景：选择发生的那一刻，比任何总结都更锋利。' },
+  { id: 'line', label: '一句对白', text: '一句看似随意的对白，事后才发现是全书的伏笔。' },
+  { id: 'object', label: '一个物件', text: '一个反复出现的物件/意象，把情绪钉在具体处，而不是口号里。' },
+  { id: 'contrast', label: '前后对照', text: '前后对照一出来，人物变了，读者也变了——这才是重读的快感。' },
+  { id: 'silence', label: '留白与沉默', text: '作者不写破的地方往往最狠：沉默、省略、一笔带过，反而更刺。' }
+];
+
 const TITLE_TEMPLATES = {
   reread: [
     (b, line) => line || `重读《${b.title}》：原来当年没看懂的，是自己`,
@@ -326,6 +451,36 @@ const TITLE_TEMPLATES = {
   ]
 };
 
+function loadCustomBooks() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list.filter(b => b && b.id && b.title) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistCustomBooks(list) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+
+function slugId(title) {
+  const base = String(title || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\u4e00-\u9fff-]/g, '')
+    .slice(0, 24) || 'book';
+  return `custom-${base}-${Date.now().toString(36)}`;
+}
+
+function optionText(list, id) {
+  const hit = list.find(o => o.id === id);
+  return hit ? (hit.text || '') : '';
+}
+
 function scoreLabel(score) {
   if (score >= 9) return '强烈推荐，值得反复读';
   if (score >= 7.5) return '值得一读，瑕不掩瑜';
@@ -334,18 +489,10 @@ function scoreLabel(score) {
   return '个人向不太契合，仅供参考';
 }
 
-function parseLines(text) {
-  return (text || '')
-    .split(/\r?\n/)
-    .map(s => s.trim())
-    .filter(Boolean);
-}
-
 function pickTitle(angleId, book, oneLiner, titleIndex) {
   const list = TITLE_TEMPLATES[angleId] || TITLE_TEMPLATES.reread;
   const fn = list[titleIndex % list.length];
   const raw = (oneLiner || '').trim();
-  // 用户一句话足够像标题时优先用；否则用模板，首条模板可吸收 oneLiner
   if (raw && raw.length >= 8 && titleIndex === 0) return raw;
   return fn(book, raw);
 }
@@ -405,7 +552,7 @@ function buildBody({
   } else if (angle.id === 'character') {
     parts.push('## 人物比主题更先抓住人');
     parts.push(char
-      ? `与其空谈「深刻」，我更想先聊这个人：${char}。`
+      ? `与其空谈「深刻」，我更想先聊这个人：${char}`
       : `与其空谈《${book.title}》的「深刻」，不如先看人怎么做选择——选择一出来，主题自己会站到台前。`);
     parts.push('');
   } else if (angle.id === 'myth') {
@@ -501,85 +648,186 @@ export default {
   name: 'Writing',
   data() {
     return {
-      books: BOOKS,
+      builtinBooks: BUILTIN_BOOKS,
+      customBooks: loadCustomBooks(),
       categories: CATEGORIES,
       angles: ANGLES,
+      scoreOptions: SCORE_OPTIONS,
+      oneLinerOptions: ONE_LINER_OPTIONS,
+      contextOptions: CONTEXT_OPTIONS,
+      highlightOptions: HIGHLIGHT_OPTIONS,
+      characterOptions: CHARACTER_OPTIONS,
+      flawOptions: FLAW_OPTIONS,
+      misreadOptions: MISREAD_OPTIONS,
+      takeawayOptions: TAKEAWAY_OPTIONS,
+      audienceOptions: AUDIENCE_OPTIONS,
+      detailOptions: DETAIL_OPTIONS,
       categoryId: CATEGORIES[0].id,
-      bookId: BOOKS[0].id,
       angleId: ANGLES[0].id,
+      score: 8,
+      oneLinerId: ONE_LINER_OPTIONS[0].id,
+      contextId: CONTEXT_OPTIONS[0].id,
+      highlightId: HIGHLIGHT_OPTIONS[0].id,
+      characterId: CHARACTER_OPTIONS[0].id,
+      flawId: FLAW_OPTIONS[0].id,
+      misreadId: MISREAD_OPTIONS[0].id,
+      takeawayId: TAKEAWAY_OPTIONS[0].id,
+      audienceId: AUDIENCE_OPTIONS[0].id,
+      detailIds: [],
+      bookId: BUILTIN_BOOKS[0].id,
+      bookSearch: '',
       customTitle: '',
       customAuthor: '',
       customYear: '',
-      score: 8,
-      oneLiner: '',
-      context: '',
-      highlight: '',
-      character: '',
-      flaw: '',
-      misread: '',
-      takeaway: '',
-      audience: '',
-      quotes: '',
       article: null,
       titleIndex: 0
     };
   },
   computed: {
+    books() {
+      return [...this.builtinBooks, ...this.customBooks];
+    },
     currentCategory() {
       return this.categories.find(c => c.id === this.categoryId) || this.categories[0];
     },
     filteredBooks() {
-      return this.books.filter(b => b.category === this.categoryId);
+      const q = (this.bookSearch || '').trim().toLowerCase();
+      let list = this.books;
+      if (this.categoryId === 'mine') {
+        list = list.filter(b => b.custom);
+      } else {
+        list = list.filter(b => b.category === this.categoryId);
+      }
+      if (!q) return list;
+      return list.filter(b => {
+        const hay = `${b.title} ${b.author || ''} ${b.blurb || ''}`.toLowerCase();
+        return hay.includes(q);
+      });
+    },
+    canSaveCustom() {
+      return Boolean((this.customTitle || '').trim());
     },
     currentBook() {
       if (this.bookId === 'custom') {
+        const title = (this.customTitle || '').trim() || '未命名名著';
         return {
           id: 'custom',
-          title: (this.customTitle || '').trim() || '未命名名著',
+          title,
           author: (this.customAuthor || '').trim() || '佚名',
           year: (this.customYear || '').trim(),
           blurb: '',
-          topics: ['经典名著', '读书', '书评', '文学', (this.customTitle || '').trim()].filter(Boolean)
+          topics: ['经典名著', '读书', '书评', '文学', title].filter(Boolean)
         };
       }
       return this.books.find(b => b.id === this.bookId) || this.filteredBooks[0] || this.books[0];
     },
     currentAngle() {
       return this.angles.find(a => a.id === this.angleId) || this.angles[0];
+    },
+    resolvedViews() {
+      return {
+        oneLiner: optionText(ONE_LINER_OPTIONS, this.oneLinerId),
+        context: optionText(CONTEXT_OPTIONS, this.contextId),
+        highlight: optionText(HIGHLIGHT_OPTIONS, this.highlightId),
+        character: optionText(CHARACTER_OPTIONS, this.characterId),
+        flaw: optionText(FLAW_OPTIONS, this.flawId),
+        misread: optionText(MISREAD_OPTIONS, this.misreadId),
+        takeaway: optionText(TAKEAWAY_OPTIONS, this.takeawayId),
+        audience: optionText(AUDIENCE_OPTIONS, this.audienceId),
+        quoteLines: DETAIL_OPTIONS
+          .filter(o => this.detailIds.includes(o.id))
+          .map(o => o.text)
+      };
     }
   },
   methods: {
     selectCategory(id) {
       if (id === this.categoryId) return;
       this.categoryId = id;
+      this.bookSearch = '';
+      if (id === 'mine') {
+        const first = this.customBooks[0];
+        this.bookId = first ? first.id : 'custom';
+        return;
+      }
       const first = this.books.find(b => b.category === id);
       this.bookId = first ? first.id : 'custom';
     },
     selectBook(id) {
       this.bookId = id;
     },
+    toggleDetail(id) {
+      if (this.detailIds.includes(id)) {
+        this.detailIds = this.detailIds.filter(x => x !== id);
+      } else {
+        this.detailIds = [...this.detailIds, id];
+      }
+    },
+    saveCustomBook() {
+      const title = (this.customTitle || '').trim();
+      if (!title) {
+        alert('请填写书名');
+        return;
+      }
+      const author = (this.customAuthor || '').trim() || '佚名';
+      const year = (this.customYear || '').trim();
+      const targetCategory = this.categoryId === 'mine' ? 'modern-cn' : this.categoryId;
+      const dup = this.books.find(
+        b => b.title === title && (b.author || '') === author
+      );
+      if (dup) {
+        this.bookId = dup.id;
+        alert(dup.custom ? '书目里已有，已选中' : '内置书目已有，已选中');
+        return;
+      }
+      const book = {
+        id: slugId(title),
+        category: targetCategory,
+        title,
+        author,
+        year,
+        blurb: `《${title}》——你加入书目的一本。`,
+        topics: [title, author, '经典名著', '读书', '书评'].filter(Boolean),
+        custom: true
+      };
+      this.customBooks = [...this.customBooks, book];
+      persistCustomBooks(this.customBooks);
+      this.bookId = book.id;
+      if (this.categoryId !== 'mine') this.categoryId = book.category;
+      this.customTitle = '';
+      this.customAuthor = '';
+      this.customYear = '';
+    },
+    removeCustomBook(id) {
+      this.customBooks = this.customBooks.filter(b => b.id !== id);
+      persistCustomBooks(this.customBooks);
+      if (this.bookId === id) {
+        const first = this.filteredBooks[0];
+        this.bookId = first ? first.id : 'custom';
+      }
+    },
     buildArticle() {
       if (this.bookId === 'custom' && !(this.customTitle || '').trim()) {
-        alert('请填写自定义书名');
+        alert('请填写书名');
         return null;
       }
       const book = this.currentBook;
       const angle = this.currentAngle;
-      const quoteLines = parseLines(this.quotes);
-      const title = pickTitle(this.angleId, book, this.oneLiner, this.titleIndex);
+      const views = this.resolvedViews;
+      const title = pickTitle(this.angleId, book, views.oneLiner, this.titleIndex);
       const body = buildBody({
         book,
         angle,
         score: this.score,
-        oneLiner: this.oneLiner,
-        context: this.context,
-        highlight: this.highlight,
-        character: this.character,
-        flaw: this.flaw,
-        misread: this.misread,
-        takeaway: this.takeaway,
-        audience: this.audience,
-        quoteLines
+        oneLiner: views.oneLiner,
+        context: views.context,
+        highlight: views.highlight,
+        character: views.character,
+        flaw: views.flaw,
+        misread: views.misread,
+        takeaway: views.takeaway,
+        audience: views.audience,
+        quoteLines: views.quoteLines
       });
       const topics = [...(book.topics || [])];
       if (!topics.includes('书评')) topics.push('书评');
@@ -596,21 +844,23 @@ export default {
       if (next) this.article = next;
     },
     resetForm() {
+      this.angleId = ANGLES[0].id;
       this.score = 8;
-      this.oneLiner = '';
-      this.context = '';
-      this.highlight = '';
-      this.character = '';
-      this.flaw = '';
-      this.misread = '';
-      this.takeaway = '';
-      this.audience = '';
-      this.quotes = '';
+      this.oneLinerId = ONE_LINER_OPTIONS[0].id;
+      this.contextId = CONTEXT_OPTIONS[0].id;
+      this.highlightId = HIGHLIGHT_OPTIONS[0].id;
+      this.characterId = CHARACTER_OPTIONS[0].id;
+      this.flawId = FLAW_OPTIONS[0].id;
+      this.misreadId = MISREAD_OPTIONS[0].id;
+      this.takeawayId = TAKEAWAY_OPTIONS[0].id;
+      this.audienceId = AUDIENCE_OPTIONS[0].id;
+      this.detailIds = [];
       this.article = null;
       this.titleIndex = 0;
       this.customTitle = '';
       this.customAuthor = '';
       this.customYear = '';
+      this.bookSearch = '';
     },
     async copyText(text, okMsg) {
       try {
@@ -680,6 +930,10 @@ export default {
   line-height: 1.5;
 }
 
+.book-meta {
+  margin-top: 10px;
+}
+
 .genre-row {
   display: flex;
   flex-wrap: wrap;
@@ -705,6 +959,36 @@ export default {
   border-color: #0066ff;
 }
 
+.book-row {
+  margin-top: 8px;
+}
+
+.book-chip.custom {
+  border-style: dashed;
+}
+
+.chip-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 50%;
+  font-size: 0.85em;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.chip-del:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.chip.active .chip-del:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .custom-book {
   display: grid;
   gap: 8px;
@@ -722,8 +1006,7 @@ export default {
   margin-top: 0;
 }
 
-.text-input,
-.outline-input {
+.text-input {
   width: 100%;
   padding: 10px 12px;
   font-size: 0.95rem;
@@ -732,28 +1015,6 @@ export default {
   border-radius: 6px;
   box-sizing: border-box;
   font-family: inherit;
-}
-
-.outline-input {
-  resize: vertical;
-}
-
-.score-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.score-range {
-  flex: 1;
-  max-width: 320px;
-}
-
-.score-num {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0066ff;
-  min-width: 2.5em;
 }
 
 .draft-actions {
